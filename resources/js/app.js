@@ -2,6 +2,127 @@ import 'htmx.org';
 import Alpine from 'alpinejs';
 
 window.Alpine = Alpine;
+
+// Register Alpine Cart Store
+Alpine.store('cart', {
+    items: JSON.parse(localStorage.getItem('rimacraft_cart') || '[]'),
+    notes: localStorage.getItem('rimacraft_cart_notes') || '',
+    showOrderForm: false,
+    checkoutMethod: 'form',
+    
+    save() {
+        localStorage.setItem('rimacraft_cart', JSON.stringify(this.items));
+        localStorage.setItem('rimacraft_cart_notes', this.notes);
+    },
+
+    add(product) {
+        const existing = this.items.find(i => i.id === product.id);
+        if (existing) {
+            if (existing.qty < product.stock) {
+                existing.qty++;
+            } else {
+                window.dispatchEvent(new CustomEvent('toast', { 
+                    detail: { message: 'Stok tidak mencukupi!', type: 'error' } 
+                }));
+                return;
+            }
+        } else {
+            if (product.stock > 0) {
+                this.items.push({
+                    id: product.id,
+                    name: product.name,
+                    price: parseFloat(product.price),
+                    qty: 1,
+                    stock: product.stock,
+                    image: product.image
+                });
+            } else {
+                window.dispatchEvent(new CustomEvent('toast', { 
+                    detail: { message: 'Produk sedang habis.', type: 'error' } 
+                }));
+                return;
+            }
+        }
+        this.save();
+        window.dispatchEvent(new CustomEvent('toast', { 
+            detail: { message: product.name + ' ditambahkan ke keranjang!', type: 'success' } 
+        }));
+    },
+
+    remove(id) {
+        this.items = this.items.filter(i => i.id !== id);
+        this.save();
+    },
+
+    clear() {
+        this.items = [];
+        this.notes = '';
+        this.save();
+        window.dispatchEvent(new CustomEvent('toast', { 
+            detail: { message: 'Keranjang telah dibersihkan!', type: 'success' } 
+        }));
+    },
+
+    increment(id) {
+        const item = this.items.find(i => i.id === id);
+        if (item && item.qty < item.stock) {
+            item.qty++;
+            this.save();
+        } else {
+            window.dispatchEvent(new CustomEvent('toast', { 
+                detail: { message: 'Maksimal stok tercapai!', type: 'error' } 
+            }));
+        }
+    },
+
+    decrement(id) {
+        const item = this.items.find(i => i.id === id);
+        if (item && item.qty > 1) {
+            item.qty--;
+            this.save();
+        } else if (item && item.qty === 1) {
+            this.remove(id);
+        }
+    },
+
+    totalItems() {
+        return this.items.reduce((sum, item) => sum + item.qty, 0);
+    },
+
+    totalPrice() {
+        return this.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
+    },
+
+    checkout(businessPhone) {
+        if (this.items.length === 0) return;
+        
+        const businessName = window.rimacraft?.businessName || 'Rima Craft';
+        let text = `Halo *${businessName}*,\nSaya ingin memesan:\n\n`;
+        
+        this.items.forEach((item, index) => {
+            text += `${index + 1}. *${item.name}*\n`;
+            text += `   Jumlah: ${item.qty} x Rp ${item.price.toLocaleString('id-ID')} = Rp ${(item.qty * item.price).toLocaleString('id-ID')}\n`;
+        });
+        
+        text += `\n*Total Pesanan: Rp ${this.totalPrice().toLocaleString('id-ID')}*\n`;
+        
+        if (this.notes.trim()) {
+            text += `\n*Catatan Tambahan:*\n_${this.notes.trim()}_\n`;
+        }
+        
+        text += `\nApakah produk tersebut tersedia dan bisa dikirim ke alamat saya?`;
+
+        // Ensure phone is formatted properly
+        let phone = (businessPhone || window.rimacraft?.businessPhone || '6281234567890').replace(/\D/g, '');
+        if (phone.startsWith('0')) {
+            phone = '62' + phone.substring(1);
+        }
+
+        const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+        window.open(waUrl, '_blank');
+    }
+});
+
 Alpine.start();
 
 // 1. GLOBAL HTMX ERROR HANDLING

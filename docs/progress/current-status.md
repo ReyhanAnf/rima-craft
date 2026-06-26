@@ -18,6 +18,7 @@
 *   [CP-010] Stock Opname/Adjustment Module ✅
 *   [CP-011] Dashboard Analytics & Metrics ✅
 *   [CP-012] Customer & Partner Roles + UX Guidelines Update ✅
+*   [CP-020] Fix Payment Flow & Checkout ✅
 *   **Architecture Refactoring Phase 1** ✅
     - FormRequest validation classes for all modules
     - Action classes for business logic extraction

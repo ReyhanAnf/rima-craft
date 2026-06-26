@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable(['type', 'name', 'phone', 'address'])]
+#[Fillable(['type', 'user_id', 'name', 'email', 'phone', 'address', 'company_name', 'business_type'])]
 class Contact extends Model
 {
     use HasFactory, SoftDeletes;

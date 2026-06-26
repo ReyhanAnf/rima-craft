@@ -24,6 +24,14 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
+    <!-- Global App Config -->
+    <script>
+        window.rimacraft = {
+            businessName: "{{ config('settings.business_name', 'Rima Craft') }}",
+            businessPhone: "{{ config('settings.business_phone', '6281234567890') }}"
+        };
+    </script>
+
     <!-- Vite Styles & Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
@@ -45,126 +53,6 @@
             scrollbar-width: none;
         }
     </style>
-
-    <script>
-        document.addEventListener('alpine:init', () => {
-            Alpine.store('cart', {
-                items: JSON.parse(localStorage.getItem('rimacraft_cart') || '[]'),
-                notes: localStorage.getItem('rimacraft_cart_notes') || '',
-                
-                save() {
-                    localStorage.setItem('rimacraft_cart', JSON.stringify(this.items));
-                    localStorage.setItem('rimacraft_cart_notes', this.notes);
-                },
-
-                add(product) {
-                    const existing = this.items.find(i => i.id === product.id);
-                    if (existing) {
-                        if (existing.qty < product.stock) {
-                            existing.qty++;
-                        } else {
-                            window.dispatchEvent(new CustomEvent('toast', { 
-                                detail: { message: 'Stok tidak mencukupi!', type: 'error' } 
-                            }));
-                            return;
-                        }
-                    } else {
-                        if (product.stock > 0) {
-                            this.items.push({
-                                id: product.id,
-                                name: product.name,
-                                price: parseFloat(product.price),
-                                qty: 1,
-                                stock: product.stock,
-                                image: product.image
-                            });
-                        } else {
-                            window.dispatchEvent(new CustomEvent('toast', { 
-                                detail: { message: 'Produk sedang habis.', type: 'error' } 
-                            }));
-                            return;
-                        }
-                    }
-                    this.save();
-                    window.dispatchEvent(new CustomEvent('toast', { 
-                        detail: { message: product.name + ' ditambahkan ke keranjang!', type: 'success' } 
-                    }));
-                },
-
-                remove(id) {
-                    this.items = this.items.filter(i => i.id !== id);
-                    this.save();
-                },
-
-                clear() {
-                    this.items = [];
-                    this.notes = '';
-                    this.save();
-                    window.dispatchEvent(new CustomEvent('toast', { 
-                        detail: { message: 'Keranjang telah dibersihkan!', type: 'success' } 
-                    }));
-                },
-
-                increment(id) {
-                    const item = this.items.find(i => i.id === id);
-                    if (item && item.qty < item.stock) {
-                        item.qty++;
-                        this.save();
-                    } else {
-                        window.dispatchEvent(new CustomEvent('toast', { 
-                            detail: { message: 'Maksimal stok tercapai!', type: 'error' } 
-                        }));
-                    }
-                },
-
-                decrement(id) {
-                    const item = this.items.find(i => i.id === id);
-                    if (item && item.qty > 1) {
-                        item.qty--;
-                        this.save();
-                    } else if (item && item.qty === 1) {
-                        this.remove(id);
-                    }
-                },
-
-                totalItems() {
-                    return this.items.reduce((sum, item) => sum + item.qty, 0);
-                },
-
-                totalPrice() {
-                    return this.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
-                },
-
-                checkout(businessPhone) {
-                    if (this.items.length === 0) return;
-                    
-                    let text = `Halo *${'{{ config("settings.business_name", "Rima Craft") }}'}*,\nSaya ingin memesan:\n\n`;
-                    
-                    this.items.forEach((item, index) => {
-                        text += `${index + 1}. *${item.name}*\n`;
-                        text += `   Jumlah: ${item.qty} x Rp ${item.price.toLocaleString('id-ID')} = Rp ${(item.qty * item.price).toLocaleString('id-ID')}\n`;
-                    });
-                    
-                    text += `\n*Total Pesanan: Rp ${this.totalPrice().toLocaleString('id-ID')}*\n`;
-                    
-                    if (this.notes.trim()) {
-                        text += `\n*Catatan Tambahan:*\n_${this.notes.trim()}_\n`;
-                    }
-                    
-                    text += `\nApakah produk tersebut tersedia dan bisa dikirim ke alamat saya?`;
-
-                    // Ensure phone is formatted properly
-                    let phone = businessPhone.replace(/\D/g, '');
-                    if (phone.startsWith('0')) {
-                        phone = '62' + phone.substring(1);
-                    }
-
-                    const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
-                    window.open(waUrl, '_blank');
-                }
-            });
-        });
-    </script>
 </head>
 <body class="bg-gray-50 dark:bg-[#050505] text-gray-800 dark:text-gray-200 antialiased transition-colors duration-300">
     
@@ -347,12 +235,62 @@
                                 <span class="text-lg font-black text-gray-900 dark:text-white" x-text="'Rp ' + $store.cart.totalPrice().toLocaleString('id-ID')"></span>
                             </div>
                             
-                            <button @click="$store.cart.checkout('{{ config('settings.business_phone', '6281234567890') }}')" 
-                                    class="w-full py-3.5 px-4 bg-[#25D366] hover:bg-[#20ba5a] text-white rounded-xl font-bold uppercase tracking-widest text-xs shadow-lg shadow-[#25D366]/20 transition duration-300 flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.02] active:scale-[0.98]">
-                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                                Kirim Pesanan (WhatsApp)
-                            </button>
-                            <p class="text-[9px] text-center text-gray-400 dark:text-gray-650 mt-3 font-light">Pemesanan akan dilanjutkan via chat WhatsApp secara otomatis</p>
+                            <!-- Checkout Method Selection -->
+                            <div class="space-y-3" x-data="{ method: 'form' }">
+                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pilih Metode Pemesanan</p>
+                                
+                                <!-- Method Options -->
+                                <div class="grid grid-cols-2 gap-2">
+                                    <button @click="method = 'form'" 
+                                            :class="method === 'form' ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900'"
+                                            class="p-3 rounded-xl border-2 transition-all text-left">
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <svg class="w-4 h-4" :class="method === 'form' ? 'text-amber-600' : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                            </svg>
+                                            <span class="text-xs font-bold" :class="method === 'form' ? 'text-amber-700 dark:text-amber-400' : 'text-gray-600 dark:text-gray-400'">Form Order</span>
+                                        </div>
+                                        <p class="text-[9px]" :class="method === 'form' ? 'text-amber-600 dark:text-amber-500' : 'text-gray-400'">Isi data & bayar langsung</p>
+                                    </button>
+                                    
+                                    <button @click="method = 'whatsapp'" 
+                                            :class="method === 'whatsapp' ? 'border-[#25D366] bg-green-50 dark:bg-green-900/20' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900'"
+                                            class="p-3 rounded-xl border-2 transition-all text-left">
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <svg class="w-4 h-4" :class="method === 'whatsapp' ? 'text-[#25D366]' : 'text-gray-400'" fill="currentColor" viewBox="0 0 24 24">
+                                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                                            </svg>
+                                            <span class="text-xs font-bold" :class="method === 'whatsapp' ? 'text-[#25D366]' : 'text-gray-600 dark:text-gray-400'">WhatsApp</span>
+                                        </div>
+                                        <p class="text-[9px]" :class="method === 'whatsapp' ? 'text-[#25D366]' : 'text-gray-400'">Chat langsung via WA</p>
+                                    </button>
+                                </div>
+
+                                <!-- Submit Button - Changes based on method -->
+                                <template x-if="method === 'form'">
+                                    <div>
+                                        <a href="{{ route('order.checkout') }}" 
+                                                class="w-full py-3.5 px-4 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold uppercase tracking-widest text-xs shadow-lg shadow-amber-600/20 transition duration-300 flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.02] active:scale-[0.98]">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                            </svg>
+                                            Pesan Sekarang (Isi Form)
+                                        </a>
+                                        <p class="text-[9px] text-center text-gray-400 dark:text-gray-650 mt-2 font-light">Isi data lengkap & pilih metode pembayaran</p>
+                                    </div>
+                                </template>
+
+                                <template x-if="method === 'whatsapp'">
+                                    <div>
+                                        <button @click="$store.cart.checkout('{{ config('settings.business_phone', '6281234567890') }}')" 
+                                                class="w-full py-3.5 px-4 bg-[#25D366] hover:bg-[#20ba5a] text-white rounded-xl font-bold uppercase tracking-widest text-xs shadow-lg shadow-[#25D366]/20 transition duration-300 flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.02] active:scale-[0.98]">
+                                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                                            Kirim Pesanan (WhatsApp)
+                                        </button>
+                                        <p class="text-[9px] text-center text-gray-400 dark:text-gray-650 mt-2 font-light">Pemesanan akan dilanjutkan via chat WhatsApp secara otomatis</p>
+                                    </div>
+                                </template>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -362,21 +300,82 @@
 
     <!-- Global Toast Notification -->
     <div x-data="{ show: false, message: '', type: 'success' }"
-         @toast.window="show = true; message = $event.detail.message; type = $event.detail.type || 'success'; setTimeout(() => show = false, 3000)"
-         class="fixed bottom-6 md:top-20 md:bottom-auto right-4 md:right-6 z-[60] flex flex-col gap-2 pointer-events-none"
+         @toast.window="show = true; message = $event.detail.message; type = $event.detail.type || 'success'; setTimeout(() => show = false, 4000)"
+         class="fixed top-6 right-4 md:right-6 z-[100] flex flex-col gap-3 pointer-events-none"
          x-show="show"
+         x-cloak
          x-transition:enter="transition ease-out duration-300"
-         x-transition:enter-start="opacity-0 transform translate-y-4 md:translate-y-0 md:translate-x-4"
-         x-transition:enter-end="opacity-100 transform translate-y-0 md:translate-x-0"
+         x-transition:enter-start="opacity-0 transform translate-x-8"
+         x-transition:enter-end="opacity-100 transform translate-x-0"
          x-transition:leave="transition ease-in duration-200"
-         x-transition:leave-start="opacity-100 transform translate-y-0"
-         x-transition:leave-end="opacity-0 transform translate-y-2 md:-translate-y-2"
+         x-transition:leave-start="opacity-100 transform translate-x-0"
+         x-transition:leave-end="opacity-0 transform translate-x-8"
          style="display: none;">
-        <div class="pointer-events-auto px-4 py-3 rounded-md shadow-xl border text-sm font-semibold flex items-center gap-3 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md"
-             :class="type === 'success' ? 'border-emerald-200 text-emerald-800 dark:border-emerald-500/20 dark:text-emerald-400' : 'border-red-200 text-red-800 dark:border-red-500/20 dark:text-red-400'">
-            <svg x-show="type === 'success'" class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
-            <svg x-show="type === 'error'" class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
-            <span x-text="message" class="tracking-wide"></span>
+        
+        <!-- Success Toast -->
+        <div x-show="type === 'success'" 
+             class="pointer-events-auto max-w-sm bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-emerald-200/50 dark:border-emerald-500/30 backdrop-blur-xl overflow-hidden">
+            <div class="flex items-start gap-3 p-4">
+                <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-bold text-gray-900 dark:text-white mb-0.5">Berhasil!</p>
+                    <p x-text="message" class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed"></p>
+                </div>
+                <button @click="show = false" class="flex-shrink-0 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="h-1 bg-gradient-to-r from-emerald-500 to-emerald-400 animate-pulse"></div>
+        </div>
+
+        <!-- Error Toast -->
+        <div x-show="type === 'error'" 
+             class="pointer-events-auto max-w-sm bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-red-200/50 dark:border-red-500/30 backdrop-blur-xl overflow-hidden">
+            <div class="flex items-start gap-3 p-4">
+                <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-red-500 to-red-600 rounded-lg flex items-center justify-center shadow-lg shadow-red-500/30">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-bold text-gray-900 dark:text-white mb-0.5">Terjadi Kesalahan</p>
+                    <p x-text="message" class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed"></p>
+                </div>
+                <button @click="show = false" class="flex-shrink-0 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="h-1 bg-gradient-to-r from-red-500 to-red-400 animate-pulse"></div>
+        </div>
+
+        <!-- Warning Toast -->
+        <div x-show="type === 'warning'" 
+             class="pointer-events-auto max-w-sm bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-amber-200/50 dark:border-amber-500/30 backdrop-blur-xl overflow-hidden">
+            <div class="flex items-start gap-3 p-4">
+                <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg flex items-center justify-center shadow-lg shadow-amber-500/30">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-bold text-gray-900 dark:text-white mb-0.5">Peringatan</p>
+                    <p x-text="message" class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed"></p>
+                </div>
+                <button @click="show = false" class="flex-shrink-0 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="h-1 bg-gradient-to-r from-amber-500 to-amber-400 animate-pulse"></div>
         </div>
     </div>
 

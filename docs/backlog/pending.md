@@ -17,25 +17,32 @@
 - **Priority**: High (Phase 2 - Enhanced Features)
 - **Description**: Fitur lanjutan untuk portal pelanggan dan partner
 - **Remaining Tasks**:
-  - [ ] **Poin 2**: Create User Management UI (Admin Panel)
-    - [ ] Create UserController for CRUD users
-    - [ ] Create RoleController for managing roles & permissions
-    - [ ] Create views: users/index, users/create, users/edit
-    - [ ] Create views: roles/index, roles/edit (permission matrix)
-    - [ ] Add FormRequest validation (UserRequest, RoleRequest)
-    - [ ] Add routes with 'manage-users' and 'manage-roles' permissions
-  - [ ] **Poin 3**: Implement Dynamic Pricing (Standard vs Reseller)
-    - [ ] Add reseller_price column to products table
-    - [ ] Create ProductPriceService for role-based pricing
-    - [ ] Update CatalogController to show role-based prices
-    - [ ] Update catalog views to display different prices
-    - [ ] Add price badge showing "Harga Reseller" for partners
-  - [ ] **Poin 4**: Customer/Partner Registration & Auto-Linking
-    - [ ] Create registration pages for customer and partner
-    - [ ] Implement auto-create Contact when User registers
-    - [ ] Send welcome email with account details
-    - [ ] Add approval workflow for Partner registration
-    - [ ] Link existing contacts to user accounts
+  - [x] **Poin 2**: Create User Management UI (Admin Panel) ✅ COMPLETE
+    - ✅ Create UserController for CRUD users
+    - ✅ Create RoleController for managing roles & permissions
+    - ✅ Create views: users/index, users/create, users/edit
+    - ✅ Create views: roles/index, roles/edit (permission matrix)
+    - ✅ Add FormRequest validation (UserRequest, RoleRequest)
+    - ✅ Add routes with 'manage-users' and 'manage-roles' permissions
+  - [x] **Poin 3**: Implement Dynamic Pricing (Standard vs Reseller) ✅ COMPLETE
+    - ✅ Add reseller_price column to products table
+    - ✅ Create ProductPriceService for role-based pricing
+    - ✅ Update CatalogController to show role-based prices
+    - ✅ Update catalog views to display different prices
+    - ✅ Add price badge showing "Harga Reseller" for partners
+    - ✅ Update admin product form to set reseller prices
+    - ✅ Add discount percentage calculation and display
+  - [x] **Poin 4**: Customer/Partner Registration & Auto-Linking ✅ COMPLETE
+    - ✅ Create registration pages for customer and partner
+    - ✅ Implement auto-create Contact when User registers
+    - ✅ Auto-login after successful registration
+    - ✅ Redirect to appropriate portal (customer/partner)
+    - ✅ Add registration links to login page
+    - ✅ Partner-specific fields (company_name, business_type)
+    - ✅ Phone number normalization
+    - ✅ Terms & conditions agreement
+    - ⏳ Welcome email (skipped - requires mail server setup)
+    - ⏳ Partner approval workflow (future enhancement)
 
 ### 📋 PWA (Progressive Web App) Features
 - **Priority**: Medium

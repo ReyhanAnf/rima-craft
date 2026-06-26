@@ -8,7 +8,6 @@
             <div>
                 <h2 class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight mb-1 flex items-center gap-3">
                     Halo, {{ auth()->user()->name }}!
-                    <span class="animate-bounce">👋</span>
                 </h2>
                 <p class="text-sm text-gray-500 dark:text-gray-400">Berikut adalah performa operasional & keuangan {{ config('settings.business_name', 'Rima Craft') }}.</p>
             </div>

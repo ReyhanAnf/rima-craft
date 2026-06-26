@@ -89,8 +89,35 @@
                     {{ $product->description ?: 'Kerajinan pengrajin lokal' }}
                 </div>
 
-                <div class="text-xl font-medium text-amber-600 dark:text-amber-500 tracking-wide mb-8">
-                    Rp {{ number_format($product->base_price, 0, ',', '.') }}
+                <!-- Dynamic Price Display -->
+                <div class="mb-8">
+                    @if(isset($product->pricing))
+                        @if($product->pricing['has_discount'])
+                            <!-- Partner sees reseller price with discount badge -->
+                            <div class="flex flex-col items-center gap-2">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-lg text-gray-400 dark:text-gray-600 line-through">{{ $product->pricing['base_price_formatted'] }}</span>
+                                    <span class="text-xl font-medium text-emerald-600 dark:text-emerald-500 tracking-wide">{{ $product->pricing['formatted'] }}</span>
+                                </div>
+                                <span class="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-[10px] font-bold uppercase tracking-wider rounded-full">
+                                    Hemat {{ $product->discount_percentage }}%
+                                </span>
+                            </div>
+                        @else
+                            <!-- Regular price or partner without discount -->
+                            <div class="text-xl font-medium text-amber-600 dark:text-amber-500 tracking-wide">
+                                {{ $product->pricing['formatted'] }}
+                            </div>
+                            @if($product->pricing['is_reseller'])
+                                <span class="text-xs text-gray-500 dark:text-gray-400 mt-1">Harga Reseller</span>
+                            @endif
+                        @endif
+                    @else
+                        <!-- Fallback for backward compatibility -->
+                        <div class="text-xl font-medium text-amber-600 dark:text-amber-500 tracking-wide">
+                            Rp {{ number_format($product->base_price, 0, ',', '.') }}
+                        </div>
+                    @endif
                 </div>
 
                 <!-- Always Visible Actions -->
@@ -104,7 +131,7 @@
 
                     @if($product->current_stock > 0)
                         <button
-                            @click.prevent="$store.cart.add({ id: {{ $product->id }}, name: '{{ addslashes($product->name) }}', price: {{ $product->base_price }}, stock: {{ $product->current_stock }}, image: '{{ $product->image_path ? asset('storage/' . $product->image_path) : '' }}' })"
+                            @click.prevent="$store.cart.add({ id: {{ $product->id }}, name: '{{ addslashes($product->name) }}', price: {{ isset($product->pricing) ? $product->pricing['price'] : $product->base_price }}, stock: {{ $product->current_stock }}, image: '{{ $product->image_path ? asset('storage/' . $product->image_path) : '' }}' })"
                             class="flex-1 py-3 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-black text-[10px] font-bold uppercase tracking-widest transition-all duration-300 hover:bg-amber-600 dark:hover:bg-amber-500 hover:text-white dark:hover:text-white"
                         >
                             Beli
@@ -177,8 +204,33 @@
                                     <div class="flex-1 p-8 md:p-12 flex flex-col justify-start">
                                         <span class="text-amber-600 dark:text-amber-500 font-medium tracking-[0.3em] uppercase text-[10px] md:text-xs mb-3 md:mb-4 block">Detail Karya</span>
                                         <h2 class="text-3xl md:text-5xl font-serif font-bold text-gray-900 dark:text-white mb-4 leading-tight">{{ $product->name }}</h2>
-                                        <div class="text-2xl font-medium text-gray-900 dark:text-white tracking-wide mb-8">
-                                            Rp {{ number_format($product->base_price, 0, ',', '.') }}
+                                        
+                                        <!-- Dynamic Price in Detail View -->
+                                        <div class="mb-8">
+                                            @if(isset($product->pricing))
+                                                @if($product->pricing['has_discount'])
+                                                    <div class="flex items-center gap-4">
+                                                        <span class="text-xl text-gray-400 dark:text-gray-600 line-through">{{ $product->pricing['base_price_formatted'] }}</span>
+                                                        <span class="text-2xl font-medium text-emerald-600 dark:text-emerald-500 tracking-wide">{{ $product->pricing['formatted'] }}</span>
+                                                    </div>
+                                                    <div class="mt-2">
+                                                        <span class="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider rounded-full">
+                                                            Diskon Reseller {{ $product->discount_percentage }}%
+                                                        </span>
+                                                    </div>
+                                                @else
+                                                    <div class="text-2xl font-medium text-gray-900 dark:text-white tracking-wide">
+                                                        {{ $product->pricing['formatted'] }}
+                                                    </div>
+                                                    @if($product->pricing['is_reseller'])
+                                                        <span class="text-sm text-gray-500 dark:text-gray-400 mt-1 block">Harga Reseller</span>
+                                                    @endif
+                                                @endif
+                                            @else
+                                                <div class="text-2xl font-medium text-gray-900 dark:text-white tracking-wide">
+                                                    Rp {{ number_format($product->base_price, 0, ',', '.') }}
+                                                </div>
+                                            @endif
                                         </div>
 
                                         <div class="w-12 h-px bg-gray-200 dark:bg-gray-800 mb-8"></div>

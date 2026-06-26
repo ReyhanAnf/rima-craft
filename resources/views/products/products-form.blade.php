@@ -31,11 +31,17 @@
             <div>
                 <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Harga Jual (Rp)</label>
                 <input type="number" name="base_price" value="{{ intval($product->base_price) ?? 0 }}" min="0" required class="w-full px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition">
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Harga standar untuk semua customer</p>
             </div>
             <div>
-                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Stok Produk</label>
-                <input type="number" name="current_stock" value="{{ $product->current_stock ?? 0 }}" min="0" required class="w-full px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition">
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Harga Reseller (Rp)</label>
+                <input type="number" name="reseller_price" value="{{ intval($product->reseller_price) ?? 0 }}" min="0" class="w-full px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition">
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Kosongkan jika sama dengan harga standar</p>
             </div>
+        </div>
+        <div>
+            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Stok Produk</label>
+            <input type="number" name="current_stock" value="{{ $product->current_stock ?? 0 }}" min="0" required class="w-full px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition">
         </div>
 
         <div class="pt-4 border-t border-gray-200 dark:border-gray-800">

@@ -7,15 +7,32 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Catalog\FilterProductRequest;
 use App\Models\Gallery;
 use App\Models\Product;
+use App\Services\ProductPriceService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
 class CatalogController extends Controller
 {
+    protected ProductPriceService $priceService;
+
+    public function __construct(ProductPriceService $priceService)
+    {
+        $this->priceService = $priceService;
+    }
+
     public function index(): View
     {
         $products  = Product::latest()->get();
         $galleries = Gallery::orderBy('sort_order')->get();
+        $user = auth()->user();
+        
+        // Add pricing info to each product
+        $products = $products->map(function ($product) use ($user) {
+            $product->pricing = $this->priceService->getProductPrice($product, $user);
+            $product->discount_percentage = $this->priceService->getDiscountPercentage($product);
+            return $product;
+        });
+        
         return view('catalog', compact('products', 'galleries'));
     }
 
@@ -44,6 +61,14 @@ class CatalogController extends Controller
         }
 
         $products = $query->get();
+        $user = auth()->user();
+        
+        // Add pricing info to each product
+        $products = $products->map(function ($product) use ($user) {
+            $product->pricing = $this->priceService->getProductPrice($product, $user);
+            $product->discount_percentage = $this->priceService->getDiscountPercentage($product);
+            return $product;
+        });
 
         return view('catalog.products-grid', compact('products'));
     }
