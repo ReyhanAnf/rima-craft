@@ -8,16 +8,16 @@
 
 ## Frontend (UI & Reaktivitas)
 
-*   **Pendekatan:** BHA Stack (Blade + HTMX + Alpine.js).
-*   **Templating:** Laravel Blade (Komponen UI modular).
-*   **Interaktivitas Server-Side:** [HTMX](https://htmx.org/) (Tidak ada _full page reload_).
-*   **Interaktivitas Client-Side:** Alpine.js (Untuk _state_ UI lokal dan _offline cart_).
+*   **Pendekatan:** Vue.js 3 (SPA dengan Vue Router + Pinia).
+*   **Templating:** Single File Components (SFC) dengan Vue Template.
+*   **State Management:** Pinia (Untuk state UI global dan _offline cart_).
+*   **HTTP Client:** Vue Query untuk caching dan server-state.
 *   **Styling:** Tailwind CSS v3/v4 (Desain modern, bersih, palet _Earth Tones_).
 
 ## Progressive Web App (PWA) & Offline Support
 
 *   **Service Worker:** Kustom berbasis Workbox.
-*   **Offline State:** Alpine.js + `localStorage` (untuk keranjang belanja publik agar tidak hilang saat sinyal putus).
+*   **Offline State:** Pinia + `localStorage` (untuk keranjang belanja publik agar tidak hilang saat sinyal putus).
 
 ## Deployment & Infrastruktur
 

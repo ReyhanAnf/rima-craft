@@ -47,15 +47,28 @@ class DashboardController extends Controller
         extract($invoices);
         extract($leaderboards);
 
-        return view('dashboard', compact(
-            'range', 'startDate', 'endDate',
-            'totalSales', 'totalPurchases', 'grossProfit', 'cashInflow', 'cashOutflow',
-            'totalKas', 'totalReceivables', 'totalPayables',
-            'pendingProductions', 'completedProductions',
-            'lowStockMaterialsLimit', 'lowStockMaterialsCount',
-            'outstandingSales', 'outstandingPurchases',
-            'topCustomers', 'topSuppliers', 'topProducts',
-            'chartData', 'recentSales',
-        ));
+        return \Inertia\Inertia::render('Dashboard', [
+            'range' => $range,
+            'startDate' => $startDate->toIso8601String(),
+            'endDate' => $endDate->toIso8601String(),
+            'totalSales' => (float) $totalSales,
+            'totalPurchases' => (float) $totalPurchases,
+            'grossProfit' => (float) $grossProfit,
+            'cashInflow' => (float) $cashInflow,
+            'cashOutflow' => (float) $cashOutflow,
+            'totalKas' => (float) $totalKas,
+            'totalReceivables' => (float) $totalReceivables,
+            'totalPayables' => (float) $totalPayables,
+            'pendingProductions' => (int) $pendingProductions,
+            'completedProductions' => (int) $completedProductions,
+            'lowStockMaterialsCount' => (int) $lowStockMaterialsCount,
+            'outstandingSales' => $outstandingSales,
+            'outstandingPurchases' => $outstandingPurchases,
+            'topCustomers' => $topCustomers,
+            'topSuppliers' => $topSuppliers,
+            'topProducts' => $topProducts,
+            'chartData' => $chartData,
+            'recentSales' => $recentSales,
+        ]);
     }
 }

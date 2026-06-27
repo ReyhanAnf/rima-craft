@@ -9,24 +9,27 @@ use App\Models\Permission;
 use App\Models\Role;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 
 class RoleController extends Controller
 {
     /**
      * Display a listing of roles.
      */
-    public function index(): View
+    public function index(): InertiaResponse
     {
         $roles = Role::withCount(['permissions', 'users'])->get();
         
-        return view('roles.index', compact('roles'));
+        return Inertia::render('Roles/Index', [
+            'roles' => $roles,
+        ]);
     }
 
     /**
      * Show the form for editing the specified role.
      */
-    public function edit(Role $role): View
+    public function edit(Role $role): InertiaResponse
     {
         $role->load('permissions');
         $permissions = Permission::orderBy('name')->get();
@@ -41,7 +44,10 @@ class RoleController extends Controller
             return ucfirst(implode(' ', $parts));
         });
         
-        return view('roles.edit', compact('role', 'groupedPermissions'));
+        return Inertia::render('Roles/Edit', [
+            'role' => $role,
+            'groupedPermissions' => $groupedPermissions,
+        ]);
     }
 
     /**

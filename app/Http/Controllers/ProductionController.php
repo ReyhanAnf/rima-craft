@@ -10,11 +10,12 @@ use App\Models\Material;
 use App\Models\Product;
 use App\Models\Production;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 
 class ProductionController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request): InertiaResponse
     {
         $query = Production::with(['materials.material', 'results.product']);
 
@@ -26,21 +27,23 @@ class ProductionController extends Controller
                   });
         }
 
-        $productions = $query->orderByDesc('date')->orderByDesc('id')->paginate(10);
+        $productions = $query->orderByDesc('date')->orderByDesc('id')->paginate(10)->withQueryString();
 
-        if ($request->header('HX-Target') === 'productions-list') {
-            return view('productions.productions-list', compact('productions'));
-        }
-
-        return view('productions.productions-index', compact('productions'));
+        return Inertia::render('Productions/Index', [
+            'productions' => $productions,
+            'filters' => $request->only(['search']),
+        ]);
     }
 
-    public function create(): View
+    public function create(): InertiaResponse
     {
         $materials = Material::orderBy('name')->get();
         $products = Product::orderBy('name')->get();
 
-        return view('productions.productions-form', compact('materials', 'products'));
+        return Inertia::render('Productions/Form', [
+            'materials' => $materials,
+            'products' => $products,
+        ]);
     }
 
     public function store(StoreProductionRequest $request)
@@ -49,15 +52,17 @@ class ProductionController extends Controller
             (new RecordProductionAction)->handle($request->validated());
 
             return redirect()->route('productions.index')
-                             ->with('toast', ['message' => 'Proses produksi berhasil dicatat! Stok bahan baku terpotong dan produk jadi bertambah.', 'type' => 'success']);
+                             ->with('success', 'Proses produksi berhasil dicatat! Stok bahan baku terpotong dan produk jadi bertambah.');
         } catch (\Exception $e) {
             return back()->withInput()->withErrors(['error' => $e->getMessage()]);
         }
     }
 
-    public function show(Production $production): View
+    public function show(Production $production): InertiaResponse
     {
         $production->load(['materials.material', 'results.product']);
-        return view('productions.productions-show', compact('production'));
+        return Inertia::render('Productions/Show', [
+            'production' => $production,
+        ]);
     }
 }

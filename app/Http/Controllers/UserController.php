@@ -11,14 +11,15 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 
 class UserController extends Controller
 {
     /**
      * Display a listing of users.
      */
-    public function index(Request $request): View
+    public function index(Request $request): InertiaResponse
     {
         $query = User::with(['roles', 'contact']);
 
@@ -38,19 +39,14 @@ class UserController extends Controller
             });
         }
 
-        $users = $query->orderByDesc('created_at')->paginate(15);
+        $users = $query->orderByDesc('created_at')->paginate(15)->withQueryString();
         $roles = Role::orderBy('name')->get();
 
-        return view('users.index', compact('users', 'roles'));
-    }
-
-    /**
-     * Show the form for creating a new user.
-     */
-    public function create(): View
-    {
-        $roles = Role::orderBy('name')->get();
-        return view('users.create', compact('roles'));
+        return Inertia::render('Users/Index', [
+            'users' => $users,
+            'roles' => $roles,
+            'filters' => $request->only(['search', 'role']),
+        ]);
     }
 
     /**
@@ -83,17 +79,6 @@ class UserController extends Controller
 
         return redirect()->route('users.index')
             ->with('success', 'User berhasil ditambahkan');
-    }
-
-    /**
-     * Show the form for editing the specified user.
-     */
-    public function edit(User $user): View
-    {
-        $roles = Role::orderBy('name')->get();
-        $user->load(['roles', 'contact']);
-        
-        return view('users.edit', compact('user', 'roles'));
     }
 
     /**

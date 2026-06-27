@@ -6,11 +6,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Contact;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 
 class ContactController extends Controller
 {
-        public function index(Request $request)
+    public function index(Request $request): InertiaResponse
     {
         $query = Contact::query();
         
@@ -29,18 +30,12 @@ class ContactController extends Controller
             });
         }
         
-        $contacts = $query->orderBy('name')->paginate(15);
+        $contacts = $query->orderBy('name')->paginate(15)->withQueryString();
 
-        if ($request->header('HX-Target') === 'contacts-list') {
-            return view('contacts.contacts-list', compact('contacts'));
-        }
-        return view('contacts.contacts-index', compact('contacts'));
-    }
-
-    public function create(): View
-    {
-        $contact = new Contact();
-        return view('contacts.contacts-form', compact('contact'));
+        return Inertia::render('Contacts/Index', [
+            'contacts' => $contacts,
+            'filters' => $request->only(['search', 'type']),
+        ]);
     }
 
     public function store(Request $request)
@@ -54,17 +49,8 @@ class ContactController extends Controller
 
         Contact::create($validated);
 
-        return response()
-            ->view('contacts.contacts-list', ['contacts' => Contact::orderBy('name')->paginate(10)])
-            ->header('HX-Trigger', json_encode([
-                'close-drawer' => true,
-                'toast' => ['message' => 'Kontak berhasil ditambahkan!', 'type' => 'success']
-            ]));
-    }
-
-    public function edit(Contact $contact): View
-    {
-        return view('contacts.contacts-form', compact('contact'));
+        return redirect()->route('contacts.index')
+            ->with('success', 'Kontak berhasil ditambahkan!');
     }
 
     public function update(Request $request, Contact $contact)
@@ -78,22 +64,15 @@ class ContactController extends Controller
 
         $contact->update($validated);
 
-        return response()
-            ->view('contacts.contacts-list', ['contacts' => Contact::orderBy('name')->paginate(10)])
-            ->header('HX-Trigger', json_encode([
-                'close-drawer' => true,
-                'toast' => ['message' => 'Kontak berhasil diperbarui!', 'type' => 'success']
-            ]));
+        return redirect()->route('contacts.index')
+            ->with('success', 'Kontak berhasil diperbarui!');
     }
 
     public function destroy(Contact $contact)
     {
         $contact->delete();
 
-        return response()
-            ->view('contacts.contacts-list', ['contacts' => Contact::orderBy('name')->paginate(10)])
-            ->header('HX-Trigger', json_encode([
-                'toast' => ['message' => 'Kontak berhasil dihapus!', 'type' => 'success']
-            ]));
+        return redirect()->route('contacts.index')
+            ->with('success', 'Kontak berhasil dihapus!');
     }
 }

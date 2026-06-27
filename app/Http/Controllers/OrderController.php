@@ -5,21 +5,50 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use App\Models\PaymentMethod;
 use App\Models\User;
 use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 
 class OrderController extends Controller
 {
     /**
-     * Display order form (public - no login required)
+     * Display checkout page via Inertia (Vue)
+     */
+    public function checkout(): InertiaResponse
+    {
+        $paymentMethods = PaymentMethod::active()->ordered()->get(['name', 'code', 'type', 'account_number', 'account_name']);
+
+        return Inertia::render('CheckoutPage', [
+            'paymentMethods' => $paymentMethods,
+            'isGuest'        => ! auth()->check(),
+            'user'           => auth()->user()?->only(['name', 'email', 'phone']),
+            'config'         => [
+                'business_name'    => config('settings.business_name', 'Rima Craft'),
+                'business_phone'   => config('settings.business_phone', '6281234567890'),
+                'hero_description' => config('settings.hero_description', ''),
+                'checkout_url'     => route('order.checkout'),
+                'order_store_url'  => route('order.store'),
+                'catalog_url'      => route('catalog.index'),
+                'login_url'        => route('login'),
+                'terms_url'        => route('page.terms'),
+                'privacy_url'      => route('page.privacy'),
+                'shipping_url'     => route('page.shipping'),
+            ],
+        ]);
+    }
+
+    /**
+     * @deprecated Legacy create — kept for backward compatibility
      */
     public function create()
     {
-        return view('orders.create');
+        return redirect()->route('order.checkout');
     }
 
     /**
@@ -120,64 +149,45 @@ class OrderController extends Controller
 
             DB::commit();
 
-            // Log for debugging
             Log::info('New order created', [
                 'order_number' => $order->order_number,
-                'customer' => $order->customer_name,
-                'total' => $order->total,
-                'user_created' => $request->input('create_account') ? true : false,
+                'customer'     => $order->customer_name,
+                'total'        => $order->total,
+                'user_created' => (bool) $request->input('create_account'),
             ]);
 
-            // HTMX redirect to success page
-            if ($request->header('HX-Request')) {
-                return response()->make('', 200, [
-                    'HX-Redirect' => route('order.success', ['order' => $order->order_number])
-                ]);
-            }
-
-            $successMessage = 'Pesanan Anda berhasil dibuat!';
-            if ($request->input('create_account')) {
-                $successMessage .= ' Akun Anda juga telah dibuat. Silakan login untuk melihat riwayat pesanan.';
-            }
-
-            return redirect()->route('order.success', ['order' => $order->order_number])
-                ->with('success', $successMessage);
+            return redirect()->route('order.success', ['order' => $order->order_number]);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             DB::rollBack();
-            
-            // HTMX error response with toast
-            if ($request->header('HX-Request')) {
-                $errors = $e->validator->errors()->first();
-                return response($errors, 422)->header('HX-Reswap', 'none');
-            }
-
             return back()->withErrors($e->errors())->withInput();
-            
+
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Order creation failed', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
-
-            // HTMX error response with toast
-            if ($request->header('HX-Request')) {
-                return response('Terjadi kesalahan sistem. Silakan coba lagi atau hubungi kami via WhatsApp.', 500)
-                    ->header('HX-Reswap', 'none');
-            }
-
-            return back()->withErrors(['error' => 'Terjadi kesalahan saat membuat pesanan.']);
+            return back()->withErrors(['error' => 'Terjadi kesalahan saat membuat pesanan.'])->withInput();
         }
     }
 
     /**
-     * Display order success page
+     * Display order success page via Inertia (Vue)
      */
-    public function success(string $orderNumber)
+    public function success(string $orderNumber): InertiaResponse
     {
         $order = Order::where('order_number', $orderNumber)->firstOrFail();
-        return view('orders.success', compact('order'));
+
+        $paymentMethodDetail = PaymentMethod::where('code', $order->payment_method)
+            ->first(['name', 'account_number', 'account_name', 'description']);
+
+        return Inertia::render('OrderSuccessPage', [
+            'order' => array_merge($order->toArray(), [
+                'payment_method_detail' => $paymentMethodDetail,
+                'created_at_formatted'  => $order->created_at->format('d M Y, H:i'),
+            ]),
+        ]);
     }
 
     /**

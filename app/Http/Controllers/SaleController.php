@@ -10,11 +10,14 @@ use App\Http\Requests\Sale\UpdateSaleStatusRequest;
 use App\Models\Contact;
 use App\Models\Product;
 use App\Models\Sale;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 use Illuminate\View\View;
 
 class SaleController extends Controller
 {
-    public function index(\Illuminate\Http\Request $request): View
+    public function index(Request $request): InertiaResponse
     {
         $query = Sale::with('customer');
 
@@ -57,21 +60,25 @@ class SaleController extends Controller
             });
         }
 
-        $sales = $query->orderByDesc('date')->orderByDesc('id')->paginate(15);
+        $sales = $query->orderByDesc('date')->orderByDesc('id')->paginate(15)->withQueryString();
 
-        if ($request->header('HX-Target') === 'sales-list') {
-            return view('sales.sales-list', compact('sales'));
-        }
-
-        return view('sales.sales-index', compact('sales'));
+        return Inertia::render('Sales/Index', [
+            'sales' => $sales,
+            'filters' => $request->only([
+                'search', 'date_from', 'date_to', 'payment_status', 'shipping_status', 'min_amount', 'max_amount'
+            ]),
+        ]);
     }
 
-    public function create(): View
+    public function create(): InertiaResponse
     {
         $customers = Contact::where('type', 'customer')->orderBy('name')->get();
         $products = Product::orderBy('name')->get();
 
-        return view('sales.sales-form', compact('customers', 'products'));
+        return Inertia::render('Sales/Form', [
+            'customers' => $customers,
+            'products' => $products,
+        ]);
     }
 
     public function store(StoreSaleRequest $request)
@@ -80,16 +87,18 @@ class SaleController extends Controller
             (new RecordSaleAction)->handle($request->validated());
 
             return redirect()->route('sales.index')
-                             ->with('toast', ['message' => 'Transaksi penjualan berhasil disimpan dan stok berkurang!', 'type' => 'success']);
+                             ->with('success', 'Transaksi penjualan berhasil disimpan dan stok berkurang!');
         } catch (\Exception $e) {
             return back()->withInput()->withErrors(['error' => $e->getMessage()]);
         }
     }
 
-    public function show(Sale $sale): View
+    public function show(Sale $sale): InertiaResponse
     {
         $sale->load(['items.product', 'customer']);
-        return view('sales.sales-show', compact('sale'));
+        return Inertia::render('Sales/Show', [
+            'sale' => $sale,
+        ]);
     }
 
     public function updateStatus(UpdateSaleStatusRequest $request, Sale $sale)
@@ -103,10 +112,7 @@ class SaleController extends Controller
             $sale->update(['payment_status' => $validated['payment_status']]);
         }
 
-        $sale->load(['items.product', 'customer']);
-        return response()
-            ->view('sales.sales-show', compact('sale'))
-            ->header('HX-Trigger', json_encode(['toast' => ['message' => 'Status berhasil diubah!', 'type' => 'success']]));
+        return redirect()->back()->with('success', 'Status berhasil diubah!');
     }
 
     public function printInvoice(Sale $sale): View

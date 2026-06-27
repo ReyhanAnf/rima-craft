@@ -9,28 +9,23 @@ use App\Http\Requests\Product\UpdateProductRequest;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 
 class ProductController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request): InertiaResponse
     {
         $query = Product::query();
         if ($request->filled('search')) {
             $query->where('name', 'like', '%' . $request->search . '%');
         }
-        $products = $query->orderBy('name')->paginate(10);
+        $products = $query->orderBy('name')->paginate(10)->withQueryString();
 
-        if ($request->header('HX-Target') === 'products-list') {
-            return view('products.products-list', compact('products'));
-        }
-        return view('products.products-index', compact('products'));
-    }
-
-    public function create(): View
-    {
-        $product = new Product();
-        return view('products.products-form', compact('product'));
+        return Inertia::render('Products/Index', [
+            'products' => $products,
+            'filters' => $request->only(['search']),
+        ]);
     }
 
     public function store(StoreProductRequest $request)
@@ -39,7 +34,7 @@ class ProductController extends Controller
 
         $product = new Product();
         $product->name = $validated['name'];
-        $product->description = $validated['description'];
+        $product->description = $validated['description'] ?? '';
         $product->base_price = $validated['base_price'];
         $product->current_stock = $validated['current_stock'];
 
@@ -67,17 +62,8 @@ class ProductController extends Controller
         $product->media_assets = $mediaAssets;
         $product->save();
 
-        return response()
-            ->view('products.products-list', ['products' => Product::orderBy('name')->paginate(10)])
-            ->header('HX-Trigger', json_encode([
-                'close-drawer' => true,
-                'toast' => ['message' => 'Produk berhasil ditambahkan!', 'type' => 'success'],
-            ]));
-    }
-
-    public function edit(Product $product): View
-    {
-        return view('products.products-form', compact('product'));
+        return redirect()->route('products.index')
+            ->with('success', 'Produk berhasil ditambahkan!');
     }
 
     public function update(UpdateProductRequest $request, Product $product)
@@ -85,7 +71,7 @@ class ProductController extends Controller
         $validated = $request->validated();
 
         $product->name = $validated['name'];
-        $product->description = $validated['description'];
+        $product->description = $validated['description'] ?? '';
         $product->base_price = $validated['base_price'];
         $product->current_stock = $validated['current_stock'];
 
@@ -116,12 +102,8 @@ class ProductController extends Controller
         $product->media_assets = $mediaAssets;
         $product->save();
 
-        return response()
-            ->view('products.products-list', ['products' => Product::orderBy('name')->paginate(10)])
-            ->header('HX-Trigger', json_encode([
-                'close-drawer' => true,
-                'toast' => ['message' => 'Produk berhasil diperbarui!', 'type' => 'success'],
-            ]));
+        return redirect()->route('products.index')
+            ->with('success', 'Produk berhasil diperbarui!');
     }
 
     public function destroyMedia(Product $product, int $index)
@@ -137,21 +119,25 @@ class ProductController extends Controller
             $product->save();
         }
 
-        return response()
-            ->view('products.products-form', compact('product'))
-            ->header('HX-Trigger', json_encode([
-                'toast' => ['message' => 'Media berhasil dihapus!', 'type' => 'success'],
-            ]));
+        return redirect()->back()->with('success', 'Media berhasil dihapus!');
     }
 
     public function destroy(Product $product)
     {
+        if ($product->image_path) {
+            Storage::disk('public')->delete($product->image_path);
+        }
+        
+        $mediaAssets = $product->media_assets ?? [];
+        foreach ($mediaAssets as $media) {
+            if ($media['type'] === 'image' && isset($media['path'])) {
+                Storage::disk('public')->delete($media['path']);
+            }
+        }
+
         $product->delete();
 
-        return response()
-            ->view('products.products-list', ['products' => Product::orderBy('name')->paginate(10)])
-            ->header('HX-Trigger', json_encode([
-                'toast' => ['message' => 'Produk berhasil dihapus!', 'type' => 'success'],
-            ]));
+        return redirect()->route('products.index')
+            ->with('success', 'Produk berhasil dihapus!');
     }
 }

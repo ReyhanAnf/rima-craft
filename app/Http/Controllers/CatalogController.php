@@ -8,8 +8,10 @@ use App\Http\Requests\Catalog\FilterProductRequest;
 use App\Models\Gallery;
 use App\Models\Product;
 use App\Services\ProductPriceService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 
 class CatalogController extends Controller
 {
@@ -20,32 +22,54 @@ class CatalogController extends Controller
         $this->priceService = $priceService;
     }
 
-    public function index(): View
+    public function index(): InertiaResponse
     {
         $products  = Product::latest()->get();
         $galleries = Gallery::orderBy('sort_order')->get();
-        $user = auth()->user();
-        
-        // Add pricing info to each product
+        $user      = auth()->user();
+
         $products = $products->map(function ($product) use ($user) {
-            $product->pricing = $this->priceService->getProductPrice($product, $user);
+            $product->pricing             = $this->priceService->getProductPrice($product, $user);
             $product->discount_percentage = $this->priceService->getDiscountPercentage($product);
             return $product;
         });
-        
-        return view('catalog', compact('products', 'galleries'));
+
+        return Inertia::render('CatalogPage', [
+            'products'  => $products,
+            'galleries' => $galleries,
+            'settings'  => config('settings'),
+        ]);
     }
 
-    public function filter(FilterProductRequest $request): View|RedirectResponse
+    public function shop(): InertiaResponse
     {
-        if (! $request->header('HX-Request')) {
+        $products  = Product::latest()->get();
+        $user      = auth()->user();
+
+        $products = $products->map(function ($product) use ($user) {
+            $product->pricing             = $this->priceService->getProductPrice($product, $user);
+            $product->discount_percentage = $this->priceService->getDiscountPercentage($product);
+            return $product;
+        });
+
+        return Inertia::render('ShopPage', [
+            'products' => $products,
+            'settings' => config('settings'),
+        ]);
+    }
+
+    /**
+     * HTMX/JSON filter endpoint — returns JSON for Vue's axios call.
+     */
+    public function filter(FilterProductRequest $request): JsonResponse|RedirectResponse
+    {
+        if (! $request->wantsJson() && ! $request->header('HX-Request')) {
             return redirect()->route('catalog.index');
         }
 
         $search = trim((string) ($request->validated('search') ?? ''));
         $stock  = $request->validated('stock') ?? 'semua';
-
-        $query = Product::query()->latest();
+        $query  = Product::query()->latest();
 
         if ($search !== '') {
             $query->where(function ($q) use ($search): void {
@@ -61,15 +85,14 @@ class CatalogController extends Controller
         }
 
         $products = $query->get();
-        $user = auth()->user();
-        
-        // Add pricing info to each product
+        $user     = auth()->user();
+
         $products = $products->map(function ($product) use ($user) {
-            $product->pricing = $this->priceService->getProductPrice($product, $user);
+            $product->pricing             = $this->priceService->getProductPrice($product, $user);
             $product->discount_percentage = $this->priceService->getDiscountPercentage($product);
             return $product;
         });
 
-        return view('catalog.products-grid', compact('products'));
+        return response()->json(['products' => $products]);
     }
 }

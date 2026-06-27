@@ -8,14 +8,15 @@ use App\Http\Controllers\Controller;
 use App\Models\Sale;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 
 class CustomerPortalController extends Controller
 {
     /**
      * Display customer dashboard.
      */
-    public function dashboard(): View
+    public function dashboard(): InertiaResponse
     {
         $user = Auth::user();
         
@@ -31,17 +32,17 @@ class CustomerPortalController extends Controller
             ->where('shipping_status', 'pending')
             ->count();
         
-        return view('portal.customer.dashboard', compact(
-            'recentOrders',
-            'totalOrders',
-            'pendingOrders'
-        ));
+        return Inertia::render('Portal/Customer/Dashboard', [
+            'recentOrders' => $recentOrders,
+            'totalOrders' => $totalOrders,
+            'pendingOrders' => $pendingOrders,
+        ]);
     }
 
     /**
      * Display customer's order history.
      */
-    public function orders(Request $request): View
+    public function orders(Request $request): InertiaResponse
     {
         $query = Sale::where('customer_id', Auth::id())
             ->with('items.product');
@@ -59,20 +60,26 @@ class CustomerPortalController extends Controller
             $query->where('date', '<=', $request->date_to);
         }
         
-        $orders = $query->orderByDesc('date')->paginate(15);
+        $orders = $query->orderByDesc('date')->paginate(15)->withQueryString();
         
-        return view('portal.customer.orders', compact('orders'));
+        return Inertia::render('Portal/Customer/Orders', [
+            'orders' => $orders,
+            'filters' => $request->only(['status', 'date_from', 'date_to']),
+        ]);
     }
 
     /**
      * Display customer profile.
      */
-    public function profile(): View
+    public function profile(): InertiaResponse
     {
         $user = Auth::user();
         $contact = $user->contact;
         
-        return view('portal.customer.profile', compact('user', 'contact'));
+        return Inertia::render('Portal/Customer/Profile', [
+            'user' => $user,
+            'contact' => $contact,
+        ]);
     }
 
     /**

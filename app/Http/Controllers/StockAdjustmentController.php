@@ -10,10 +10,12 @@ use App\Models\Material;
 use App\Models\Product;
 use App\Models\StockAdjustment;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 
 class StockAdjustmentController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): InertiaResponse
     {
         $query = StockAdjustment::with(['adjustable', 'user']);
         
@@ -35,21 +37,17 @@ class StockAdjustmentController extends Controller
             $query->where('user_id', $request->user_id);
         }
         
-        $adjustments = $query->latest()->paginate(15);
+        $adjustments = $query->latest()->paginate(15)->withQueryString();
 
-        if ($request->header('HX-Target') === 'stock-adjustments-list') {
-            return view('stock-adjustments.stock-adjustments-list', compact('adjustments'));
-        }
-
-        return view('stock-adjustments.stock-adjustments-index', compact('adjustments'));
-    }
-
-    public function create()
-    {
         $materials = Material::select('id', 'name', 'current_stock', 'unit')->get();
         $products = Product::select('id', 'name', 'current_stock')->get();
 
-        return view('stock-adjustments.stock-adjustments-form', compact('materials', 'products'));
+        return Inertia::render('StockAdjustments/Index', [
+            'adjustments' => $adjustments,
+            'materials' => $materials,
+            'products' => $products,
+            'filters' => $request->only(['type', 'date_from', 'date_to']),
+        ]);
     }
 
     public function store(StoreStockAdjustmentRequest $request)
@@ -57,13 +55,10 @@ class StockAdjustmentController extends Controller
         try {
             (new AdjustStockAction)->handle($request->validated());
 
-            $adjustments = StockAdjustment::with(['adjustable', 'user'])->latest()->paginate(15);
-
-            return response()
-                ->view('stock-adjustments.stock-adjustments-list', compact('adjustments'))
-                ->header('HX-Trigger', 'close-drawer');
+            return redirect()->route('stock-adjustments.index')
+                             ->with('success', 'Penyesuaian stok berhasil disimpan!');
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Terjadi kesalahan: ' . $e->getMessage()], 500);
+            return back()->withErrors(['error' => 'Terjadi kesalahan: ' . $e->getMessage()]);
         }
     }
 }

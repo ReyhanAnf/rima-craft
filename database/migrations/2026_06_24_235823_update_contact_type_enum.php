@@ -13,7 +13,9 @@ return new class extends Migration
     public function up(): void
     {
         // Update enum type to include 'partner'
-        DB::statement("ALTER TABLE contacts MODIFY COLUMN type ENUM('supplier', 'customer', 'crafter', 'partner') NOT NULL");
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE contacts MODIFY COLUMN type ENUM('supplier', 'customer', 'crafter', 'partner') NOT NULL");
+        }
     }
 
     /**
@@ -22,6 +24,8 @@ return new class extends Migration
     public function down(): void
     {
         // Revert enum type (make sure no 'partner' records exist first)
-        DB::statement("ALTER TABLE contacts MODIFY COLUMN type ENUM('supplier', 'customer', 'crafter') NOT NULL");
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE contacts MODIFY COLUMN type ENUM('supplier', 'customer', 'crafter') NOT NULL");
+        }
     }
 };

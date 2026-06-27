@@ -13,15 +13,19 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 
 class AuthController extends Controller
 {
     /**
      * Display the admin login view.
      */
-    public function createAdminLogin()
+    public function createAdminLogin(): InertiaResponse
     {
-        return view('auth.admin-login');
+        return Inertia::render('Auth/Login', [
+            'businessName' => config('settings.business_name', 'Rima Craft'),
+        ]);
     }
 
     /**
@@ -39,18 +43,27 @@ class AuthController extends Controller
         $hasAdminRole = $user->roles()->whereIn('name', $adminRoles)->exists();
 
         if (!$hasAdminRole) {
-            // User doesn't have admin role, logout and redirect
+            // Check if user is a customer or partner
+            $isCustomer = $user->roles()->where('name', 'customer')->exists();
+            $isPartner = $user->roles()->where('name', 'partner')->exists();
+
+            if ($isCustomer) {
+                return redirect()->route('customer.dashboard')
+                    ->with('success', 'Selamat datang kembali!');
+            }
+
+            if ($isPartner) {
+                return redirect()->route('partner.dashboard')
+                    ->with('success', 'Selamat datang kembali!');
+            }
+
+            // User doesn't have access, logout and redirect
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
             
             return redirect()->back()
-                ->with('error', 'Anda tidak memiliki akses ke admin dashboard.');
-        }
-
-        // HTMX Redirect
-        if ($request->header('HX-Request')) {
-            return response()->make('', 200, ['HX-Redirect' => route('dashboard')]);
+                ->with('error', 'Anda tidak memiliki akses ke dashboard.');
         }
 
         return redirect()->intended(route('dashboard'));
@@ -82,23 +95,22 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        if ($request->header('HX-Request')) {
-            return response()->make('', 200, ['HX-Redirect' => route('login')]);
-        }
-
         return redirect(route('login'));
     }
 
     /**
      * Display the registration view.
      */
-    public function showRegistration(string $type)
+    public function showRegistration(string $type): InertiaResponse
     {
         if (!in_array($type, ['customer', 'partner'])) {
             abort(404);
         }
 
-        return view('auth.register', compact('type'));
+        return Inertia::render('Auth/Register', [
+            'type' => $type,
+            'businessName' => config('settings.business_name', 'Rima Craft'),
+        ]);
     }
 
     /**
@@ -146,11 +158,6 @@ class AuthController extends Controller
 
         // Redirect to appropriate portal
         $redirectRoute = $type === 'partner' ? 'partner.dashboard' : 'customer.dashboard';
-
-        // HTMX Redirect
-        if ($request->header('HX-Request')) {
-            return response()->make('', 200, ['HX-Redirect' => route($redirectRoute)]);
-        }
 
         return redirect()->route($redirectRoute)
             ->with('success', 'Selamat datang di Rima Craft! Akun Anda berhasil dibuat.');

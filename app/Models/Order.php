@@ -8,19 +8,18 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\DB;
-use Spatie\LaravelSettings\Attributes\Settings;
 
-#[Settings(fillable: [
-    'user_id', 'order_number', 'customer_name', 'customer_phone', 'customer_email',
-    'customer_address', 'items', 'subtotal', 'shipping_cost', 'total', 'notes',
-    'status', 'payment_method', 'payment_status', 'payment_proof', 'order_method',
-    'whatsapp_url', 'confirmed_at', 'shipped_at', 'completed_at', 'cancelled_at',
-    'cancellation_reason'
-])]
 class Order extends Model
 {
     use HasFactory, SoftDeletes;
+
+    protected $fillable = [
+        'user_id', 'order_number', 'customer_name', 'customer_phone', 'customer_email',
+        'customer_address', 'items', 'subtotal', 'shipping_cost', 'total', 'notes',
+        'status', 'payment_method', 'payment_status', 'payment_proof', 'order_method',
+        'whatsapp_url', 'confirmed_at', 'shipped_at', 'completed_at', 'cancelled_at',
+        'cancellation_reason',
+    ];
 
     protected $casts = [
         'items' => 'array',
@@ -42,7 +41,7 @@ class Order extends Model
             if (!$order->order_number) {
                 $date = now()->format('Ymd');
                 $count = static::whereDate('created_at', today())->count() + 1;
-                $order->order_number = 'ORD-' . $date . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
+                $order->order_number = 'ORD-' . $date . '-' . str_pad((string) $count, 3, '0', STR_PAD_LEFT);
             }
         });
     }

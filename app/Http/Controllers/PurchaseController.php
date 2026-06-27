@@ -10,11 +10,12 @@ use App\Models\Contact;
 use App\Models\Material;
 use App\Models\Purchase;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 
 class PurchaseController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request): InertiaResponse
     {
         $query = Purchase::with('supplier');
 
@@ -52,21 +53,25 @@ class PurchaseController extends Controller
             });
         }
 
-        $purchases = $query->orderByDesc('date')->orderByDesc('id')->paginate(15);
+        $purchases = $query->orderByDesc('date')->orderByDesc('id')->paginate(15)->withQueryString();
 
-        if ($request->header('HX-Target') === 'purchases-list') {
-            return view('purchases.purchases-list', compact('purchases'));
-        }
-
-        return view('purchases.purchases-index', compact('purchases'));
+        return Inertia::render('Purchases/Index', [
+            'purchases' => $purchases,
+            'filters' => $request->only([
+                'search', 'date_from', 'date_to', 'payment_status', 'min_amount', 'max_amount'
+            ]),
+        ]);
     }
 
-    public function create(): View
+    public function create(): InertiaResponse
     {
         $suppliers = Contact::where('type', 'supplier')->orderBy('name')->get();
         $materials = Material::orderBy('name')->get();
 
-        return view('purchases.purchases-form', compact('suppliers', 'materials'));
+        return Inertia::render('Purchases/Form', [
+            'suppliers' => $suppliers,
+            'materials' => $materials,
+        ]);
     }
 
     public function store(StorePurchaseRequest $request)
@@ -75,15 +80,17 @@ class PurchaseController extends Controller
             (new RecordPurchaseAction)->handle($request->validated());
 
             return redirect()->route('purchases.index')
-                             ->with('toast', ['message' => 'Transaksi pembelian berhasil disimpan, stok bahan bertambah!', 'type' => 'success']);
+                             ->with('success', 'Transaksi pembelian berhasil disimpan, stok bahan bertambah!');
         } catch (\Exception $e) {
             return back()->withInput()->withErrors(['error' => 'Gagal menyimpan transaksi: ' . $e->getMessage()]);
         }
     }
 
-    public function show(Purchase $purchase): View
+    public function show(Purchase $purchase): InertiaResponse
     {
         $purchase->load(['items.material', 'supplier']);
-        return view('purchases.purchases-show', compact('purchase'));
+        return Inertia::render('Purchases/Show', [
+            'purchase' => $purchase,
+        ]);
     }
 }

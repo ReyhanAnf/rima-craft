@@ -1,4 +1,4 @@
-﻿<div class="px-4 sm:px-4 py-3 flex items-start justify-between border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 sticky top-0 z-10">
+<div class="px-4 sm:px-4 py-3 flex items-start justify-between border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 sticky top-0 z-10">
     <h2 class="text-lg font-bold tracking-tight text-gray-900 dark:text-white">{{ $product->exists ? 'Edit Produk' : 'Tambah Produk' }}</h2>
     <button type="button" @click="drawerOpen = false" class="rounded p-1 text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -19,29 +19,45 @@
             @method('PUT')
         @endif
 
+        @if($errors->any())
+        <div class="mb-6 p-4 rounded-lg bg-red-50 text-red-800 text-sm border border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20 shadow-sm">
+            <div class="flex items-start gap-2">
+                <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <div>
+                    <p class="font-semibold mb-1">Terdapat kesalahan pada input:</p>
+                    <ul class="list-disc pl-5 space-y-1">
+                        @foreach($errors->all() as $err)
+                            <li>{{ $err }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            </div>
+        </div>
+        @endif
+
         <div>
-            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Nama Produk</label>
-            <input type="text" name="name" value="{{ $product->name }}" required class="w-full px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition">
+            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Nama Produk <span class="text-red-500">*</span></label>
+            <input type="text" name="name" value="{{ $product->name }}" required class="w-full px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition hover:border-gray-300 dark:hover:border-gray-600">
         </div>
         <div>
             <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Deskripsi Singkat</label>
-            <textarea name="description" rows="2" class="w-full px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition">{{ $product->description }}</textarea>
+            <textarea name="description" rows="2" class="w-full px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition hover:border-gray-300 dark:hover:border-gray-600">{{ $product->description }}</textarea>
         </div>
         <div class="grid grid-cols-2 gap-3">
             <div>
-                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Harga Jual (Rp)</label>
-                <input type="number" name="base_price" value="{{ intval($product->base_price) ?? 0 }}" min="0" required class="w-full px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition">
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Harga Jual (Rp) <span class="text-red-500">*</span></label>
+                <input type="number" name="base_price" value="{{ intval($product->base_price) ?? 0 }}" min="0" required class="w-full px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition hover:border-gray-300 dark:hover:border-gray-600">
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Harga standar untuk semua customer</p>
             </div>
             <div>
                 <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Harga Reseller (Rp)</label>
-                <input type="number" name="reseller_price" value="{{ intval($product->reseller_price) ?? 0 }}" min="0" class="w-full px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition">
+                <input type="number" name="reseller_price" value="{{ intval($product->reseller_price) ?? 0 }}" min="0" class="w-full px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition hover:border-gray-300 dark:hover:border-gray-600">
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Kosongkan jika sama dengan harga standar</p>
             </div>
         </div>
         <div>
-            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Stok Produk</label>
-            <input type="number" name="current_stock" value="{{ $product->current_stock ?? 0 }}" min="0" required class="w-full px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition">
+            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Stok Produk <span class="text-red-500">*</span></label>
+            <input type="number" name="current_stock" value="{{ $product->current_stock ?? 0 }}" min="0" required class="w-full px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition hover:border-gray-300 dark:hover:border-gray-600">
         </div>
 
         <div class="pt-4 border-t border-gray-200 dark:border-gray-800">
@@ -113,9 +129,10 @@
         </div>
 
         <div class="fixed bottom-0 right-0 w-full max-w-md bg-white dark:bg-gray-950 p-3 border-t border-gray-200 dark:border-gray-800 z-20">
-            <button type="submit" class="w-full flex justify-center py-2.5 px-4 rounded-md text-sm font-bold text-white bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 transition" x-bind:disabled="submitting">
-                <span x-show="!submitting">Simpan Produk</span>
-                <span x-show="submitting" style="display: none;">Menyimpan...</span>
+            <button type="submit" class="w-full flex justify-center items-center gap-2 py-2.5 px-4 rounded-md text-sm font-bold text-white bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 transition-all hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed" x-bind:disabled="submitting">
+                <svg x-show="submitting" class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" style="display: none;"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                <span x-show="!submitting">💾 Simpan Produk</span>
+                <span x-show="submitting">⏳ Menyimpan...</span>
             </button>
         </div>
     </form>

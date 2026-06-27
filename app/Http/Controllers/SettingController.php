@@ -7,14 +7,17 @@ namespace App\Http\Controllers;
 use App\Models\Setting;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 
 class SettingController extends Controller
 {
-    public function index(): View
+    public function index(): InertiaResponse
     {
         $settings = Setting::pluck('value', 'key')->toArray();
-        return view('settings.index', compact('settings'));
+        return Inertia::render('Settings/Index', [
+            'settings' => $settings,
+        ]);
     }
 
     public function update(Request $request): RedirectResponse

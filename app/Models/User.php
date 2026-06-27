@@ -102,4 +102,14 @@ class User extends Authenticatable
         }
         return true;
     }
+
+    /**
+     * Get the contact information associated with the user.
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
+    public function contact()
+    {
+        return $this->hasOne(Contact::class);
+    }
 }

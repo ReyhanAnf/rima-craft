@@ -48,6 +48,10 @@ class PermissionSeeder extends Seeder
             'update-sales-status',
             'print-sales',
             
+            // Orders (Public B2C/B2B orders)
+            'view-orders',
+            'manage-orders',
+            
             // Productions
             'view-productions',
             'create-productions',
@@ -119,6 +123,8 @@ class PermissionSeeder extends Seeder
                 'adjust-stock',
                 'record-payments',
                 'view-gallery',
+                'view-orders',
+                'manage-orders',
             ];
             
             $operatorRole->permissions()->sync(
@@ -162,6 +168,8 @@ class PermissionSeeder extends Seeder
                 'manage-gallery',
                 'view-settings',
                 'manage-settings',
+                'view-orders',
+                'manage-orders',
             ];
             
             $ownerRole->permissions()->sync(

@@ -8,11 +8,12 @@ use App\Http\Requests\Material\StoreMaterialRequest;
 use App\Http\Requests\Material\UpdateMaterialRequest;
 use App\Models\Material;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 
 class MaterialController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request): InertiaResponse
     {
         $query = Material::query();
         
@@ -37,57 +38,35 @@ class MaterialController extends Controller
             $query->where('name', 'like', '%' . $request->search . '%');
         }
         
-        $materials = $query->orderBy('name')->paginate(15);
+        $materials = $query->orderBy('name')->paginate(15)->withQueryString();
 
-        if ($request->header('HX-Target') === 'materials-list') {
-            return view('materials.materials-list', compact('materials'));
-        }
-        return view('materials.materials-index', compact('materials'));
-    }
-
-    public function create(): View
-    {
-        $material = new Material();
-        return view('materials.materials-form', compact('material'));
+        return Inertia::render('Materials/Index', [
+            'materials' => $materials,
+            'filters' => $request->only(['search', 'stock_status', 'max_stock']),
+        ]);
     }
 
     public function store(StoreMaterialRequest $request)
     {
         Material::create($request->validated());
 
-        return response()
-            ->view('materials.materials-list', ['materials' => Material::orderBy('name')->paginate(10)])
-            ->header('HX-Trigger', json_encode([
-                'close-drawer' => true,
-                'toast' => ['message' => 'Bahan baku berhasil ditambahkan!', 'type' => 'success'],
-            ]));
-    }
-
-    public function edit(Material $material): View
-    {
-        return view('materials.materials-form', compact('material'));
+        return redirect()->route('materials.index')
+            ->with('success', 'Bahan baku berhasil ditambahkan!');
     }
 
     public function update(UpdateMaterialRequest $request, Material $material)
     {
         $material->update($request->validated());
 
-        return response()
-            ->view('materials.materials-list', ['materials' => Material::orderBy('name')->paginate(10)])
-            ->header('HX-Trigger', json_encode([
-                'close-drawer' => true,
-                'toast' => ['message' => 'Bahan baku berhasil diperbarui!', 'type' => 'success'],
-            ]));
+        return redirect()->route('materials.index')
+            ->with('success', 'Bahan baku berhasil diperbarui!');
     }
 
     public function destroy(Material $material)
     {
         $material->delete();
 
-        return response()
-            ->view('materials.materials-list', ['materials' => Material::orderBy('name')->paginate(10)])
-            ->header('HX-Trigger', json_encode([
-                'toast' => ['message' => 'Bahan baku berhasil dihapus!', 'type' => 'success'],
-            ]));
+        return redirect()->route('materials.index')
+            ->with('success', 'Bahan baku berhasil dihapus!');
     }
 }

@@ -9,14 +9,15 @@ use App\Models\Payment;
 use App\Models\Sale;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 
 class PartnerPortalController extends Controller
 {
     /**
      * Display partner dashboard.
      */
-    public function dashboard(): View
+    public function dashboard(): InertiaResponse
     {
         $user = Auth::user();
         
@@ -41,20 +42,20 @@ class PartnerPortalController extends Controller
             ->sum('amount');
         $outstandingBalance = $totalBilling - $paidAmount;
         
-        return view('portal.partner.dashboard', compact(
-            'recentOrders',
-            'totalOrders',
-            'pendingOrders',
-            'totalBilling',
-            'paidAmount',
-            'outstandingBalance'
-        ));
+        return Inertia::render('Portal/Partner/Dashboard', [
+            'recentOrders' => $recentOrders,
+            'totalOrders' => $totalOrders,
+            'pendingOrders' => $pendingOrders,
+            'totalBilling' => $totalBilling,
+            'paidAmount' => $paidAmount,
+            'outstandingBalance' => $outstandingBalance,
+        ]);
     }
 
     /**
      * Display partner's order history.
      */
-    public function orders(Request $request): View
+    public function orders(Request $request): InertiaResponse
     {
         $query = Sale::where('customer_id', Auth::id())
             ->with('items.product');
@@ -77,15 +78,18 @@ class PartnerPortalController extends Controller
             $query->where('date', '<=', $request->date_to);
         }
         
-        $orders = $query->orderByDesc('date')->paginate(15);
+        $orders = $query->orderByDesc('date')->paginate(15)->withQueryString();
         
-        return view('portal.partner.orders', compact('orders'));
+        return Inertia::render('Portal/Partner/Orders', [
+            'orders' => $orders,
+            'filters' => $request->only(['status', 'payment_status', 'date_from', 'date_to']),
+        ]);
     }
 
     /**
      * Display partner's billing statement.
      */
-    public function billing(Request $request): View
+    public function billing(Request $request): InertiaResponse
     {
         $query = Sale::where('customer_id', Auth::id())
             ->with(['payments', 'items.product'])
@@ -104,7 +108,7 @@ class PartnerPortalController extends Controller
             $query->where('date', '<=', $request->date_to);
         }
         
-        $invoices = $query->paginate(15);
+        $invoices = $query->paginate(15)->withQueryString();
         
         // Calculate totals
         $totalBilling = $invoices->sum('grand_total');
@@ -114,18 +118,26 @@ class PartnerPortalController extends Controller
             })
             ->sum('amount');
         
-        return view('portal.partner.billing', compact('invoices', 'totalBilling', 'totalPaid'));
+        return Inertia::render('Portal/Partner/Billing', [
+            'invoices' => $invoices,
+            'totalBilling' => $totalBilling,
+            'totalPaid' => $totalPaid,
+            'filters' => $request->only(['payment_status', 'date_from', 'date_to']),
+        ]);
     }
 
     /**
      * Display partner profile.
      */
-    public function profile(): View
+    public function profile(): InertiaResponse
     {
         $user = Auth::user();
         $contact = $user->contact;
         
-        return view('portal.partner.profile', compact('user', 'contact'));
+        return Inertia::render('Portal/Partner/Profile', [
+            'user' => $user,
+            'contact' => $contact,
+        ]);
     }
 
     /**

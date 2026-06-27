@@ -8,14 +8,17 @@ use App\Models\Gallery;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 
 class GalleryController extends Controller
 {
-    public function index(): View
+    public function index(): InertiaResponse
     {
         $galleries = Gallery::orderBy('sort_order')->get();
-        return view('galleries.index', compact('galleries'));
+        return Inertia::render('Galleries/Index', [
+            'galleries' => $galleries,
+        ]);
     }
 
     public function store(Request $request): RedirectResponse

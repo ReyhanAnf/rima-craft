@@ -14,8 +14,9 @@ Setiap kali Anda menerima prompt dengan file ini, Anda **DIWAJIBKAN** menjalanka
 
 ## 🛠️ ATURAN TEKNIS UTAMA
 
-*   **Stack:** Laravel 13 + Blade + HTMX + Alpine.js + Tailwind CSS.
+*   **Stack:** Laravel 13 + Vue.js 3 + Tailwind CSS.
 *   **Arsitektur:** Controller → Action → DTO → Service → Repository.
+*   **State Management:** Pinia untuk state global dan offline support.
 *   **Kualitas > Kecepatan:** Prioritaskan struktur _database_ yang _scalable_ (seperti Polymorphic Payments untuk DP/Cicilan) dan _clean code_.
 
 ## 📝 PROTOKOL AKHIR TUGAS (WAJIB DILAKUKAN)
