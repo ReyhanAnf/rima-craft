@@ -11,6 +11,40 @@ const user = page.props.auth?.user || {};
 const siteConfig = page.props.siteConfig || {};
 const menuCategories = page.props.menus || [];
 
+// PWA Install Prompt State
+const installPromptEvent = ref(null);
+const isInstallable = ref(false);
+
+if (typeof window !== 'undefined') {
+    window.addEventListener('beforeinstallprompt', (e) => {
+        // Prevent Chrome 67 and earlier from automatically showing the prompt
+        e.preventDefault();
+        // Stash the event so it can be triggered later.
+        installPromptEvent.value = e;
+        isInstallable.value = true;
+    });
+
+    window.addEventListener('appinstalled', () => {
+        isInstallable.value = false;
+        installPromptEvent.value = null;
+    });
+}
+
+const installPWA = async () => {
+    if (!installPromptEvent.value) return;
+    
+    // Show the install prompt
+    installPromptEvent.value.prompt();
+    
+    // Wait for the user to respond to the prompt
+    const { outcome } = await installPromptEvent.value.userChoice;
+    if (outcome === 'accepted') {
+        isInstallable.value = false;
+        installPromptEvent.value = null;
+    }
+};
+
+// Theme and Admin store setup
 const themeStore = useThemeStore();
 const adminStore = useAdminStore();
 
@@ -141,6 +175,23 @@ const flatNavigation = computed(() => {
                     </Link>
                 </div>
             </nav>
+
+            <!-- Sidebar Footer PWA Install -->
+            <div v-if="isInstallable" class="p-4 border-t border-gray-200 dark:border-gray-800">
+                <button
+                    @click="installPWA"
+                    :class="[
+                        'w-full flex items-center justify-center gap-2 py-2.5 bg-amber-500 hover:bg-amber-600 text-gray-950 rounded-lg text-xs font-bold transition shadow-sm',
+                        !adminStore.isSidebarOpen ? 'px-0' : 'px-3'
+                    ]"
+                    title="Download Aplikasi Rima Craft"
+                >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    <span v-show="adminStore.isSidebarOpen" class="truncate">Download App</span>
+                </button>
+            </div>
         </aside>
 
         <!-- Main Body -->
