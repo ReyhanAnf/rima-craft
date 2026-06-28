@@ -62,6 +62,9 @@ class HandleInertiaRequests extends Middleware
                 'privacy_url'      => route('page.privacy'),
                 'shipping_url'     => route('page.shipping'),
             ],
+
+            // Sidebar Menu configuration
+            'menus' => config('menus.categories', []),
         ];
     }
 }

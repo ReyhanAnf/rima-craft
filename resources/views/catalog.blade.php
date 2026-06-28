@@ -91,7 +91,7 @@
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
                 <div class="max-w-2xl">
-                    <h2 class="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight mb-4">Galeri Inspirasi</h2>
+                    <h2 class="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight mb-4">Galeri</h2>
                     <p class="text-lg text-gray-500 dark:text-gray-400">Estetika kerajinan tangan lokal yang diabadikan melalui lensa visual yang menceritakan sebuah kisah karya.</p>
                 </div>
             </div>
@@ -157,7 +157,7 @@
                 @endif
             @else
                 <div class="text-center py-20 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800">
-                    <p class="text-gray-500 dark:text-gray-400">Belum ada foto galeri inspirasi.</p>
+                    <p class="text-gray-500 dark:text-gray-400">Belum ada foto galeri.</p>
                 </div>
             @endif
         </div>

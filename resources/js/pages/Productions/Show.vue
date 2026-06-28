@@ -69,8 +69,46 @@ const formatDate = (dateStr) => {
                     </Card>
                 </div>
 
-                <!-- Notes Panel -->
+                <!-- Notes & Cost Panel -->
                 <div class="space-y-6">
+                    <Card class="!border !border-gray-200 dark:!border-gray-800 !bg-white dark:!bg-gray-900">
+                        <template #title><span class="text-sm font-bold uppercase tracking-wider text-gray-400">Rincian Finansial</span></template>
+                        <template #content>
+                            <div class="space-y-3 text-xs">
+                                <div class="flex justify-between items-center border-b border-gray-100 dark:border-gray-800 pb-2">
+                                    <span class="text-gray-500">HPP Bahan:</span>
+                                    <span class="font-semibold text-gray-900 dark:text-white">
+                                        Rp {{ Number(production.total_material_cost).toLocaleString('id-ID') }}
+                                    </span>
+                                </div>
+                                <div class="flex justify-between items-center border-b border-gray-100 dark:border-gray-800 pb-2">
+                                    <span class="text-gray-500">Upah Kerja:</span>
+                                    <span class="font-semibold text-gray-900 dark:text-white">
+                                        Rp {{ Number(production.labor_cost).toLocaleString('id-ID') }}
+                                    </span>
+                                </div>
+                                <div class="flex justify-between items-center border-b border-gray-100 dark:border-gray-800 pb-2">
+                                    <span class="text-gray-500">Overhead:</span>
+                                    <span class="font-semibold text-gray-900 dark:text-white">
+                                        Rp {{ Number(production.overhead_cost).toLocaleString('id-ID') }}
+                                    </span>
+                                </div>
+                                <div class="flex justify-between items-center border-b border-gray-100 dark:border-gray-800 pb-2">
+                                    <span class="text-gray-500">Biaya Lainnya:</span>
+                                    <span class="font-semibold text-gray-900 dark:text-white">
+                                        Rp {{ Number(production.additional_cost).toLocaleString('id-ID') }}
+                                    </span>
+                                </div>
+                                <div class="flex justify-between items-center pt-1 font-bold text-sm">
+                                    <span class="text-gray-800 dark:text-gray-200">Total Biaya:</span>
+                                    <span class="text-amber-500">
+                                        Rp {{ Number(production.grand_total_cost).toLocaleString('id-ID') }}
+                                    </span>
+                                </div>
+                            </div>
+                        </template>
+                    </Card>
+
                     <Card class="!border !border-gray-200 dark:!border-gray-800 !bg-white dark:!bg-gray-900">
                         <template #title><span class="text-sm font-bold uppercase tracking-wider text-gray-400">Catatan Produksi</span></template>
                         <template #content>

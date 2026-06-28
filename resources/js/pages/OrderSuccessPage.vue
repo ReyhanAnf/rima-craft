@@ -39,7 +39,7 @@ function buildWaConfirmUrl() {
 
 <template>
     <PublicLayout>
-        <div class="min-h-screen bg-gray-50 px-4 py-6 dark:bg-gray-950">
+        <div class="min-h-screen bg-gray-50 px-4 py-10 dark:bg-gray-950">
             <div class="mx-auto max-w-3xl space-y-4">
                 <section class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
                     <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">

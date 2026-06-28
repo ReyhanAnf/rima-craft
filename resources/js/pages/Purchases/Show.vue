@@ -28,7 +28,7 @@ const totalPaid = computed(() => {
 });
 
 const balanceDue = computed(() => {
-    return props.purchase.grand_total - totalPaid.value;
+    return props.purchase.total_amount - totalPaid.value;
 });
 </script>
 
@@ -93,7 +93,7 @@ const balanceDue = computed(() => {
                             <div class="mt-6 border-t border-gray-100 dark:border-gray-800 pt-4 space-y-2 text-xs text-gray-500 text-right">
                                 <div class="flex justify-between items-center pt-3 border-t border-gray-150 dark:border-gray-800 mt-3">
                                     <span class="font-bold text-sm text-gray-950 dark:text-white text-left">Grand Total</span>
-                                    <span class="font-bold text-lg text-amber-600 dark:text-amber-400">{{ formatCurrency(purchase.grand_total) }}</span>
+                                    <span class="font-bold text-lg text-amber-600 dark:text-amber-400">{{ formatCurrency(purchase.total_amount) }}</span>
                                 </div>
                             </div>
                         </template>

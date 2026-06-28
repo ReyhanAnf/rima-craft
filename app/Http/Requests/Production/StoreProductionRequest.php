@@ -21,6 +21,8 @@ class StoreProductionRequest extends FormRequest
         return [
             'date' => ['required', 'date'],
             'additional_cost' => ['nullable', 'numeric', 'min:0'],
+            'labor_cost' => ['nullable', 'numeric', 'min:0'],
+            'overhead_cost' => ['nullable', 'numeric', 'min:0'],
             'notes' => ['nullable', 'string'],
             'materials' => ['required', 'array', 'min:1'],
             'materials.*.material_id' => ['required', 'exists:materials,id'],

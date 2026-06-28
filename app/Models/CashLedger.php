@@ -13,10 +13,20 @@ class CashLedger extends Model
 {
     use HasFactory;
 
+    // Category constants for classifying ledger entries
+    const CATEGORY_SALE_INCOME           = 'sale_income';
+    const CATEGORY_PURCHASE_EXPENSE      = 'purchase_expense';
+    const CATEGORY_PRODUCTION_MATERIAL   = 'production_material';
+    const CATEGORY_PRODUCTION_LABOR      = 'production_labor';
+    const CATEGORY_PRODUCTION_OVERHEAD   = 'production_overhead';
+    const CATEGORY_MANUAL                = 'manual';
+    const CATEGORY_OTHER                 = 'other';
+
     protected $fillable = [
         'account_id',
         'date',
         'type',
+        'category',
         'amount',
         'balance_after',
         'description',

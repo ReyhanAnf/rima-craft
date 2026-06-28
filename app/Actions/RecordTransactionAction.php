@@ -33,10 +33,11 @@ class RecordTransactionAction
                 : $account->balance - $data['amount'];
 
             $ledger = CashLedger::create([
-                'account_id' => $account->id,
-                'date' => $data['date'],
-                'type' => $data['type'],
-                'amount' => $data['amount'],
+                'account_id'  => $account->id,
+                'date'        => $data['date'],
+                'type'        => $data['type'],
+                'category'    => CashLedger::CATEGORY_MANUAL,
+                'amount'      => $data['amount'],
                 'balance_after' => $balanceAfter,
                 'description' => $data['description'],
             ]);

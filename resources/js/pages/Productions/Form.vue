@@ -20,6 +20,8 @@ const toast = useToast();
 
 const form = useForm({
     date: new Date().toISOString().split("T")[0],
+    labor_cost: 0,
+    overhead_cost: 0,
     additional_cost: 0,
     notes: "",
     materials: [{ material_id: null, qty: 1 }],
@@ -63,7 +65,14 @@ const totalMaterialCost = computed(() => {
         const price = mat ? Number(mat.last_buy_price) || 0 : 0;
         return sum + price * Number(item.qty || 0);
     }, 0);
-    return cost + Number(form.additional_cost || 0);
+    return cost;
+});
+
+const grandTotalCost = computed(() => {
+    return totalMaterialCost.value +
+        Number(form.labor_cost || 0) +
+        Number(form.overhead_cost || 0) +
+        Number(form.additional_cost || 0);
 });
 
 const submitForm = () => {
@@ -125,9 +134,9 @@ const formatCurrency = (val) => {
                 <div
                     class="border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 rounded-xl shadow-sm"
                 >
-                    <h3 class="text-sm font-bold uppercase tracking-wider text-gray-400 mb-4 pb-2 border-b border-gray-100 dark:border-gray-800">Informasi Umum</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                        <div class="flex flex-col gap-1.5">
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-gray-400 mb-4 pb-2 border-b border-gray-100 dark:border-gray-800">Informasi Umum & Biaya</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
+                        <div class="flex flex-col gap-1.5 lg:col-span-2">
                             <label class="text-xs font-semibold"
                                 >Tanggal Produksi (Selesai)
                                 <span class="text-red-500">*</span></label
@@ -142,8 +151,29 @@ const formatCurrency = (val) => {
 
                         <div class="flex flex-col gap-1.5">
                             <label class="text-xs font-semibold"
-                                >Upah Tukang / Makloon (Rp) -
-                                Opsional</label
+                                >Upah Tukang / Tenaga Kerja (Rp)</label
+                            >
+                            <InputNumber
+                                v-model="form.labor_cost"
+                                :min="0"
+                                class="w-full"
+                            />
+                        </div>
+
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-xs font-semibold"
+                                >Biaya Overhead / Listrik (Rp)</label
+                            >
+                            <InputNumber
+                                v-model="form.overhead_cost"
+                                :min="0"
+                                class="w-full"
+                            />
+                        </div>
+
+                        <div class="flex flex-col gap-1.5 lg:col-span-2">
+                            <label class="text-xs font-semibold"
+                                >Biaya Lain-lain / Tambahan (Rp)</label
                             >
                             <InputNumber
                                 v-model="form.additional_cost"
@@ -152,7 +182,7 @@ const formatCurrency = (val) => {
                             />
                         </div>
 
-                        <div class="md:col-span-2 flex flex-col gap-1.5">
+                        <div class="lg:col-span-2 flex flex-col gap-1.5">
                             <label class="text-xs font-semibold"
                                 >Catatan (Opsional)</label
                             >
@@ -234,15 +264,20 @@ const formatCurrency = (val) => {
                             </div>
 
                             <div
-                                class="border-t border-gray-150 dark:border-gray-800 pt-3 mt-4 flex justify-between items-center text-xs text-gray-500"
+                                class="border-t border-gray-150 dark:border-gray-800 pt-3 mt-4 space-y-2 text-xs text-gray-500"
                             >
-                                <span>Estimasi HPP Bahan:</span>
-                                <span
-                                    class="font-bold text-sm text-gray-900 dark:text-white"
-                                    >{{
-                                        formatCurrency(totalMaterialCost)
-                                    }}</span
-                                >
+                                <div class="flex justify-between items-center">
+                                    <span>Estimasi HPP Bahan:</span>
+                                    <span class="font-semibold text-gray-900 dark:text-white">
+                                        {{ formatCurrency(totalMaterialCost) }}
+                                    </span>
+                                </div>
+                                <div class="flex justify-between items-center border-t border-gray-100 dark:border-gray-800 pt-2 font-bold text-sm">
+                                    <span class="text-gray-700 dark:text-gray-300">Estimasi Total Biaya:</span>
+                                    <span class="text-amber-500">
+                                        {{ formatCurrency(grandTotalCost) }}
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>

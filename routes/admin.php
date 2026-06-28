@@ -118,6 +118,10 @@ Route::middleware('auth')->group(function () {
                 ->name('update');
         });
 
+    Route::middleware('permission:view-settings')->group(function () {
+        Route::resource('payment-methods', \App\Http\Controllers\AdminPaymentMethodController::class)->except(['show']);
+    });
+
     Route::middleware('permission:view-gallery')->group(function () {
         Route::resource('galleries', GalleryController::class)->only(['index', 'store', 'destroy']);
     });

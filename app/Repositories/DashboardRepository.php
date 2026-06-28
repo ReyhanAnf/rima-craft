@@ -62,20 +62,35 @@ class DashboardRepository
     /**
      * Get financial metrics for the given date range.
      *
-     * @return array{totalSales: float, totalPurchases: float, grossProfit: float, cashInflow: float, cashOutflow: float, totalKas: float}
+    /**
+     * @return array{totalSales: float, totalPurchases: float, totalProductionCost: float, grossProfit: float, cashInflow: float, cashOutflow: float, totalKas: float}
      */
     public function getFinancialMetrics(string $startStr, string $endStr): array
     {
-        $totalSales = (float) Sale::whereBetween('date', [$startStr, $endStr])->sum('grand_total');
+        $offlineSales = (float) Sale::whereBetween('date', [$startStr, $endStr])->sum('grand_total');
+        $onlineSales = (float) \App\Models\Order::where('payment_status', 'paid')
+            ->whereBetween('created_at', [$startStr, $endStr])
+            ->sum('total');
+            
+        $totalSales = $offlineSales + $onlineSales;
         $totalPurchases = (float) Purchase::whereBetween('date', [$startStr, $endStr])->sum('total_amount');
-        $grossProfit = $totalSales - $totalPurchases;
+        
+        // Sum of all production costs (materials HPP + labor + overhead)
+        $totalProductionCost = (float) CashLedger::whereIn('category', [
+            CashLedger::CATEGORY_PRODUCTION_MATERIAL,
+            CashLedger::CATEGORY_PRODUCTION_LABOR,
+            CashLedger::CATEGORY_PRODUCTION_OVERHEAD
+        ])->whereBetween('date', [$startStr, $endStr])->sum('amount');
+
+        // Net gross profit = Sales - Purchases (raw material buys) - Production costs (actually used in production)
+        $grossProfit = $totalSales - $totalPurchases - $totalProductionCost;
 
         $cashInflow = (float) CashLedger::where('type', 'in')->whereBetween('date', [$startStr, $endStr])->sum('amount');
         $cashOutflow = (float) CashLedger::where('type', 'out')->whereBetween('date', [$startStr, $endStr])->sum('amount');
 
         $totalKas = (float) Account::sum('balance');
 
-        return compact('totalSales', 'totalPurchases', 'grossProfit', 'cashInflow', 'cashOutflow', 'totalKas');
+        return compact('totalSales', 'totalPurchases', 'totalProductionCost', 'grossProfit', 'cashInflow', 'cashOutflow', 'totalKas');
     }
 
     /**

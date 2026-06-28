@@ -13,6 +13,8 @@ use App\Models\Sale;
 use App\Models\SaleItem;
 use Illuminate\Support\Facades\DB;
 
+// @see CashLedger::CATEGORY_* constants for category values
+
 class RecordSaleAction
 {
     /**
@@ -120,14 +122,15 @@ class RecordSaleAction
                     ]);
 
                     CashLedger::create([
-                        'account_id' => $account->id,
-                        'date' => $sale->date,
-                        'type' => 'in',
-                        'amount' => $sale->grand_total,
-                        'balance_after' => $account->balance + $sale->grand_total,
-                        'description' => 'Pembayaran Lunas Penjualan #' . $sale->id,
+                        'account_id'     => $account->id,
+                        'date'           => $sale->date,
+                        'type'           => 'in',
+                        'category'       => CashLedger::CATEGORY_SALE_INCOME,
+                        'amount'         => $sale->grand_total,
+                        'balance_after'  => $account->balance + $sale->grand_total,
+                        'description'    => 'Pendapatan Penjualan #' . $sale->id,
                         'reference_type' => get_class($payment),
-                        'reference_id' => $payment->id,
+                        'reference_id'   => $payment->id,
                     ]);
 
                     $account->balance += $sale->grand_total;

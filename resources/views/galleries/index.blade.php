@@ -1,7 +1,7 @@
 <x-layouts.app title="Manajemen Galeri">
     <div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-            <h2 class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight mb-2">Galeri Inspirasi</h2>
+            <h2 class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight mb-2">Galeri</h2>
             <p class="text-gray-500 dark:text-gray-400">Kelola foto yang akan ditampilkan pada layout masonry di Landing Page.</p>
         </div>
         <button onclick="document.getElementById('upload-modal').classList.remove('hidden')" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-md shadow-sm transition-all flex items-center gap-2 text-sm">
@@ -44,7 +44,7 @@
             <div class="col-span-full py-16 text-center bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 border-dashed rounded-lg">
                 <svg class="w-12 h-12 mx-auto text-gray-300 dark:text-gray-700 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                 <h3 class="font-bold text-gray-900 dark:text-white">Galeri Kosong</h3>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Belum ada foto yang ditambahkan ke galeri inspirasi.</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Belum ada foto yang ditambahkan ke galeri.</p>
             </div>
         @endforelse
     </div>

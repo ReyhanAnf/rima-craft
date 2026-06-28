@@ -18,30 +18,36 @@ export const useCartStore = defineStore('cart', () => {
         items.value.reduce((sum, item) => sum + item.price * item.qty, 0)
     );
 
-    function add(product) {
-        const existing = items.value.find(i => i.id === product.id);
+    function add(product, qty = 1) {
+        const existing = items.value.find(i => i.id === product.id && i.variantLabel === (product.variantLabel ?? null));
         if (existing) {
-            if (existing.qty < product.stock) {
-                existing.qty++;
+            const newQty = existing.qty + qty;
+            if (newQty <= product.stock) {
+                existing.qty = newQty;
             } else {
                 return { error: 'Stok tidak mencukupi!' };
             }
         } else {
             if (product.stock > 0) {
+                if (qty > product.stock) {
+                    return { error: 'Stok tidak mencukupi!' };
+                }
                 items.value.push({
-                    id:    product.id,
-                    name:  product.name,
-                    price: parseFloat(product.price) || 0,  // coerce string "85000.00" → number
-                    qty:   1,
-                    stock: product.stock,
-                    image: product.image ?? null,
+                    id:           product.id,
+                    name:         product.name,
+                    price:        parseFloat(product.price) || 0,
+                    qty:          qty,
+                    stock:        product.stock,
+                    image:        product.image ?? null,
+                    variantLabel: product.variantLabel ?? null,
                 });
             } else {
                 return { error: 'Produk sedang habis.' };
             }
         }
         save();
-        return { success: `${product.name} ditambahkan ke keranjang!` };
+        const label = product.variantLabel ? ` (${product.variantLabel})` : '';
+        return { success: `${product.name}${label} ditambahkan ke keranjang!` };
     }
 
     function remove(id) {

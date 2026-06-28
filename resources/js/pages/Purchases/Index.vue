@@ -136,13 +136,13 @@ const formatDate = (dateStr) => {
                     <!-- Min Amount -->
                     <div class="flex flex-col gap-1.5">
                         <label class="text-xs font-semibold">Min. Total (Rp)</label>
-                        <InputNumber v-model="minAmount" placeholder="0" class="w-full" @input="applyFilters" />
+                        <InputNumber v-model="minAmount" placeholder="0" class="w-full" @update:modelValue="applyFilters" />
                     </div>
 
                     <!-- Max Amount -->
                     <div class="flex flex-col gap-1.5">
                         <label class="text-xs font-semibold">Max. Total (Rp)</label>
-                        <InputNumber v-model="maxAmount" placeholder="Tak Terbatas" class="w-full" @input="applyFilters" />
+                        <InputNumber v-model="maxAmount" placeholder="Tak Terbatas" class="w-full" @update:modelValue="applyFilters" />
                     </div>
 
                     <!-- Search Supplier -->
@@ -196,7 +196,7 @@ const formatDate = (dateStr) => {
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 text-right font-bold text-gray-900 dark:text-white">
-                                    {{ formatCurrency(purchase.grand_total) }}
+                                    {{ formatCurrency(purchase.total_amount) }}
                                 </td>
                                 <td class="px-6 py-4 text-right">
                                     <Link :href="route('purchases.show', purchase.id)">
@@ -227,7 +227,7 @@ const formatDate = (dateStr) => {
                                 ]">
                                     {{ purchase.payment_status === 'paid' ? 'Lunas' : 'Belum Lunas' }}
                                 </span>
-                                <span class="text-xs font-bold text-amber-600 dark:text-amber-400">{{ formatCurrency(purchase.grand_total) }}</span>
+                                <span class="text-xs font-bold text-amber-600 dark:text-amber-400">{{ formatCurrency(purchase.total_amount) }}</span>
                             </div>
                         </div>
                         <Link :href="route('purchases.show', purchase.id)" class="ml-4">

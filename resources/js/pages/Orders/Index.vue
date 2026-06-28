@@ -195,11 +195,27 @@ const getRequiredAction = (order) => {
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 text-right font-bold text-gray-900 dark:text-white">
-                                    {{ formatCurrency(order.grand_total) }}
+                                    {{ formatCurrency(order.total) }}
                                 </td>
                                 <td class="px-6 py-4 text-right">
                                     <Link :href="route('orders.show', order.id)">
-                                        <Button label="Detail" icon="pi pi-eye" size="small" text rounded />
+                                        <Button 
+                                            v-if="getRequiredAction(order)"
+                                            :label="getRequiredAction(order).label === 'Butuh Verifikasi' ? 'Verifikasi' : getRequiredAction(order).label" 
+                                            :icon="getRequiredAction(order).icon"
+                                            :severity="getRequiredAction(order).severity"
+                                            size="small" 
+                                            class="font-bold shadow-sm"
+                                        />
+                                        <Button 
+                                            v-else
+                                            label="Detail" 
+                                            icon="pi pi-eye" 
+                                            severity="secondary" 
+                                            text 
+                                            rounded 
+                                            size="small" 
+                                        />
                                     </Link>
                                 </td>
                             </tr>

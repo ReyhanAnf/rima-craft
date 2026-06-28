@@ -9,6 +9,7 @@ import { useAdminStore } from '@/stores/admin';
 const page = usePage();
 const user = page.props.auth?.user || {};
 const siteConfig = page.props.siteConfig || {};
+const menuCategories = page.props.menus || [];
 
 const themeStore = useThemeStore();
 const adminStore = useAdminStore();
@@ -19,71 +20,70 @@ const logout = () => {
     router.post(route('logout'));
 };
 
-const navigation = computed(() => {
+const permissions = computed(() => page.props.auth?.permissions || []);
+const roles = computed(() => page.props.auth?.roles || []);
+
+const hasPermission = (perm) => {
+    return permissions.value.includes(perm);
+};
+
+// Filtered navigation structure grouped by category
+const categorizedNavigation = computed(() => {
     const list = [];
-    const permissions = page.props.auth?.permissions || [];
-    const roles = page.props.auth?.roles || [];
-    
-    const hasPermission = (perm) => permissions.includes(perm);
+    const isCustomer = roles.value.includes('customer');
+    const isPartner = roles.value.includes('partner');
 
-    // Dashboard
-    if (hasPermission('view-dashboard')) {
-        list.push({ name: 'Dashboard', route: 'dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' });
-    }
-
-    // Admin Menus
-    if (hasPermission('view-materials')) {
-        list.push({ name: 'Bahan Baku', route: 'materials.index', icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10' });
-    }
-    if (hasPermission('view-products')) {
-        list.push({ name: 'Katalog Produk', route: 'products.index', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' });
-    }
-    if (hasPermission('view-sales')) {
-        list.push({ name: 'Penjualan', route: 'sales.index', icon: 'M9 8h6m-6 2h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' });
-    }
-    if (hasPermission('view-orders')) {
-        list.push({ name: 'Pesanan Online', route: 'orders.index', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01' });
-    }
-    if (hasPermission('view-productions')) {
-        list.push({ name: 'Produksi', route: 'productions.index', icon: 'M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z' });
-    }
-    if (hasPermission('adjust-stock')) {
-        list.push({ name: 'Penyesuaian Stok', route: 'stock-adjustments.index', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4' });
-    }
-    if (hasPermission('view-contacts')) {
-        list.push({ name: 'Buku Kontak', route: 'contacts.index', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' });
-    }
-    if (hasPermission('view-finance')) {
-        list.push({ name: 'Buku Kas', route: 'finance.index', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' });
-    }
-    if (hasPermission('view-purchases')) {
-        list.push({ name: 'Pembelian', route: 'purchases.index', icon: 'M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z' });
-    }
-    if (hasPermission('view-gallery')) {
-        list.push({ name: 'Galeri Foto', route: 'galleries.index', icon: 'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z' });
-    }
-    if (hasPermission('manage-users')) {
-        list.push({ name: 'Daftar Pengguna', route: 'users.index', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' });
-    }
-    if (hasPermission('view-settings')) {
-        list.push({ name: 'Pengaturan', route: 'settings.index', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z' });
-    }
-
-    // Portal Links
-    const isCustomer = roles.includes('customer');
-    const isPartner = roles.includes('partner');
-
+    // Customer Portal Items
     if (isCustomer) {
-        list.push({ name: 'Portal Dashboard', route: 'customer.dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3M9 21h6' });
-        list.push({ name: 'Pesanan Saya', route: 'customer.orders', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2' });
-        list.push({ name: 'Profil Saya', route: 'customer.profile', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' });
-    } else if (isPartner) {
-        list.push({ name: 'Portal Reseller', route: 'partner.dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3M9 21h6' });
-        list.push({ name: 'Riwayat Order', route: 'partner.orders', icon: 'M9 5H7a2 2 0 00-2-2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2' });
-        list.push({ name: 'Tagihan / Billing', route: 'partner.billing', icon: 'M9 8h6m-6 2h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' });
-        list.push({ name: 'Profil Reseller', route: 'partner.profile', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' });
+        return [
+            {
+                title: 'Portal Pelanggan',
+                items: [
+                    { name: 'Portal Dashboard', route: 'customer.dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3M9 21h6' },
+                    { name: 'Pesanan Saya', route: 'customer.orders', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2' },
+                    { name: 'Profil Saya', route: 'customer.profile', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' }
+                ]
+            }
+        ];
     }
 
+    // Partner Reseller Portal Items
+    if (isPartner) {
+        return [
+            {
+                title: 'Portal Reseller',
+                items: [
+                    { name: 'Portal Reseller', route: 'partner.dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3M9 21h6' },
+                    { name: 'Riwayat Order', route: 'partner.orders', icon: 'M9 5H7a2 2 0 00-2-2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2' },
+                    { name: 'Tagihan / Billing', route: 'partner.billing', icon: 'M9 8h6m-6 2h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
+                    { name: 'Profil Reseller', route: 'partner.profile', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' }
+                ]
+            }
+        ];
+    }
+
+    // Admin Config-driven Categorized Items
+    for (const cat of menuCategories) {
+        const filteredItems = cat.items.filter(item => !item.permission || hasPermission(item.permission));
+        if (filteredItems.length > 0) {
+            list.push({
+                title: cat.title,
+                items: filteredItems
+            });
+        }
+    }
+
+    return list;
+});
+
+// Flatten navigation helper for mobile/active check searches
+const flatNavigation = computed(() => {
+    const list = [];
+    categorizedNavigation.value.forEach(cat => {
+        cat.items.forEach(item => {
+            list.push(item);
+        });
+    });
     return list;
 });
 </script>
@@ -94,7 +94,7 @@ const navigation = computed(() => {
 
         <aside
             :class="[
-                'bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transition-all duration-300 flex-col shrink-0 hidden lg:flex',
+                'bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transition-all duration-300 flex-col shrink-0 hidden lg:flex h-screen sticky top-0 overflow-y-auto',
                 adminStore.isSidebarOpen ? 'w-64' : 'w-20'
             ]"
         >
@@ -111,23 +111,35 @@ const navigation = computed(() => {
             </div>
 
             <!-- Navigation Links -->
-            <nav class="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
-                <Link
-                    v-for="item in navigation"
-                    :key="item.name"
-                    :href="route(item.route)"
-                    :class="[
-                        'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group',
-                        route().current(item.route)
-                            ? 'bg-amber-500 text-gray-950 shadow-md shadow-amber-500/10'
-                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/60 hover:text-gray-900 dark:hover:text-white'
-                    ]"
-                >
-                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="item.icon" />
-                    </svg>
-                    <span v-show="adminStore.isSidebarOpen" class="truncate">{{ item.name }}</span>
-                </Link>
+            <nav class="flex-1 py-4 px-3 space-y-4 overflow-y-auto">
+                <div v-for="category in categorizedNavigation" :key="category.title" class="space-y-1">
+                    <!-- Category Title -->
+                    <span
+                        v-show="adminStore.isSidebarOpen"
+                        class="px-3 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block mb-1.5"
+                    >
+                        {{ category.title }}
+                    </span>
+                    <hr v-show="!adminStore.isSidebarOpen" class="border-gray-100 dark:border-gray-800 my-2" />
+
+                    <!-- Category Items -->
+                    <Link
+                        v-for="item in category.items"
+                        :key="item.name"
+                        :href="route(item.route)"
+                        :class="[
+                            'flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold transition-all group',
+                            route().current(item.route)
+                                ? 'bg-amber-500 text-gray-950 shadow-md shadow-amber-500/10'
+                                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/60 hover:text-gray-900 dark:hover:text-white'
+                        ]"
+                    >
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="item.icon" />
+                        </svg>
+                        <span v-show="adminStore.isSidebarOpen" class="truncate">{{ item.name }}</span>
+                    </Link>
+                </div>
             </nav>
         </aside>
 
@@ -197,7 +209,7 @@ const navigation = computed(() => {
             <div class="flex justify-around items-center">
                 <!-- Dashboard -->
                 <Link
-                    v-if="navigation.some(item => item.route === 'dashboard')"
+                    v-if="flatNavigation.some(item => item.route === 'dashboard')"
                     :href="route('dashboard')"
                     :class="[
                         'flex flex-col items-center gap-1 py-1 px-3 rounded-lg text-center',
@@ -212,7 +224,7 @@ const navigation = computed(() => {
 
                 <!-- Penjualan -->
                 <Link
-                    v-if="navigation.some(item => item.route === 'sales.index')"
+                    v-if="flatNavigation.some(item => item.route === 'sales.index')"
                     :href="route('sales.index')"
                     :class="[
                         'flex flex-col items-center gap-1 py-1 px-3 rounded-lg text-center',
@@ -227,7 +239,7 @@ const navigation = computed(() => {
 
                 <!-- Buku Kas -->
                 <Link
-                    v-if="navigation.some(item => item.route === 'finance.index')"
+                    v-if="flatNavigation.some(item => item.route === 'finance.index')"
                     :href="route('finance.index')"
                     :class="[
                         'flex flex-col items-center gap-1 py-1 px-3 rounded-lg text-center',
@@ -276,24 +288,29 @@ const navigation = computed(() => {
                 </div>
 
                 <!-- Navigation List inside Drawer -->
-                <div class="flex-1 overflow-y-auto space-y-1.5 pr-1">
-                    <Link
-                        v-for="item in navigation"
-                        :key="item.name"
-                        :href="route(item.route)"
-                        @click="isMobileMenuOpen = false"
-                        :class="[
-                            'flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-semibold transition-all',
-                            route().current(item.route)
-                                ? 'bg-amber-500 text-gray-950 shadow-md shadow-amber-500/10'
-                                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/60 hover:text-gray-900 dark:hover:text-white'
-                        ]"
-                    >
-                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="item.icon" />
-                        </svg>
-                        <span class="truncate">{{ item.name }}</span>
-                    </Link>
+                <div class="flex-1 overflow-y-auto space-y-4 pr-1">
+                    <div v-for="category in categorizedNavigation" :key="category.title" class="space-y-1">
+                        <span class="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block mb-1">
+                            {{ category.title }}
+                        </span>
+                        <Link
+                            v-for="item in category.items"
+                            :key="item.name"
+                            :href="route(item.route)"
+                            @click="isMobileMenuOpen = false"
+                            :class="[
+                                'flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold transition-all',
+                                route().current(item.route)
+                                    ? 'bg-amber-500 text-gray-950 shadow-md shadow-amber-500/10'
+                                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/60 hover:text-gray-900 dark:hover:text-white'
+                            ]"
+                        >
+                            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="item.icon" />
+                            </svg>
+                            <span class="truncate">{{ item.name }}</span>
+                        </Link>
+                    </div>
                 </div>
             </div>
         </div>

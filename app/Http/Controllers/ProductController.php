@@ -60,6 +60,9 @@ class ProductController extends Controller
         }
 
         $product->media_assets = $mediaAssets;
+        $product->variants = !empty($validated['variants'])
+            ? array_values(array_filter($validated['variants'], fn($v) => !empty($v['label'])))
+            : null;
         $product->save();
 
         return redirect()->route('products.index')
@@ -100,6 +103,9 @@ class ProductController extends Controller
         }
 
         $product->media_assets = $mediaAssets;
+        $product->variants = !empty($validated['variants'])
+            ? array_values(array_filter($validated['variants'], fn($v) => !empty($v['label'])))
+            : null;
         $product->save();
 
         return redirect()->route('products.index')

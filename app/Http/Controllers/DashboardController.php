@@ -53,6 +53,7 @@ class DashboardController extends Controller
             'endDate' => $endDate->toIso8601String(),
             'totalSales' => (float) $totalSales,
             'totalPurchases' => (float) $totalPurchases,
+            'totalProductionCost' => (float) $totalProductionCost,
             'grossProfit' => (float) $grossProfit,
             'cashInflow' => (float) $cashInflow,
             'cashOutflow' => (float) $cashOutflow,

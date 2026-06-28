@@ -97,6 +97,53 @@ class AdminOrderController extends Controller
             $newPaymentStatus = $validated['payment_status'];
             if ($oldPaymentStatus !== $newPaymentStatus) {
                 $order->update(['payment_status' => $newPaymentStatus]);
+                
+                // Realtime Sync: If status changed to PAID, record payment transaction to cash ledger
+                if ($newPaymentStatus === 'paid') {
+                    \Illuminate\Support\Facades\DB::transaction(function () use ($order) {
+                        // 1. Get default cash account
+                        $account = \App\Models\Account::first();
+                        if ($account) {
+                            // 2. Create Payment record linked to Order
+                            $payment = \App\Models\Payment::create([
+                                'account_id' => $account->id,
+                                'date' => now()->format('Y-m-d'),
+                                'amount' => $order->total,
+                                'payable_type' => \App\Models\Order::class,
+                                'payable_id' => $order->id,
+                            ]);
+
+                            // 3. Create CashLedger entry categorized as B2C online sale income
+                            \App\Models\CashLedger::create([
+                                'account_id' => $account->id,
+                                'date' => now()->format('Y-m-d'),
+                                'type' => 'in',
+                                'category' => \App\Models\CashLedger::CATEGORY_SALE_INCOME,
+                                'amount' => $order->total,
+                                'balance_after' => $account->balance + $order->total,
+                                'description' => 'Pendapatan Pesanan Online (B2C) #' . $order->order_number,
+                                'reference_type' => get_class($payment),
+                                'reference_id' => $payment->id,
+                            ]);
+
+                            // 4. Update cash account balance
+                            $account->balance += $order->total;
+                            $account->save();
+                        }
+
+                        // 5. Deduct product stock when payment is verified
+                        if (is_array($order->items)) {
+                            foreach ($order->items as $item) {
+                                $product = \App\Models\Product::find($item['id']);
+                                if ($product) {
+                                    $product->current_stock = max(0, $product->current_stock - $item['qty']);
+                                    $product->save();
+                                }
+                            }
+                        }
+                    });
+                }
+                
                 $toastMessage = 'Status pembayaran berhasil diubah!';
             }
         }

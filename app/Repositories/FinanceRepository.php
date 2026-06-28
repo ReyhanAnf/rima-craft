@@ -36,9 +36,16 @@ class FinanceRepository
         $totalExpense = (float) (clone $summaryQuery)->where('type', 'out')->sum('amount');
         $netCashFlow = $totalIncome - $totalExpense;
 
+        // Financial category breakdowns
+        $breakdownQuery = clone $summaryQuery;
+        $breakdowns = $breakdownQuery->selectRaw('category, SUM(amount) as total')
+            ->groupBy('category')
+            ->pluck('total', 'category')
+            ->toArray();
+
         $ledgers = $query->paginate(30);
 
-        return compact('accounts', 'ledgers', 'startDate', 'endDate', 'totalIncome', 'totalExpense', 'netCashFlow');
+        return compact('accounts', 'ledgers', 'startDate', 'endDate', 'totalIncome', 'totalExpense', 'netCashFlow', 'breakdowns');
     }
 
     /**

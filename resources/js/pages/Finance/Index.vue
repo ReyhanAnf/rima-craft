@@ -20,6 +20,7 @@ const props = defineProps({
     totalIncome: Number,
     totalExpense: Number,
     netCashFlow: Number,
+    breakdowns: Object,
     filters: Object,
 });
 
@@ -121,6 +122,26 @@ const formatDate = (dateStr) => {
     if (!dateStr) return '-';
     return new Date(dateStr).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
 };
+
+const categoryLabels = {
+    sale_income: 'Penjualan',
+    purchase_expense: 'Pembelian Bahan',
+    production_material: 'HPP Bahan Baku',
+    production_labor: 'Upah Tukang',
+    production_overhead: 'Overhead',
+    manual: 'Manual',
+    other: 'Lainnya'
+};
+
+const categoryClasses = {
+    sale_income: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400',
+    purchase_expense: 'bg-rose-50 text-rose-700 dark:bg-rose-950/20 dark:text-rose-400',
+    production_material: 'bg-amber-50 text-amber-700 dark:bg-amber-950/20 dark:text-amber-400',
+    production_labor: 'bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400',
+    production_overhead: 'bg-purple-50 text-purple-700 dark:bg-purple-950/20 dark:text-purple-400',
+    manual: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
+    other: 'bg-gray-50 text-gray-500 dark:bg-gray-800/40 dark:text-gray-400'
+};
 </script>
 
 <template>
@@ -162,6 +183,47 @@ const formatDate = (dateStr) => {
                 </Card>
             </div>
 
+            <!-- Detailed Breakdowns -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 shadow-sm">
+                    <h3 class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-4 border-b border-gray-100 dark:border-gray-800 pb-2">Rincian Pendapatan</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="text-gray-600 dark:text-gray-400">Hasil Penjualan Produk</span>
+                            <span class="font-bold text-emerald-600 dark:text-emerald-450">{{ formatCurrency(breakdowns.sale_income || 0) }}</span>
+                        </div>
+                        <div class="flex justify-between items-center text-sm border-t border-gray-100 dark:border-gray-800/60 pt-2">
+                            <span class="text-gray-600 dark:text-gray-400">Pemasukan Manual</span>
+                            <span class="font-bold text-emerald-600 dark:text-emerald-450">
+                                {{ formatCurrency(ledgers.data.filter(l => l.type === 'in' && l.category === 'manual').reduce((sum, l) => sum + Number(l.amount), 0)) }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 shadow-sm">
+                    <h3 class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-4 border-b border-gray-100 dark:border-gray-800 pb-2">Rincian Pengeluaran</h3>
+                    <div class="grid grid-cols-2 gap-x-8 gap-y-3 text-sm">
+                        <div class="flex justify-between items-center col-span-2 sm:col-span-1">
+                            <span class="text-gray-600 dark:text-gray-400">Belanja Bahan Baku:</span>
+                            <span class="font-semibold text-gray-900 dark:text-white">{{ formatCurrency(breakdowns.purchase_expense || 0) }}</span>
+                        </div>
+                        <div class="flex justify-between items-center col-span-2 sm:col-span-1">
+                            <span class="text-gray-600 dark:text-gray-400">HPP Bahan Produksi:</span>
+                            <span class="font-semibold text-gray-900 dark:text-white">{{ formatCurrency(breakdowns.production_material || 0) }}</span>
+                        </div>
+                        <div class="flex justify-between items-center col-span-2 sm:col-span-1 border-t border-gray-100 dark:border-gray-800/40 pt-2">
+                            <span class="text-gray-600 dark:text-gray-400">Upah Tukang (Produksi):</span>
+                            <span class="font-semibold text-gray-900 dark:text-white">{{ formatCurrency(breakdowns.production_labor || 0) }}</span>
+                        </div>
+                        <div class="flex justify-between items-center col-span-2 sm:col-span-1 border-t border-gray-100 dark:border-gray-800/40 pt-2">
+                            <span class="text-gray-600 dark:text-gray-400">Overhead Produksi:</span>
+                            <span class="font-semibold text-gray-900 dark:text-white">{{ formatCurrency(breakdowns.production_overhead || 0) }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Filters -->
             <div class="bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 <div class="flex flex-col gap-1">
@@ -200,6 +262,7 @@ const formatDate = (dateStr) => {
                         <thead class="text-xs text-gray-500 uppercase bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-800">
                             <tr>
                                 <th scope="col" class="px-6 py-4 font-bold">Tanggal</th>
+                                <th scope="col" class="px-6 py-4 font-bold">Kategori</th>
                                 <th scope="col" class="px-6 py-4 font-bold">Keterangan</th>
                                 <th scope="col" class="px-6 py-4 font-bold">Sumber Kas</th>
                                 <th scope="col" class="px-6 py-4 font-bold text-right">Debit (+)</th>
@@ -208,14 +271,19 @@ const formatDate = (dateStr) => {
                         </thead>
                         <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                             <tr v-for="ledger in ledgers.data" :key="ledger.id" class="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition">
-                                <td class="px-6 py-4">{{ formatDate(ledger.date) }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">{{ formatDate(ledger.date) }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span :class="['px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider', categoryClasses[ledger.category] || categoryClasses.other]">
+                                        {{ categoryLabels[ledger.category] || ledger.category || 'Lainnya' }}
+                                    </span>
+                                </td>
                                 <td class="px-6 py-4 font-semibold text-gray-900 dark:text-white">
                                     {{ ledger.description }}
                                 </td>
-                                <td class="px-6 py-4 text-xs">
+                                <td class="px-6 py-4 text-xs whitespace-nowrap">
                                     {{ ledger.account?.name }}
                                 </td>
-                                <td class="px-6 py-4 text-right font-bold text-emerald-650">
+                                <td class="px-6 py-4 text-right font-bold text-emerald-605">
                                     {{ ledger.type === 'in' ? formatCurrency(ledger.amount) : '-' }}
                                 </td>
                                 <td class="px-6 py-4 text-right font-bold text-red-500">

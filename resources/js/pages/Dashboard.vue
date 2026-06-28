@@ -12,6 +12,7 @@ const props = defineProps({
     endDate: String,
     totalSales: Number,
     totalPurchases: Number,
+    totalProductionCost: Number,
     grossProfit: Number,
     cashInflow: Number,
     cashOutflow: Number,
@@ -152,7 +153,7 @@ const formatDate = (dateStr) => {
             <!-- TAB 1: GENERAL -->
             <div v-if="currentTab === 'general'" class="space-y-6">
                 <!-- Financial Cards -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                     <!-- Revenue -->
                     <div class="bg-white dark:bg-gray-900 rounded-xl p-5 border-l-4 border-emerald-500 border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md transition">
                         <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Total Pendapatan (Omset)</p>
@@ -162,16 +163,23 @@ const formatDate = (dateStr) => {
 
                     <!-- Purchases -->
                     <div class="bg-white dark:bg-gray-900 rounded-xl p-5 border-l-4 border-rose-500 border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md transition">
-                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Total Pengeluaran (Belanja)</p>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Belanja Bahan Baku</p>
                         <h3 class="text-xl font-bold text-gray-900 dark:text-white mt-1">{{ formatCurrency(totalPurchases) }}</h3>
-                        <div class="text-xs text-gray-400 mt-2">Belanja bahan & operasional</div>
+                        <div class="text-xs text-gray-400 mt-2">Belanja bahan & supplier</div>
+                    </div>
+
+                    <!-- Production Cost -->
+                    <div class="bg-white dark:bg-gray-900 rounded-xl p-5 border-l-4 border-amber-500 border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md transition">
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Biaya Produksi (HPP/Upah)</p>
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white mt-1">{{ formatCurrency(totalProductionCost) }}</h3>
+                        <div class="text-xs text-gray-400 mt-2">Bahan terpakai, upah & overhead</div>
                     </div>
 
                     <!-- Profit -->
                     <div class="bg-white dark:bg-gray-900 rounded-xl p-5 border-l-4 border-teal-500 border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md transition">
                         <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Estimasi Laba Kotor</p>
                         <h3 class="text-xl font-bold text-teal-600 dark:text-teal-400 mt-1">{{ formatCurrency(grossProfit) }}</h3>
-                        <div class="text-xs text-gray-400 mt-2">Penjualan dikurangi Pembelian</div>
+                        <div class="text-xs text-gray-400 mt-2">Omset - Belanja - Biaya Produksi</div>
                     </div>
 
                     <!-- Cashflow -->

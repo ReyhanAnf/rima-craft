@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import AdminLayout from '@/layouts/AdminLayout.vue';
 import Card from 'primevue/card';
@@ -34,13 +34,29 @@ const paymentStatusOptions = [
 ];
 
 const submitStatus = () => {
-    form.post(route('orders.update-status', props.order.id), {
+    // Laravel cannot parse multipart form data with PATCH directly.
+    // We spoof the method by posting with _method: 'PATCH'
+    form.transform((data) => ({
+        ...data,
+        _method: 'PATCH',
+    })).post(route('orders.update-status', props.order.id), {
         preserveState: true,
+        onSuccess: () => {
+            previewUrl.value = null;
+        }
     });
 };
 
+const previewUrl = ref(null);
+
 const handleFileChange = (e) => {
-    form.payment_proof = e.target.files[0];
+    const file = e.target.files[0];
+    form.payment_proof = file;
+    if (file) {
+        previewUrl.value = URL.createObjectURL(file);
+    } else {
+        previewUrl.value = null;
+    }
 };
 
 const deleteOrder = () => {
@@ -169,36 +185,185 @@ const whatsappLink = computed(() => {
                             </div>
                         </template>
                     </Card>
+
+                    <!-- Quick Verification Actions (Highly visible for non-technical admins) -->
+                    <Card v-if="order.status !== 'completed' && order.status !== 'cancelled'" class="!border-2 !border-amber-300 dark:!border-amber-800/80 !bg-amber-50/15 dark:!bg-amber-950/5 shadow-md">
+                        <template #title>
+                            <span class="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                                <i class="pi pi-exclamation-circle animate-pulse"></i>
+                                Tindakan Verifikasi Cepat
+                            </span>
+                        </template>
+                        <template #content>
+                            <div class="space-y-4 pt-1">
+                                <!-- 1. Order is pending approval -->
+                                <div v-if="order.status === 'pending'" class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-4 rounded-xl space-y-3">
+                                    <p class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed font-semibold">
+                                        Pesanan ini baru masuk dan statusnya masih **Pending**. Verifikasi rincian belanja & alamat pembeli, lalu konfirmasi pesanan ini.
+                                    </p>
+                                    <div class="flex gap-2">
+                                        <Button 
+                                            label="Konfirmasi & Setujui Pesanan" 
+                                            icon="pi pi-check" 
+                                            severity="success" 
+                                            class="w-full text-xs font-bold" 
+                                            @click="() => { form.status = 'confirmed'; submitStatus(); }"
+                                            :loading="form.processing"
+                                        />
+                                        <Button 
+                                            label="Batalkan" 
+                                            icon="pi pi-times" 
+                                            severity="danger" 
+                                            outlined
+                                            class="text-xs font-bold" 
+                                            @click="() => { form.status = 'cancelled'; form.cancellation_reason = 'Dibatalkan oleh admin.'; submitStatus(); }"
+                                            :loading="form.processing"
+                                        />
+                                    </div>
+                                </div>
+
+                                <!-- 2. Payment verification needed -->
+                                <div v-if="order.payment_status !== 'paid' && order.payment_method !== 'cod'" class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-4 rounded-xl space-y-3">
+                                    <div class="flex justify-between items-start">
+                                        <p class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed font-semibold">
+                                            Status Pembayaran: <span class="text-red-500 font-bold uppercase">BELUM LUNAS</span>. 
+                                            Jika pelanggan mengirimkan bukti pembayaran manual ke Anda (WA/dll), silakan unggah di bawah ini lalu konfirmasi lunas.
+                                        </p>
+                                    </div>
+                                    
+                                    <!-- Upload proof directly in Quick Action with rich preview styling -->
+                                    <div class="flex flex-col gap-2 p-3 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-xl">
+                                        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Unggah Bukti Transfer Baru</label>
+                                        
+                                        <!-- Interactive drag/click upload box -->
+                                        <div class="relative group border-2 border-dashed border-gray-200 dark:border-gray-800 hover:border-amber-400 rounded-lg p-4 transition flex flex-col items-center justify-center cursor-pointer min-h-[90px]">
+                                            <input 
+                                                type="file" 
+                                                accept="image/*" 
+                                                @change="handleFileChange" 
+                                                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+                                            />
+                                            <div v-if="!previewUrl" class="text-center space-y-1">
+                                                <i class="pi pi-upload text-gray-400 group-hover:text-amber-500 text-lg transition block"></i>
+                                                <span class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 block">Pilih Gambar / Seret ke Sini</span>
+                                            </div>
+                                            
+                                            <!-- Image Preview with details -->
+                                            <div v-else class="w-full flex items-center gap-3">
+                                                <img :src="previewUrl" class="w-14 h-14 object-cover rounded-md border border-gray-200 dark:border-gray-800" />
+                                                <div class="flex-1 min-w-0">
+                                                    <p class="text-[11px] font-bold text-gray-800 dark:text-gray-200 truncate">
+                                                        {{ form.payment_proof?.name || 'File terpilih' }}
+                                                    </p>
+                                                    <p class="text-[10px] text-gray-400">
+                                                        {{ (form.payment_proof?.size / 1024).toFixed(1) }} KB
+                                                    </p>
+                                                </div>
+                                                <Button 
+                                                    icon="pi pi-trash" 
+                                                    severity="danger" 
+                                                    text 
+                                                    size="small" 
+                                                    class="z-20 !p-1"
+                                                    @click.stop="() => { form.payment_proof = null; previewUrl = null; }" 
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <Button 
+                                        label="Konfirmasi: Sudah Terima Pembayaran (Lunas)" 
+                                        icon="pi pi-wallet" 
+                                        severity="success" 
+                                        class="w-full text-xs font-bold" 
+                                        @click="() => { form.payment_status = 'paid'; submitStatus(); }"
+                                        :loading="form.processing"
+                                    />
+                                </div>
+
+                                <!-- 3. Order is confirmed but not processed yet -->
+                                <div v-if="order.status === 'confirmed'" class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-4 rounded-xl space-y-3">
+                                    <p class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed font-semibold">
+                                        Pesanan disetujui. Silakan klik tombol di bawah jika barang mulai diproses/dikemas di gudang.
+                                    </p>
+                                    <Button 
+                                        label="Mulai Proses Kemas Barang" 
+                                        icon="pi pi-cog" 
+                                        severity="info" 
+                                        class="w-full text-xs font-bold" 
+                                        @click="() => { form.status = 'processing'; submitStatus(); }"
+                                        :loading="form.processing"
+                                    />
+                                </div>
+
+                                <!-- 4. Order is processing but not shipped yet -->
+                                <div v-if="order.status === 'processing'" class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-4 rounded-xl space-y-3">
+                                    <p class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed font-semibold">
+                                        Barang sudah dikemas. Klik tombol di bawah setelah kurir mengambil barang untuk dikirim ke pembeli.
+                                    </p>
+                                    <Button 
+                                        label="Konfirmasi: Barang Sudah Dikirim" 
+                                        icon="pi pi-send" 
+                                        severity="info" 
+                                        class="w-full text-xs font-bold" 
+                                        @click="() => { form.status = 'shipped'; submitStatus(); }"
+                                        :loading="form.processing"
+                                    />
+                                </div>
+
+                                <!-- 5. Order is shipped but not completed yet -->
+                                <div v-if="order.status === 'shipped'" class="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-4 rounded-xl space-y-3">
+                                    <p class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed font-semibold">
+                                        Barang dalam perjalanan. Klik tombol di bawah jika pelanggan mengonfirmasi barang telah sampai dan diterima.
+                                    </p>
+                                    <div class="flex gap-2">
+                                        <Button 
+                                            label="Selesaikan Pesanan (Diterima)" 
+                                            icon="pi pi-check-circle" 
+                                            severity="success" 
+                                            class="w-full text-xs font-bold" 
+                                            @click="() => { form.status = 'completed'; form.payment_status = 'paid'; submitStatus(); }"
+                                            :loading="form.processing"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </Card>
                 </div>
 
                 <!-- Status & Action Forms -->
                 <div class="space-y-6">
                     <Card class="!border !border-gray-200 dark:!border-gray-800 !bg-white dark:!bg-gray-900">
-                        <template #title><span class="text-sm font-bold uppercase tracking-wider text-gray-400">Status & Perubahan</span></template>
+                        <template #title><span class="text-sm font-bold uppercase tracking-wider text-gray-400">Pengaturan Manual Status</span></template>
                         <template #content>
+                            <div v-if="order.status === 'completed' || order.status === 'cancelled'" class="p-3 bg-gray-50 dark:bg-gray-950 border border-gray-150 dark:border-gray-850 rounded-lg text-xs text-gray-500 font-semibold mb-4 text-center">
+                                <i class="pi pi-lock mr-1.5 text-[10px]"></i>
+                                Pesanan ini telah {{ order.status === 'completed' ? 'Selesai' : 'Dibatalkan' }}. Data status terkunci.
+                            </div>
                             <form @submit.prevent="submitStatus" class="space-y-4 pt-2">
                                 <div class="flex flex-col gap-1.5">
                                     <label class="text-xs font-semibold">Status Pesanan</label>
-                                    <Dropdown v-model="form.status" :options="statusOptions" optionLabel="label" optionValue="value" class="w-full" />
+                                    <Dropdown v-model="form.status" :options="statusOptions" optionLabel="label" optionValue="value" class="w-full" :disabled="order.status === 'completed' || order.status === 'cancelled'" />
                                 </div>
 
                                 <div class="flex flex-col gap-1.5">
                                     <label class="text-xs font-semibold">Status Pembayaran</label>
-                                    <Dropdown v-model="form.payment_status" :options="paymentStatusOptions" optionLabel="label" optionValue="value" class="w-full" />
+                                    <Dropdown v-model="form.payment_status" :options="paymentStatusOptions" optionLabel="label" optionValue="value" class="w-full" :disabled="order.status === 'completed' || order.status === 'cancelled'" />
                                 </div>
 
                                 <div v-if="form.status === 'cancelled'" class="flex flex-col gap-1.5">
                                     <label class="text-xs font-semibold text-red-500">Alasan Pembatalan</label>
-                                    <Textarea v-model="form.cancellation_reason" rows="2" placeholder="Sebutkan alasan..." class="w-full" />
+                                    <Textarea v-model="form.cancellation_reason" rows="2" placeholder="Sebutkan alasan..." class="w-full" :disabled="order.status === 'completed' || order.status === 'cancelled'" />
                                 </div>
 
                                 <!-- Upload new Proof option -->
-                                <div class="flex flex-col gap-1.5 pt-2 border-t border-gray-100 dark:border-gray-800">
+                                <div v-if="order.status !== 'completed' && order.status !== 'cancelled'" class="flex flex-col gap-1.5 pt-2 border-t border-gray-100 dark:border-gray-800">
                                     <label class="text-[10px] font-bold text-gray-400 uppercase">Ganti / Upload Bukti Transfer</label>
                                     <input type="file" accept="image/*" @change="handleFileChange" class="text-xs cursor-pointer w-full text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-amber-50 file:text-amber-700" />
                                 </div>
 
-                                <Button type="submit" label="Simpan Perubahan" class="w-full !bg-amber-500 hover:!bg-amber-600 !border-amber-500 hover:!border-amber-600 !text-gray-950 font-bold" :loading="form.processing" />
+                                <Button v-if="order.status !== 'completed' && order.status !== 'cancelled'" type="submit" label="Simpan Perubahan" severity="warning" outlined class="w-full font-bold" :loading="form.processing" />
                             </form>
                         </template>
                     </Card>
@@ -225,7 +390,7 @@ const whatsappLink = computed(() => {
                         <template #content>
                             <div class="pt-1 space-y-3">
                                 <p class="text-[10px] text-gray-500 dark:text-gray-400">Menghapus pesanan ini akan menyembunyikannya dari sistem (Soft Delete).</p>
-                                <Button label="Hapus Pesanan" severity="danger" class="w-full" @click="deleteOrder" />
+                                <Button label="Hapus Pesanan" severity="danger" outlined class="w-full" @click="deleteOrder" />
                             </div>
                         </template>
                     </Card>

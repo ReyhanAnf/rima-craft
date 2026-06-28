@@ -38,6 +38,7 @@ class FinanceController extends Controller
             'totalIncome' => $data['totalIncome'],
             'totalExpense' => $data['totalExpense'],
             'netCashFlow' => $data['netCashFlow'],
+            'breakdowns' => $data['breakdowns'],
             'filters' => $request->only(['account_id', 'start_date', 'end_date', 'type']),
         ]);
     }

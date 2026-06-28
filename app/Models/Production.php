@@ -17,6 +17,8 @@ class Production extends Model
     protected $fillable = [
         'date',
         'additional_cost',
+        'labor_cost',
+        'overhead_cost',
         'total_material_cost',
         'grand_total_cost',
         'notes',
@@ -26,6 +28,8 @@ class Production extends Model
     protected $casts = [
         'date' => 'date',
         'additional_cost' => 'decimal:2',
+        'labor_cost' => 'decimal:2',
+        'overhead_cost' => 'decimal:2',
         'total_material_cost' => 'decimal:2',
         'grand_total_cost' => 'decimal:2',
     ];

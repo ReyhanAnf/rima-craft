@@ -53,6 +53,7 @@ const form = useForm({
     image: null,
     gallery_images: [],
     video_links: [''],
+    variants: [],
 });
 
 const mainImagePreview = ref(null);
@@ -63,6 +64,7 @@ const openCreateModal = () => {
     form.clearErrors();
     form.reset();
     form.video_links = [''];
+    form.variants = [];
     mainImagePreview.value = null;
     galleryPreviews.value = [];
     isFormOpen.value = true;
@@ -83,6 +85,7 @@ const openEditModal = (product) => {
     if (form.video_links.length === 0) {
         form.video_links = [''];
     }
+    form.variants = (product.variants || []).map(v => ({ label: v.label, price_adj: v.price_adj ?? 0 }));
     mainImagePreview.value = product.image_path ? `/storage/${product.image_path}` : null;
     galleryPreviews.value = [];
     isFormOpen.value = true;
@@ -94,6 +97,14 @@ const addVideoLink = () => {
 };
 const removeVideoLink = (idx) => {
     form.video_links.splice(idx, 1);
+};
+
+// Variants
+const addVariant = () => {
+    form.variants.push({ label: '', price_adj: 0 });
+};
+const removeVariant = (idx) => {
+    form.variants.splice(idx, 1);
 };
 
 // Image Upload Previews
@@ -416,6 +427,41 @@ const formatCurrency = (val) => {
                                     :disabled="form.video_links.length === 1"
                                 />
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Variants Section (Optional) -->
+                    <div class="pt-4 border-t border-gray-150 dark:border-gray-800 space-y-3">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h4 class="text-sm font-bold text-gray-800 dark:text-gray-200">Varian Produk</h4>
+                                <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Opsional — misal: Ukuran S, Warna Merah, dsb.</p>
+                            </div>
+                            <Button label="Tambah Varian" icon="pi pi-plus" size="small" text @click="addVariant" />
+                        </div>
+                        <div v-if="form.variants.length === 0" class="text-xs text-gray-400 dark:text-gray-600 italic py-2 text-center border border-dashed border-gray-200 dark:border-gray-700 rounded-lg">
+                            Belum ada varian — produk dijual tanpa pilihan varian.
+                        </div>
+                        <div v-for="(variant, idx) in form.variants" :key="idx" class="flex gap-2 items-center">
+                            <InputText
+                                v-model="form.variants[idx].label"
+                                placeholder="Nama varian (mis: Ukuran S)"
+                                class="flex-1"
+                            />
+                            <InputNumber
+                                v-model="form.variants[idx].price_adj"
+                                placeholder="+ Harga (Rp)"
+                                mode="decimal"
+                                :min="0"
+                                class="w-36"
+                                inputClass="w-full"
+                            />
+                            <Button
+                                icon="pi pi-trash"
+                                severity="danger"
+                                text
+                                @click="removeVariant(idx)"
+                            />
                         </div>
                     </div>
                 </form>

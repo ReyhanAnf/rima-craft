@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { Head, useForm, usePage, router } from '@inertiajs/vue3';
 import AdminLayout from '@/layouts/AdminLayout.vue';
 import Button from 'primevue/button';
@@ -55,19 +55,36 @@ const isFormOpen = ref(false);
 const itemType = ref('Product'); // 'Product' or 'Material'
 
 const form = useForm({
-    adjustable_type: 'App\\Models\\Product',
+    adjustable_type: 'product',
     adjustable_id: null,
+    actual_stock: 0,
     type: 'in',
     quantity: 1,
     reason: '',
 });
 
 watch(itemType, (newType) => {
-    form.adjustable_type = newType === 'Product' ? 'App\\Models\\Product' : 'App\\Models\\Material';
+    form.adjustable_type = newType === 'Product' ? 'product' : 'material';
     form.adjustable_id = null;
+    form.actual_stock = 0;
+});
+
+// Watch current stock and updates actual_stock automatically
+const currentStockOfSelectedItem = computed(() => {
+    const list = itemType.value === 'Product' ? props.products : props.materials;
+    const item = list.find(i => i.id === form.adjustable_id);
+    return item ? Number(item.current_stock) : 0;
 });
 
 const submitForm = () => {
+    // hitung actual_stock
+    const current = currentStockOfSelectedItem.value;
+    if (form.type === 'in') {
+        form.actual_stock = current + Number(form.quantity);
+    } else {
+        form.actual_stock = Math.max(0, current - Number(form.quantity));
+    }
+
     form.post(route('stock-adjustments.store'), {
         onSuccess: () => {
             isFormOpen.value = false;

@@ -88,14 +88,15 @@ class RecordPurchaseAction
                     ]);
 
                     CashLedger::create([
-                        'account_id' => $account->id,
-                        'date' => $purchase->date,
-                        'type' => 'out',
-                        'amount' => $purchase->total_amount,
-                        'balance_after' => $account->balance - $purchase->total_amount,
-                        'description' => 'Pembayaran Lunas Pembelian #' . $purchase->id,
+                        'account_id'     => $account->id,
+                        'date'           => $purchase->date,
+                        'type'           => 'out',
+                        'category'       => CashLedger::CATEGORY_PURCHASE_EXPENSE,
+                        'amount'         => $purchase->total_amount,
+                        'balance_after'  => $account->balance - $purchase->total_amount,
+                        'description'    => 'Pembelian Bahan Baku #' . $purchase->id,
                         'reference_type' => get_class($payment),
-                        'reference_id' => $payment->id,
+                        'reference_id'   => $payment->id,
                     ]);
 
                     $account->balance -= $purchase->total_amount;
