@@ -14,6 +14,14 @@
         <form hx-patch="{{ route('orders.update-status', $order) }}" hx-target="#drawer-content" hx-swap="innerHTML" class="space-y-4">
             @csrf
             <div class="grid grid-cols-2 gap-4">
+                <div x-show="selectedStatus === 'shipped' || '{{ $order->tracking_number }}' !== ''"
+                     x-transition class="col-span-2" style="display: none;">
+                    <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">Nomor Resi</label>
+                    <input type="text" name="tracking_number"
+                           value="{{ $order->tracking_number }}"
+                           placeholder="Contoh: JNE123456789ID"
+                           class="w-full text-xs font-mono border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 rounded outline-none focus:ring-1 focus:ring-primary-500 px-2.5 py-1.5 text-gray-900 dark:text-gray-200">
+                </div>
                 <div>
                     <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">Status Pesanan</label>
                     <select name="status" x-model="selectedStatus"
@@ -38,11 +46,22 @@
                             class="w-full text-xs font-bold border rounded outline-none focus:ring-1 focus:ring-primary-500 uppercase tracking-wider px-2.5 py-1.5 cursor-pointer bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200
                             {{ $order->payment_status === 'paid' ? 'border-emerald-300 text-emerald-700' : '' }}
                             {{ $order->payment_status === 'unpaid' ? 'border-red-300 text-red-700' : '' }}
+                            {{ $order->payment_status === 'partial' ? 'border-amber-300 text-amber-700' : '' }}
                             {{ $order->payment_status === 'refunded' ? 'border-amber-300 text-amber-700' : '' }}">
-                        <option value="unpaid">Unpaid</option>
-                        <option value="paid">Paid</option>
-                        <option value="refunded">Refunded</option>
+                        <option value="unpaid" {{ $order->payment_status === 'unpaid' ? 'selected' : '' }}>Unpaid</option>
+                        <option value="partial" {{ $order->payment_status === 'partial' ? 'selected' : '' }}>DP / Partial</option>
+                        <option value="paid" {{ $order->payment_status === 'paid' ? 'selected' : '' }}>Paid</option>
+                        <option value="refunded" {{ $order->payment_status === 'refunded' ? 'selected' : '' }}>Refunded</option>
                     </select>
+                </div>
+
+                <div x-show="selectedStatus === 'shipped' || '{{ $order->tracking_number }}' !== ''"
+                     x-transition class="col-span-2" style="display: none;">
+                    <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">Nomor Resi</label>
+                    <input type="text" name="tracking_number"
+                           value="{{ $order->tracking_number }}"
+                           placeholder="Contoh: JNE123456789ID"
+                           class="w-full text-xs font-mono border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 rounded outline-none focus:ring-1 focus:ring-primary-500 px-2.5 py-1.5 text-gray-900 dark:text-gray-200">
                 </div>
             </div>
 
@@ -151,6 +170,18 @@
                     <span class="text-gray-950 dark:text-white">Grand Total:</span>
                     <span class="text-amber-600 dark:text-amber-400 text-base">Rp {{ number_format($order->total, 0, ',', '.') }}</span>
                 </div>
+                @if($order->down_payment_amount > 0)
+                <div class="mt-3 pt-3 border-t border-amber-100 dark:border-amber-900/30 space-y-1.5 text-xs">
+                    <div class="flex justify-end gap-6 font-semibold text-emerald-700 dark:text-emerald-400">
+                        <span>DP Dibayar:</span>
+                        <span>Rp {{ number_format($order->down_payment_amount, 0, ',', '.') }}</span>
+                    </div>
+                    <div class="flex justify-end gap-6 font-bold text-amber-700 dark:text-amber-400">
+                        <span>Sisa Piutang:</span>
+                        <span>Rp {{ number_format($order->remaining_balance, 0, ',', '.') }}</span>
+                    </div>
+                </div>
+                @endif
             </div>
         </div>
     </div>
@@ -228,6 +259,24 @@
                     <time class="text-[10px] text-gray-400 font-semibold">{{ $order->shipped_at->format('d M Y, H:i') }}</time>
                     <p class="text-xs font-semibold text-gray-900 dark:text-white mt-0.5">Pesanan Dikirim</p>
                     <span class="text-[10px] text-gray-500">Barang telah diserahkan ke kurir pengiriman</span>
+                </li>
+                @endif
+
+                @if($order->tracking_number)
+                <li class="ml-4">
+                    <span class="absolute -left-[4.5px] mt-1.5 w-2.5 h-2.5 bg-cyan-500 rounded-full"></span>
+                    <time class="text-[10px] text-gray-400 font-semibold">Nomor Resi</time>
+                    <p class="text-xs font-semibold text-gray-900 dark:text-white mt-0.5 font-mono">{{ $order->tracking_number }}</p>
+                    <span class="text-[10px] text-cyan-600 dark:text-cyan-400">Nomor resi pengiriman telah dicatat</span>
+                </li>
+                @endif
+
+                @if($order->tracking_number)
+                <li class="ml-4">
+                    <span class="absolute -left-[4.5px] mt-1.5 w-2.5 h-2.5 bg-cyan-500 rounded-full"></span>
+                    <time class="text-[10px] text-gray-400 font-semibold">Nomor Resi</time>
+                    <p class="text-xs font-semibold text-gray-900 dark:text-white mt-0.5">{{ $order->tracking_number }}</p>
+                    <span class="text-[10px] text-cyan-600 dark:text-cyan-400">Nomor resi pengiriman telah dicatat</span>
                 </li>
                 @endif
 

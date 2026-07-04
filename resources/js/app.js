@@ -219,6 +219,16 @@ window.route = function(name, params = {}) {
         'roles.index': '/roles',
         'orders.index': '/orders',
         
+        // Auth routes
+        'customer.login': '/customer/login',
+        'customer.login.store': '/customer/login',
+        'customer.register': '/customer/register',
+        'customer.register.submit': '/customer/register',
+        'reseller.login': '/reseller/login',
+        'reseller.login.store': '/reseller/login',
+        'reseller.register': '/reseller/register',
+        'reseller.register.submit': '/reseller/register',
+
         // Parameterized routes
         'register.show': '/register/{type}',
         'register.submit': '/register/{type}',
@@ -238,11 +248,11 @@ window.route = function(name, params = {}) {
         'customer.orders': '/customer/orders',
         'customer.profile': '/customer/profile',
         'customer.profile.update': '/customer/profile/update',
-        'partner.dashboard': '/partner/dashboard',
-        'partner.orders': '/partner/orders',
-        'partner.billing': '/partner/billing',
-        'partner.profile': '/partner/profile',
-        'partner.profile.update': '/partner/profile/update',
+        'reseller.dashboard': '/reseller/dashboard',
+        'reseller.orders': '/reseller/orders',
+        'reseller.billing': '/reseller/billing',
+        'reseller.profile': '/reseller/profile',
+        'reseller.profile.update': '/reseller/profile/update',
     };
 
     let path = routes[name];

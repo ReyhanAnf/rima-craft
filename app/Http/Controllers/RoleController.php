@@ -72,7 +72,7 @@ class RoleController extends Controller
     public function destroy(Role $role): RedirectResponse
     {
         // Prevent deleting system roles
-        $systemRoles = ['super-admin', 'owner', 'operator', 'customer', 'partner'];
+        $systemRoles = ['super-admin', 'owner', 'operator', 'customer', 'reseller'];
         if (in_array($role->name, $systemRoles)) {
             return redirect()->back()
                 ->with('error', 'Role sistem tidak dapat dihapus');

@@ -18,7 +18,7 @@ class ProductPriceService
      */
     public function getProductPrice(Product $product, ?User $user = null): array
     {
-        $isReseller = $user && $user->hasRole('partner');
+        $isReseller = $user && $user->hasRole('reseller');
         $price = $product->getPriceForUser($user);
         $basePrice = (float) $product->base_price;
         $hasDiscount = $isReseller && $product->reseller_price && $product->reseller_price < $basePrice;

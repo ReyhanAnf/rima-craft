@@ -49,12 +49,18 @@
                     </span>
                 </td>
                 <td class="px-4 py-2.5">
-                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border uppercase tracking-wider
-                        {{ $order->payment_status === 'paid' ? 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/20 dark:text-emerald-400' : '' }}
-                        {{ $order->payment_status === 'unpaid' ? 'bg-red-50 border-red-200 text-red-700 dark:bg-red-500/10 dark:border-red-500/20 dark:text-red-400' : '' }}
-                        {{ $order->payment_status === 'refunded' ? 'bg-amber-50 border-amber-200 text-amber-700 dark:bg-amber-500/10 dark:border-amber-500/20 dark:text-amber-400' : '' }}">
-                        {{ $order->payment_status }}
-                    </span>
+                    @if($order->payment_status === 'partial')
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 ring-1 ring-amber-300 dark:ring-amber-700">
+                            DP
+                        </span>
+                    @else
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border uppercase tracking-wider
+                            {{ $order->payment_status === 'paid' ? 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/20 dark:text-emerald-400' : '' }}
+                            {{ $order->payment_status === 'unpaid' ? 'bg-red-50 border-red-200 text-red-700 dark:bg-red-500/10 dark:border-red-500/20 dark:text-red-400' : '' }}
+                            {{ $order->payment_status === 'refunded' ? 'bg-amber-50 border-amber-200 text-amber-700 dark:bg-amber-500/10 dark:border-amber-500/20 dark:text-amber-400' : '' }}">
+                            {{ $order->payment_status }}
+                        </span>
+                    @endif
                     @if($order->payment_proof)
                         <span class="ml-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-bold" title="Bukti Transfer Tersedia">📎 Bukti</span>
                     @endif
@@ -95,12 +101,18 @@
             </div>
         </div>
         <div class="flex justify-between items-end mt-2 pt-2 border-t border-gray-100 dark:border-gray-800">
-            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold border uppercase tracking-wider
-                        {{ $order->payment_status === 'paid' ? 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/20 dark:text-emerald-400' : '' }}
-                        {{ $order->payment_status === 'unpaid' ? 'bg-red-50 border-red-200 text-red-700 dark:bg-red-500/10 dark:border-red-500/20 dark:text-red-400' : '' }}
-                        {{ $order->payment_status === 'refunded' ? 'bg-amber-50 border-amber-200 text-amber-700 dark:bg-amber-500/10 dark:border-amber-500/20 dark:text-amber-400' : '' }}">
-                Bayar: {{ $order->payment_status }}
-            </span>
+            @if($order->payment_status === 'partial')
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 ring-1 ring-amber-300 dark:ring-amber-700">
+                    DP
+                </span>
+            @else
+                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold border uppercase tracking-wider
+                            {{ $order->payment_status === 'paid' ? 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/20 dark:text-emerald-400' : '' }}
+                            {{ $order->payment_status === 'unpaid' ? 'bg-red-50 border-red-200 text-red-700 dark:bg-red-500/10 dark:border-red-500/20 dark:text-red-400' : '' }}
+                            {{ $order->payment_status === 'refunded' ? 'bg-amber-50 border-amber-200 text-amber-700 dark:bg-amber-500/10 dark:border-amber-500/20 dark:text-amber-400' : '' }}">
+                    Bayar: {{ $order->payment_status }}
+                </span>
+            @endif
             <div class="flex items-center gap-2">
                 @if($order->payment_proof)
                     <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">📎 Bukti</span>

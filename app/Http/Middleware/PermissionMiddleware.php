@@ -6,7 +6,6 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -34,9 +33,14 @@ class PermissionMiddleware
             return redirect()->route('login');
         }
 
+        // Unset the cached roles relation to force a fresh DB query.
+        // This prevents stale Eloquent cache from failing permission checks
+        // immediately after registration (when role was just attached).
+        $user->unsetRelation('roles');
+
         $hasPermission = false;
         foreach ($permissions as $permission) {
-            if (Gate::allows($permission)) {
+            if ($user->hasPermission($permission)) {
                 $hasPermission = true;
                 break;
             }

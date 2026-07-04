@@ -1,6 +1,6 @@
 <script setup>
-import { ref } from 'vue';
-import { usePage } from '@inertiajs/vue3';
+import { ref, computed } from 'vue';
+import { usePage, Link } from '@inertiajs/vue3';
 import PublicLayout from '@/layouts/PublicLayout.vue';
 import { useCartStore } from '@/stores/cart';
 
@@ -189,6 +189,16 @@ function buildWaConfirmUrl() {
                         </svg>
                         Lanjutkan Belanja
                     </a>
+                    <Link
+                        v-if="page.props.auth?.user"
+                        :href="route('my-orders.index')"
+                        class="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-700 shadow-sm transition hover:bg-amber-100 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300 dark:hover:bg-amber-500/20"
+                    >
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                        </svg>
+                        Lihat Riwayat Pesanan
+                    </Link>
                     <a
                         :href="buildWaConfirmUrl()"
                         target="_blank"

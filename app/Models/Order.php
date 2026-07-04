@@ -18,7 +18,7 @@ class Order extends Model
         'customer_address', 'items', 'subtotal', 'shipping_cost', 'total', 'notes',
         'status', 'payment_method', 'payment_status', 'payment_proof', 'order_method',
         'whatsapp_url', 'confirmed_at', 'shipped_at', 'completed_at', 'cancelled_at',
-        'cancellation_reason',
+        'cancellation_reason', 'down_payment_amount', 'remaining_balance', 'tracking_number',
     ];
 
     protected $casts = [
@@ -26,6 +26,8 @@ class Order extends Model
         'subtotal' => 'decimal:2',
         'shipping_cost' => 'decimal:2',
         'total' => 'decimal:2',
+        'down_payment_amount' => 'decimal:2',
+        'remaining_balance' => 'decimal:2',
         'confirmed_at' => 'datetime',
         'shipped_at' => 'datetime',
         'completed_at' => 'datetime',
@@ -87,6 +89,11 @@ class Order extends Model
         return $this->payment_status === 'paid';
     }
 
+    public function isPartiallyPaid(): bool
+    {
+        return $this->payment_status === 'partial';
+    }
+
     // Status transitions
     public function confirm(): void
     {
@@ -140,6 +147,11 @@ class Order extends Model
     public function scopeConfirmed($query)
     {
         return $query->where('status', 'confirmed');
+    }
+
+    public function scopePartial($query)
+    {
+        return $query->where('payment_status', 'partial');
     }
 
     public function scopeThisMonth($query)

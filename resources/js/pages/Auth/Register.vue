@@ -32,7 +32,7 @@ const submitForm = () => {
 
 <template>
     <div class="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <Head :title="type === 'partner' ? 'Daftar Partner' : 'Daftar Akun Baru'" />
+        <Head :title="type === 'reseller' ? 'Daftar Reseller' : 'Daftar Akun Baru'" />
 
         <!-- Header -->
         <div class="sm:mx-auto sm:w-full sm:max-w-md text-center">
@@ -40,10 +40,10 @@ const submitForm = () => {
                 <span class="text-3xl font-serif font-bold text-gray-900 dark:text-white">{{ businessName }}</span>
             </Link>
             <h2 class="mt-6 text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
-                {{ type === 'partner' ? 'Daftar sebagai Partner' : 'Buat Akun Baru' }}
+                {{ type === 'reseller' ? 'Daftar sebagai Reseller' : 'Buat Akun Baru' }}
             </h2>
             <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                {{ type === 'partner' ? 'Dapatkan harga reseller dan keuntungan khusus keagenan' : 'Belanja kerajinan tradisional berkualitas Nusantara' }}
+                {{ type === 'reseller' ? 'Dapatkan harga grosir dan keuntungan khusus keagenan' : 'Belanja kerajinan tradisional berkualitas Nusantara' }}
             </p>
         </div>
 
@@ -82,8 +82,8 @@ const submitForm = () => {
                             <Textarea v-model="form.address" rows="3" placeholder="Alamat pengiriman barang..." />
                         </div>
 
-                        <!-- Partner Info -->
-                        <div v-if="type === 'partner'" class="border-t border-gray-100 dark:border-gray-850 pt-4 space-y-4">
+                        <!-- Reseller Info -->
+                        <div v-if="type === 'reseller'" class="border-t border-gray-100 dark:border-gray-850 pt-4 space-y-4">
                             <h3 class="text-sm font-bold uppercase text-gray-400">Informasi Bisnis</h3>
 
                             <div class="flex flex-col gap-1">
@@ -129,14 +129,14 @@ const submitForm = () => {
                     <!-- Login redirection -->
                     <div class="mt-6 border-t border-gray-100 dark:border-gray-850 pt-6 text-center">
                         <span class="text-xs text-gray-400">Sudah memiliki akun? </span>
-                        <Link :href="route('login')" class="text-xs font-bold text-amber-500 hover:underline">Masuk disini</Link>
+                        <Link :href="type === 'reseller' ? route('reseller.login') : route('customer.login')" class="text-xs font-bold text-amber-500 hover:underline">Masuk disini</Link>
                     </div>
                 </template>
             </Card>
 
-            <!-- Benefits box for partner -->
-            <div v-if="type === 'partner'" class="mt-6 bg-gradient-to-r from-emerald-500/5 to-teal-500/5 border border-emerald-500/10 rounded-xl p-5 text-xs text-emerald-800 dark:text-emerald-300 space-y-3">
-                <h4 class="font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Keuntungan Partner</h4>
+            <!-- Benefits box for reseller -->
+            <div v-if="type === 'reseller'" class="mt-6 bg-gradient-to-r from-emerald-500/5 to-teal-500/5 border border-emerald-500/10 rounded-xl p-5 text-xs text-emerald-800 dark:text-emerald-300 space-y-3">
+                <h4 class="font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Keuntungan Reseller</h4>
                 <ul class="space-y-1.5">
                     <li class="flex items-center gap-2"><i class="pi pi-check text-emerald-500"></i> Harga khusus reseller (lebih murah 10-20%)</li>
                     <li class="flex items-center gap-2"><i class="pi pi-check text-emerald-500"></i> Akses dashboard reseller dengan analitik khusus</li>

@@ -5,6 +5,7 @@ import AdminLayout from '@/layouts/AdminLayout.vue';
 import Card from 'primevue/card';
 import Button from 'primevue/button';
 import SelectButton from 'primevue/selectbutton';
+import Chart from 'primevue/chart';
 
 const props = defineProps({
     range: String,
@@ -27,11 +28,174 @@ const props = defineProps({
     topCustomers: Array,
     topSuppliers: Array,
     topProducts: Array,
-    chartData: Array,
+    chartData: Object,
     recentSales: Array,
 });
 
 const currentTab = ref('general');
+
+const chartJsData = computed(() => {
+    const categories = props.chartData?.categories || [];
+    const sales = props.chartData?.sales || [];
+    const purchases = props.chartData?.purchases || [];
+
+    return {
+        labels: categories,
+        datasets: [
+            {
+                label: 'Penjualan',
+                data: sales,
+                borderColor: '#10b981', // emerald-500
+                borderWidth: 3,
+                pointBackgroundColor: '#10b981',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                pointHoverBackgroundColor: '#10b981',
+                pointHoverBorderColor: '#ffffff',
+                pointHoverBorderWidth: 2,
+                tension: 0.4,
+                fill: true,
+                backgroundColor: (context) => {
+                    const chart = context.chart;
+                    const { ctx, chartArea } = chart;
+                    if (!chartArea) return 'rgba(16, 185, 129, 0.1)';
+                    const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                    gradient.addColorStop(0, 'rgba(16, 185, 129, 0.3)');
+                    gradient.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+                    return gradient;
+                },
+            },
+            {
+                label: 'Belanja',
+                data: purchases,
+                borderColor: '#f43f5e', // rose-500
+                borderWidth: 3,
+                pointBackgroundColor: '#f43f5e',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                pointHoverBackgroundColor: '#f43f5e',
+                pointHoverBorderColor: '#ffffff',
+                pointHoverBorderWidth: 2,
+                tension: 0.4,
+                fill: true,
+                backgroundColor: (context) => {
+                    const chart = context.chart;
+                    const { ctx, chartArea } = chart;
+                    if (!chartArea) return 'rgba(244, 63, 94, 0.1)';
+                    const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                    gradient.addColorStop(0, 'rgba(244, 63, 94, 0.3)');
+                    gradient.addColorStop(1, 'rgba(244, 63, 94, 0.0)');
+                    return gradient;
+                },
+            }
+        ]
+    };
+});
+
+const chartOptions = computed(() => {
+    const isDark = document.documentElement.classList.contains('dark');
+    const textColor = isDark ? '#94a3b8' : '#64748b';
+    const gridColor = isDark ? 'rgba(51, 65, 85, 0.5)' : 'rgba(226, 232, 240, 0.8)';
+    const tooltipBg = isDark ? '#0f172a' : '#ffffff';
+    const tooltipBorder = isDark ? '#334155' : '#e2e8f0';
+    const tooltipText = isDark ? '#f1f5f9' : '#1e293b';
+
+    return {
+        plugins: {
+            legend: {
+                position: 'top',
+                align: 'end',
+                labels: {
+                    color: isDark ? '#cbd5e1' : '#334155',
+                    boxWidth: 12,
+                    boxHeight: 12,
+                    usePointStyle: true,
+                    pointStyle: 'circle',
+                    font: {
+                        size: 12,
+                        weight: '600',
+                        family: 'system-ui, -apple-system, sans-serif'
+                    }
+                }
+            },
+            tooltip: {
+                backgroundColor: tooltipBg,
+                titleColor: tooltipText,
+                bodyColor: tooltipText,
+                borderColor: tooltipBorder,
+                borderWidth: 1,
+                padding: 12,
+                boxPadding: 6,
+                usePointStyle: true,
+                pointStyle: 'circle',
+                titleFont: {
+                    size: 13,
+                    weight: 'bold',
+                    family: 'system-ui, -apple-system, sans-serif'
+                },
+                bodyFont: {
+                    size: 12,
+                    family: 'system-ui, -apple-system, sans-serif'
+                },
+                callbacks: {
+                    label: (context) => {
+                        let label = context.dataset.label || '';
+                        if (label) {
+                            label += ': ';
+                        }
+                        if (context.parsed.y !== null) {
+                            label += new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(context.parsed.y);
+                        }
+                        return label;
+                    }
+                }
+            }
+        },
+        scales: {
+            x: {
+                ticks: {
+                    color: textColor,
+                    font: {
+                        size: 11,
+                        family: 'system-ui, -apple-system, sans-serif'
+                    }
+                },
+                grid: {
+                    display: false
+                }
+            },
+            y: {
+                ticks: {
+                    color: textColor,
+                    font: {
+                        size: 11,
+                        family: 'system-ui, -apple-system, sans-serif'
+                    },
+                    callback: (value) => {
+                        return new Intl.NumberFormat('id-ID', {
+                            notation: 'compact',
+                            compactDisplay: 'short'
+                        }).format(value);
+                    }
+                },
+                grid: {
+                    color: gridColor,
+                    drawBorder: false
+                }
+            }
+        },
+        interaction: {
+            mode: 'index',
+            intersect: false
+        },
+        responsive: true,
+        maintainAspectRatio: false
+    };
+});
 
 const rangeOptions = [
     { label: 'Hari Ini', value: 'today' },
@@ -247,6 +411,19 @@ const formatDate = (dateStr) => {
 
             <!-- TAB 2: ANALYTICS (Leaderboard / Recent Sales) -->
             <div v-if="currentTab === 'analytics'" class="space-y-6">
+                <!-- Analytics Chart -->
+                <div class="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Tren Penjualan vs Belanja</h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Grafik perbandingan pendapatan penjualan (omset) dan pengeluaran belanja bahan baku</p>
+                        </div>
+                    </div>
+                    <div class="h-80">
+                        <Chart type="line" :data="chartJsData" :options="chartOptions" class="h-full w-full" />
+                    </div>
+                </div>
+
                 <!-- Recent Sales List -->
                 <div class="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
                     <h3 class="text-lg font-bold mb-4">Penjualan Terbaru</h3>

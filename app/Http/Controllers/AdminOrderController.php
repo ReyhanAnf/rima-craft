@@ -73,10 +73,11 @@ class AdminOrderController extends Controller
     public function updateStatus(Request $request, Order $order)
     {
         $validated = $request->validate([
-            'status' => 'nullable|in:pending,confirmed,processing,shipped,completed,cancelled',
-            'payment_status' => 'nullable|in:unpaid,paid,refunded',
+            'status'              => 'nullable|in:pending,confirmed,processing,shipped,completed,cancelled',
+            'payment_status'      => 'nullable|in:unpaid,paid,partial,refunded',
             'cancellation_reason' => 'nullable|string|max:1000',
-            'payment_proof' => 'nullable|image|max:2048',
+            'payment_proof'       => 'nullable|image|max:2048',
+            'tracking_number'     => 'nullable|string|max:100',
         ]);
 
         $toastMessage = 'Order berhasil diperbarui!';
@@ -89,6 +90,11 @@ class AdminOrderController extends Controller
             $path = $request->file('payment_proof')->store('payment_proofs', 'public');
             $order->update(['payment_proof' => $path]);
             $toastMessage = 'Bukti pembayaran berhasil diunggah!';
+        }
+
+        // Update tracking number if provided
+        if ($request->filled('tracking_number')) {
+            $order->update(['tracking_number' => $validated['tracking_number']]);
         }
 
         // Update payment status
@@ -104,34 +110,44 @@ class AdminOrderController extends Controller
                         // 1. Get default cash account
                         $account = \App\Models\Account::first();
                         if ($account) {
-                            // 2. Create Payment record linked to Order
+                            // 2. Determine amount to record: use remaining_balance if DP exists, else full total
+                            $amountToRecord = $order->remaining_balance > 0
+                                ? (float) $order->remaining_balance
+                                : (float) $order->total;
+
+                            // 3. Build description based on whether DP was involved
+                            $description = $order->down_payment_amount > 0
+                                ? 'Pelunasan Piutang Order (B2C) #' . $order->order_number
+                                : 'Pendapatan Pesanan Online (B2C) #' . $order->order_number;
+
+                            // 4. Create Payment record linked to Order
                             $payment = \App\Models\Payment::create([
-                                'account_id' => $account->id,
-                                'date' => now()->format('Y-m-d'),
-                                'amount' => $order->total,
+                                'account_id'   => $account->id,
+                                'date'         => now()->format('Y-m-d'),
+                                'amount'       => $amountToRecord,
                                 'payable_type' => \App\Models\Order::class,
-                                'payable_id' => $order->id,
+                                'payable_id'   => $order->id,
                             ]);
 
-                            // 3. Create CashLedger entry categorized as B2C online sale income
+                            // 5. Create CashLedger entry categorized as B2C online sale income
                             \App\Models\CashLedger::create([
-                                'account_id' => $account->id,
-                                'date' => now()->format('Y-m-d'),
-                                'type' => 'in',
-                                'category' => \App\Models\CashLedger::CATEGORY_SALE_INCOME,
-                                'amount' => $order->total,
-                                'balance_after' => $account->balance + $order->total,
-                                'description' => 'Pendapatan Pesanan Online (B2C) #' . $order->order_number,
+                                'account_id'     => $account->id,
+                                'date'           => now()->format('Y-m-d'),
+                                'type'           => 'in',
+                                'category'       => \App\Models\CashLedger::CATEGORY_SALE_INCOME,
+                                'amount'         => $amountToRecord,
+                                'balance_after'  => $account->balance + $amountToRecord,
+                                'description'    => $description,
                                 'reference_type' => get_class($payment),
-                                'reference_id' => $payment->id,
+                                'reference_id'   => $payment->id,
                             ]);
 
-                            // 4. Update cash account balance
-                            $account->balance += $order->total;
+                            // 6. Update cash account balance
+                            $account->balance += $amountToRecord;
                             $account->save();
                         }
 
-                        // 5. Deduct product stock when payment is verified
+                        // 7. Deduct product stock when payment is verified
                         if (is_array($order->items)) {
                             foreach ($order->items as $item) {
                                 $product = \App\Models\Product::find($item['id']);
@@ -141,8 +157,13 @@ class AdminOrderController extends Controller
                                 }
                             }
                         }
+
+                        // 8. Clear remaining balance now that order is fully paid
+                        $order->update(['remaining_balance' => 0]);
                     });
                 }
+
+                // 'partial' payment_status: DP noted, no cash entry needed here (handled separately)
                 
                 $toastMessage = 'Status pembayaran berhasil diubah!';
             }

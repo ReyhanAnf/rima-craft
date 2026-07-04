@@ -156,7 +156,7 @@ class UserController extends Controller
     {
         return match ($roleName) {
             'customer' => 'customer',
-            'partner' => 'customer',
+            'reseller' => 'reseller',
             'operator', 'owner', 'super-admin' => 'staff',
             default => 'customer',
         };

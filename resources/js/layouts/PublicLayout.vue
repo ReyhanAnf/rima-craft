@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue';
-import { usePage } from '@inertiajs/vue3';
+import { usePage, Link } from '@inertiajs/vue3';
 import Navbar from '@/components/Navbar.vue';
 import CartDrawer from '@/components/CartDrawer.vue';
 import Toast from '@/components/Toast.vue';
@@ -19,6 +19,17 @@ const cartDrawer = ref(null);
 function openCart() {
     cartDrawer.value?.open();
 }
+
+const authUser = computed(() => page.props.auth?.user);
+
+const dashboardRouteName = computed(() => {
+    if (!page.props.auth?.roles) return null;
+    const roles = page.props.auth.roles;
+    if (roles.includes('customer')) return 'customer.dashboard';
+    if (roles.includes('reseller')) return 'reseller.dashboard';
+    if (roles.some(r => ['super-admin', 'owner', 'operator'].includes(r))) return 'dashboard';
+    return null;
+});
 
 const businessName    = computed(() => siteConfig.value.business_name    ?? 'Rima Craft');
 const businessPhone   = computed(() => siteConfig.value.business_phone   ?? '6281234567890');
@@ -70,7 +81,8 @@ const year            = new Date().getFullYear();
                         &copy; {{ year }} {{ businessName }}. Hak cipta dilindungi.
                     </div>
                     <div class="flex items-center gap-6">
-                        <a :href="loginUrl" class="text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-gray-600 hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-300">Login</a>
+                        <Link v-if="authUser && dashboardRouteName" :href="route(dashboardRouteName)" class="text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-gray-600 hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-300">Portal Saya</Link>
+                        <a v-else :href="loginUrl" class="text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-gray-600 hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-300">Login</a>
                     </div>
                 </div>
             </div>

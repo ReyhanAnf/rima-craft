@@ -30,14 +30,14 @@ class DashboardController extends Controller
         $endStr = $endDate->toDateString();
 
         // 2. Gather all data via repository
-        $financials = $this->dashboardRepo->getFinancialMetrics($startStr, $endStr);
+        $financials = $this->dashboardRepo->getFinancialMetrics($startDate, $endDate);
         $outstanding = $this->dashboardRepo->getOutstandingTotals();
         $operational = $this->dashboardRepo->getOperationalCounts($startStr, $endStr);
         $lowStock = $this->dashboardRepo->getLowStockMaterials();
         $invoices = $this->dashboardRepo->getOutstandingInvoices();
         $leaderboards = $this->dashboardRepo->getLeaderboards($startStr, $endStr);
         $chartData = $this->dashboardRepo->getChartData($startDate, $endDate);
-        $recentSales = $this->dashboardRepo->getRecentSales($startStr, $endStr);
+        $recentSales = $this->dashboardRepo->getRecentSales($startDate, $endDate);
 
         // Flatten arrays for view compatibility
         extract($financials);

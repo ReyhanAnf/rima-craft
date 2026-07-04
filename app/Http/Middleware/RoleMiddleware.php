@@ -33,6 +33,10 @@ class RoleMiddleware
             return redirect()->route('login');
         }
 
+        // Unset the cached roles relation to force a fresh DB query.
+        // This prevents stale Eloquent cache after registration.
+        $user->unsetRelation('roles');
+
         $hasRole = false;
         foreach ($roles as $role) {
             if ($user->hasRole($role)) {

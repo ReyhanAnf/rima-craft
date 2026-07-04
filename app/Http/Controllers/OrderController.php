@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\PaymentMethod;
 use App\Models\User;
 use App\Models\Role;
+use App\Models\Contact;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -27,6 +28,7 @@ class OrderController extends Controller
         return Inertia::render('CheckoutPage', [
             'paymentMethods' => $paymentMethods,
             'isGuest'        => ! auth()->check(),
+            'isPartner'      => auth()->check() && auth()->user()->hasRole('reseller'),
             'user'           => auth()->user()?->only(['name', 'email', 'phone']),
             'config'         => [
                 'business_name'    => config('settings.business_name', 'Rima Craft'),
@@ -93,10 +95,28 @@ class OrderController extends Controller
                 'whatsapp_url' => 'nullable|url',
                 'create_account' => 'nullable|boolean',
                 'password' => 'required_if:create_account,1|nullable|min:8|confirmed',
+                'payment_mode'        => 'nullable|in:full,dp',
+                'down_payment_amount' => 'nullable|numeric|min:0',
             ]);
 
             // Add items to validated data
             $validated['items'] = $items;
+
+            $paymentMode = $request->input('payment_mode', 'full');
+            $downPayment = 0;
+            $remaining   = 0;
+            $paymentStatus = 'unpaid';
+
+            if ($paymentMode === 'dp' && auth()->user()?->hasRole('reseller')) {
+                $total = (float) ($validated['total'] ?? 0);
+                $dp    = (float) ($validated['down_payment_amount'] ?? 0);
+                if ($dp < $total * 0.3) {
+                    return back()->withErrors(['down_payment_amount' => 'DP minimal 30% dari total order.'])->withInput();
+                }
+                $downPayment   = min($dp, $total);
+                $remaining     = max(0.0, $total - $downPayment);
+                $paymentStatus = $remaining > 0 ? 'partial' : 'unpaid';
+            }
 
             DB::beginTransaction();
 
@@ -109,15 +129,24 @@ class OrderController extends Controller
                 $user = User::create([
                     'name' => $validated['customer_name'],
                     'email' => $validated['customer_email'],
-                    'phone' => $validated['customer_phone'],
                     'password' => Hash::make($validated['password']),
-                    'status' => 'active',
+                    'role' => 'customer',
                 ]);
 
                 // Assign customer role
                 if ($customerRole) {
-                    $user->roles()->attach($customerRole);
+                    $user->roles()->attach($customerRole->id);
                 }
+
+                // Create contact for the user
+                Contact::create([
+                    'user_id' => $user->id,
+                    'type' => 'customer',
+                    'name' => $validated['customer_name'],
+                    'email' => $validated['customer_email'],
+                    'phone' => $validated['customer_phone'],
+                    'address' => $validated['customer_address'],
+                ]);
 
                 // Auto login the user
                 auth()->login($user);
@@ -144,7 +173,9 @@ class OrderController extends Controller
                 'order_method' => $validated['order_method'],
                 'whatsapp_url' => $validated['whatsapp_url'] ?? null,
                 'status' => 'pending',
-                'payment_status' => 'unpaid',
+                'payment_status'      => $paymentStatus,
+                'down_payment_amount' => $downPayment,
+                'remaining_balance'   => $remaining,
             ]);
 
             DB::commit();

@@ -19,6 +19,18 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\RoleMiddleware::class,
             'permission' => \App\Http\Middleware\PermissionMiddleware::class,
         ]);
+        $middleware->redirectUsersTo(function (Request $request) {
+            $user = $request->user();
+            if ($user) {
+                if ($user->roles()->where('name', 'reseller')->exists()) {
+                    return route('reseller.dashboard');
+                }
+                if ($user->roles()->where('name', 'customer')->exists()) {
+                    return route('customer.dashboard');
+                }
+            }
+            return route('dashboard');
+        });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

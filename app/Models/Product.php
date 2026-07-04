@@ -37,7 +37,7 @@ class Product extends Model
      */
     public function getPriceForUser(?User $user = null): float
     {
-        if ($user && $user->hasRole('partner')) {
+        if ($user && $user->hasRole('reseller')) {
             return $this->reseller_price && $this->reseller_price > 0 
                 ? (float) $this->reseller_price 
                 : (float) $this->base_price;

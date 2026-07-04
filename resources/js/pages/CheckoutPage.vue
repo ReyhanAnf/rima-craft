@@ -9,6 +9,7 @@ const props = defineProps({
     paymentMethods: { type: Array, default: () => [] },
     errors:         { type: Object, default: () => ({}) },
     isGuest:        { type: Boolean, default: true },
+    isPartner:      { type: Boolean, default: false },
     user:           { type: Object, default: null },
 });
 
@@ -49,12 +50,32 @@ const form = useForm({
     shipping_cost:    0,
     total:            0,
     items:            '[]',
+    payment_mode:         'full',
+    down_payment_amount:  0,
 });
+
+// DP state (partner only)
+const paymentMode = ref('full')
+const dpAmount    = ref(0)
+const dpError     = ref('')
+
+const remainingBalance = computed(() =>
+    paymentMode.value === 'dp' ? Math.max(0, cart.totalPrice - dpAmount.value) : 0
+)
+
+function validateDp() {
+    const min = cart.totalPrice * 0.3
+    dpError.value = dpAmount.value < min
+        ? `DP minimal ${formatPrice(min)} (30% dari total)`
+        : ''
+}
 
 const submitting = ref(false);
 
 const canSubmit = computed(() =>
-    cart.items.length > 0 && form.payment_method !== ''
+    cart.items.length > 0 &&
+    form.payment_method !== '' &&
+    (paymentMode.value !== 'dp' || (dpAmount.value >= cart.totalPrice * 0.3 && !dpError.value))
 );
 
 function submit() {
@@ -63,6 +84,8 @@ function submit() {
     form.subtotal  = cart.totalPrice;
     form.total     = cart.totalPrice;
     form.items     = JSON.stringify(cart.items);
+    form.payment_mode        = paymentMode.value;
+    form.down_payment_amount = paymentMode.value === 'dp' ? dpAmount.value : 0;
 
     submitting.value = true;
 
@@ -197,6 +220,7 @@ function formatPrice(val) {
                                                     class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all outline-none"
                                                     placeholder="Minimal 8 karakter"
                                                 />
+                                                <p v-if="form.errors.password" class="mt-1 text-xs text-red-500">{{ form.errors.password }}</p>
                                             </div>
                                             <div>
                                                 <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
@@ -210,6 +234,7 @@ function formatPrice(val) {
                                                     class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all outline-none"
                                                     placeholder="Ulangi password"
                                                 />
+                                                <p v-if="form.errors.password_confirmation" class="mt-1 text-xs text-red-500">{{ form.errors.password_confirmation }}</p>
                                             </div>
                                         </div>
                                     </Transition>
@@ -251,6 +276,46 @@ function formatPrice(val) {
                                         </div>
                                     </div>
                                     <p v-if="form.errors.payment_method" class="text-xs text-red-500">{{ form.errors.payment_method }}</p>
+                                </div>
+
+                                <!-- DP Option — partner only -->
+                                <div v-if="isPartner" class="space-y-4 p-5 bg-blue-50 dark:bg-blue-900/10 rounded-xl border border-blue-200 dark:border-blue-800/50">
+                                    <h3 class="text-base font-bold text-gray-900 dark:text-white">Opsi Pembayaran Partner</h3>
+                                    <div class="flex gap-3">
+                                        <label class="flex items-start gap-3 cursor-pointer p-3 rounded-lg border-2 flex-1 transition-all"
+                                               :class="paymentMode === 'full' ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900'">
+                                            <input type="radio" v-model="paymentMode" value="full" class="mt-0.5 w-4 h-4 text-amber-600" />
+                                            <div>
+                                                <p class="text-sm font-bold text-gray-900 dark:text-white">Bayar Lunas</p>
+                                                <p class="text-xs text-gray-500">Bayar penuh sekarang</p>
+                                            </div>
+                                        </label>
+                                        <label class="flex items-start gap-3 cursor-pointer p-3 rounded-lg border-2 flex-1 transition-all"
+                                               :class="paymentMode === 'dp' ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900'">
+                                            <input type="radio" v-model="paymentMode" value="dp" class="mt-0.5 w-4 h-4 text-amber-600" />
+                                            <div>
+                                                <p class="text-sm font-bold text-gray-900 dark:text-white">Bayar DP</p>
+                                                <p class="text-xs text-gray-500">Min. 30% di muka, sisa jadi piutang</p>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <Transition name="expand">
+                                        <div v-if="paymentMode === 'dp'" class="space-y-3 pt-3 border-t border-blue-200 dark:border-blue-800/50">
+                                            <div>
+                                                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                                    Nominal DP <span class="text-red-500">*</span>
+                                                </label>
+                                                <input type="number" v-model.number="dpAmount" @input="validateDp" min="0"
+                                                       class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 outline-none transition-all"
+                                                       placeholder="Masukkan nominal DP" />
+                                                <p v-if="dpError" class="mt-1 text-xs text-red-500">{{ dpError }}</p>
+                                            </div>
+                                            <div v-if="dpAmount > 0" class="flex justify-between items-center text-sm font-semibold p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800/50">
+                                                <span class="text-gray-700 dark:text-gray-300">Sisa Piutang:</span>
+                                                <span class="text-amber-700 dark:text-amber-400">{{ formatPrice(remainingBalance) }}</span>
+                                            </div>
+                                        </div>
+                                    </Transition>
                                 </div>
 
                                 <!-- Notes -->

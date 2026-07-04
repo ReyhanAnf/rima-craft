@@ -62,14 +62,16 @@ class DashboardRepository
     /**
      * Get financial metrics for the given date range.
      *
-    /**
      * @return array{totalSales: float, totalPurchases: float, totalProductionCost: float, grossProfit: float, cashInflow: float, cashOutflow: float, totalKas: float}
      */
-    public function getFinancialMetrics(string $startStr, string $endStr): array
+    public function getFinancialMetrics(Carbon $startDate, Carbon $endDate): array
     {
+        $startStr = $startDate->toDateString();
+        $endStr = $endDate->toDateString();
+
         $offlineSales = (float) Sale::whereBetween('date', [$startStr, $endStr])->sum('grand_total');
         $onlineSales = (float) \App\Models\Order::where('payment_status', 'paid')
-            ->whereBetween('created_at', [$startStr, $endStr])
+            ->whereBetween('created_at', [$startDate, $endDate])
             ->sum('total');
             
         $totalSales = $offlineSales + $onlineSales;
@@ -228,11 +230,6 @@ class DashboardRepository
         return compact('topCustomers', 'topSuppliers', 'topProducts');
     }
 
-    /**
-     * Get chart data for the analytics tab.
-     *
-     * @return array{categories: array<string>, sales: array<float>, purchases: array<float>, type: string}
-     */
     public function getChartData(Carbon $startDate, Carbon $endDate): array
     {
         $startStr = $startDate->toDateString();
@@ -246,10 +243,27 @@ class DashboardRepository
             'type' => ($diffInDays > 45) ? 'monthly' : 'daily',
         ];
 
+        // 1. Fetch offline sales
         $salesByDate = Sale::whereBetween('date', [$startStr, $endStr])
             ->selectRaw('date, SUM(grand_total) as total')
             ->groupBy('date')
             ->pluck('total', 'date');
+
+        // 2. Fetch online sales (paid orders)
+        $onlineSalesByDate = \App\Models\Order::where('payment_status', 'paid')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->selectRaw('DATE(created_at) as date_only, SUM(total) as total')
+            ->groupBy('date_only')
+            ->pluck('total', 'date_only');
+
+        // 3. Merge sales
+        $mergedSalesByDate = [];
+        foreach ($salesByDate as $dateStr => $total) {
+            $mergedSalesByDate[$dateStr] = (float) $total;
+        }
+        foreach ($onlineSalesByDate as $dateStr => $total) {
+            $mergedSalesByDate[$dateStr] = ($mergedSalesByDate[$dateStr] ?? 0.0) + (float) $total;
+        }
 
         $purchasesByDate = Purchase::whereBetween('date', [$startStr, $endStr])
             ->selectRaw('date, SUM(total_amount) as total')
@@ -258,7 +272,7 @@ class DashboardRepository
 
         if ($chartData['type'] === 'monthly') {
             $salesByMonth = [];
-            foreach ($salesByDate as $dateStr => $total) {
+            foreach ($mergedSalesByDate as $dateStr => $total) {
                 $monthStr = Carbon::parse($dateStr)->format('Y-m');
                 $salesByMonth[$monthStr] = ($salesByMonth[$monthStr] ?? 0) + $total;
             }
@@ -281,7 +295,7 @@ class DashboardRepository
             while ($current->lte($endDate)) {
                 $dateKey = $current->toDateString();
                 $chartData['categories'][] = $current->format('d M');
-                $chartData['sales'][] = (float) ($salesByDate[$dateKey] ?? 0);
+                $chartData['sales'][] = (float) ($mergedSalesByDate[$dateKey] ?? 0);
                 $chartData['purchases'][] = (float) ($purchasesByDate[$dateKey] ?? 0);
                 $current->addDay();
             }
@@ -291,20 +305,42 @@ class DashboardRepository
     }
 
     /**
-     * Get recent sales for the dashboard.
+     * Get recent sales for the dashboard, merging offline and online transactions.
      */
-    public function getRecentSales(string $startStr, string $endStr): \Illuminate\Database\Eloquent\Collection
+    public function getRecentSales(Carbon $startDate, Carbon $endDate): \Illuminate\Support\Collection
     {
-        $recentSales = Sale::with('customer')
+        $startStr = $startDate->toDateString();
+        $endStr = $endDate->toDateString();
+
+        $offline = Sale::with('customer')
             ->whereBetween('date', [$startStr, $endStr])
             ->latest()
             ->take(5)
-            ->get();
+            ->get()
+            ->map(fn($sale) => [
+                'id' => 'offline_' . $sale->id,
+                'invoice_number' => $sale->invoice_number,
+                'contact' => ['name' => $sale->customer->name ?? $sale->customer_name ?? 'Pelanggan Umum'],
+                'sale_date' => $sale->date,
+                'total_amount' => (float) $sale->grand_total,
+            ]);
 
-        if ($recentSales->isEmpty()) {
-            $recentSales = Sale::with('customer')->latest()->take(5)->get();
-        }
+        $online = \App\Models\Order::where('payment_status', 'paid')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->latest()
+            ->take(5)
+            ->get()
+            ->map(fn($order) => [
+                'id' => 'online_' . $order->id,
+                'invoice_number' => $order->order_number,
+                'contact' => ['name' => $order->customer_name ?? 'Pelanggan Online'],
+                'sale_date' => $order->created_at->toDateString(),
+                'total_amount' => (float) $order->total,
+            ]);
 
-        return $recentSales;
+        return $offline->concat($online)
+            ->sortByDesc('sale_date')
+            ->take(5)
+            ->values();
     }
 }

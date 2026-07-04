@@ -63,6 +63,7 @@
                     <option value="">Semua Status</option>
                     <option value="unpaid" {{ request('payment_status') === 'unpaid' ? 'selected' : '' }}>Belum Bayar (Unpaid)</option>
                     <option value="paid" {{ request('payment_status') === 'paid' ? 'selected' : '' }}>Lunas (Paid)</option>
+                    <option value="partial" {{ request('payment_status') === 'partial' ? 'selected' : '' }}>DP / Partial</option>
                     <option value="refunded" {{ request('payment_status') === 'refunded' ? 'selected' : '' }}>Dikembalikan (Refunded)</option>
                 </select>
             </div>
