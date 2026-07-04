@@ -46,6 +46,14 @@ Route::prefix('order')
         Route::post('/store', 'store')->name('store');
         Route::get('/success/{order}', 'success')->name('success');
     });
+
+Route::prefix('api/regions')
+    ->name('api.regions.')
+    ->controller(\App\Http\Controllers\RegionController::class)
+    ->group(function () {
+        Route::get('/{province}/cities', 'getCities')->name('cities');
+        Route::post('/calculate', 'calculateTotals')->name('calculate');
+    });
 // Login & Register pages accessible by anyone (even logged-in users switching portals)
 Route::controller(AuthController::class)->group(function () {
     // Redirect default login to customer login

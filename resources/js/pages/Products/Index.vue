@@ -15,6 +15,7 @@ import { useToast } from 'primevue/usetoast';
 const props = defineProps({
     products: Object,
     filters: Object,
+    regions: Array,
 });
 
 const toast = useToast();
@@ -54,6 +55,7 @@ const form = useForm({
     gallery_images: [],
     video_links: [''],
     variants: [],
+    region_prices: [],
 });
 
 const mainImagePreview = ref(null);
@@ -65,6 +67,7 @@ const openCreateModal = () => {
     form.reset();
     form.video_links = [''];
     form.variants = [];
+    form.region_prices = [];
     mainImagePreview.value = null;
     galleryPreviews.value = [];
     isFormOpen.value = true;
@@ -86,6 +89,11 @@ const openEditModal = (product) => {
         form.video_links = [''];
     }
     form.variants = (product.variants || []).map(v => ({ label: v.label, price_adj: v.price_adj ?? 0 }));
+    form.region_prices = (product.region_prices || []).map(rp => ({
+        region_id: rp.region_id,
+        base_price: rp.base_price ? Number(rp.base_price) : null,
+        reseller_price: rp.reseller_price ? Number(rp.reseller_price) : null,
+    }));
     mainImagePreview.value = product.image_path ? `/storage/${product.image_path}` : null;
     galleryPreviews.value = [];
     isFormOpen.value = true;
@@ -105,6 +113,14 @@ const addVariant = () => {
 };
 const removeVariant = (idx) => {
     form.variants.splice(idx, 1);
+};
+
+// Region Prices
+const addRegionPrice = () => {
+    form.region_prices.push({ region_id: '', base_price: null, reseller_price: null });
+};
+const removeRegionPrice = (idx) => {
+    form.region_prices.splice(idx, 1);
 };
 
 // Image Upload Previews
@@ -461,6 +477,62 @@ const formatCurrency = (val) => {
                                 severity="danger"
                                 text
                                 @click="removeVariant(idx)"
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Region Prices Section -->
+                    <div class="pt-4 border-t border-gray-150 dark:border-gray-800 space-y-3">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h4 class="text-sm font-bold text-gray-800 dark:text-gray-200">Harga Khusus Wilayah</h4>
+                                <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Opsional — Override harga dasar/reseller di wilayah tertentu.</p>
+                            </div>
+                            <Button label="Tambah Harga Wilayah" icon="pi pi-plus" size="small" text @click="addRegionPrice" />
+                        </div>
+                        <div v-if="form.region_prices.length === 0" class="text-xs text-gray-400 dark:text-gray-600 italic py-2 text-center border border-dashed border-gray-200 dark:border-gray-700 rounded-lg">
+                            Belum ada harga khusus wilayah.
+                        </div>
+                        <div v-for="(rp, idx) in form.region_prices" :key="idx" class="flex flex-col md:flex-row gap-2 items-end p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
+                            <div class="w-full md:flex-1">
+                                <label class="text-xs font-semibold block mb-1">Wilayah (Provinsi)</label>
+                                <select
+                                    v-model="form.region_prices[idx].region_id"
+                                    class="w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm"
+                                    required
+                                >
+                                    <option value="" disabled>Pilih Provinsi</option>
+                                    <option v-for="region in regions" :key="region.id" :value="region.id">{{ region.name }}</option>
+                                </select>
+                            </div>
+                            <div class="w-full md:w-32">
+                                <label class="text-xs font-semibold block mb-1">Harga Dasar (Rp)</label>
+                                <InputNumber
+                                    v-model="form.region_prices[idx].base_price"
+                                    placeholder="Opsional"
+                                    mode="decimal"
+                                    :min="0"
+                                    class="w-full"
+                                    inputClass="w-full text-sm"
+                                />
+                            </div>
+                            <div class="w-full md:w-32">
+                                <label class="text-xs font-semibold block mb-1">Harga Reseller (Rp)</label>
+                                <InputNumber
+                                    v-model="form.region_prices[idx].reseller_price"
+                                    placeholder="Opsional"
+                                    mode="decimal"
+                                    :min="0"
+                                    class="w-full"
+                                    inputClass="w-full text-sm"
+                                />
+                            </div>
+                            <Button
+                                icon="pi pi-trash"
+                                severity="danger"
+                                text
+                                class="mt-2 md:mt-0 md:ml-1"
+                                @click="removeRegionPrice(idx)"
                             />
                         </div>
                     </div>

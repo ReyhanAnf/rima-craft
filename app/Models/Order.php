@@ -15,7 +15,7 @@ class Order extends Model
 
     protected $fillable = [
         'user_id', 'order_number', 'customer_name', 'customer_phone', 'customer_email',
-        'customer_address', 'items', 'subtotal', 'shipping_cost', 'total', 'notes',
+        'customer_address', 'province_id', 'city_id', 'items', 'subtotal', 'shipping_cost', 'total', 'notes',
         'status', 'payment_method', 'payment_status', 'payment_proof', 'order_method',
         'whatsapp_url', 'confirmed_at', 'shipped_at', 'completed_at', 'cancelled_at',
         'cancellation_reason', 'down_payment_amount', 'remaining_balance', 'tracking_number',
@@ -51,6 +51,16 @@ class Order extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function province(): BelongsTo
+    {
+        return $this->belongsTo(Region::class, 'province_id');
+    }
+
+    public function city(): BelongsTo
+    {
+        return $this->belongsTo(Region::class, 'city_id');
     }
 
     // Status helpers

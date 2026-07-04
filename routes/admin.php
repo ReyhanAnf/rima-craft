@@ -120,6 +120,7 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('permission:view-settings')->group(function () {
         Route::resource('payment-methods', \App\Http\Controllers\AdminPaymentMethodController::class)->except(['show']);
+        Route::resource('regions', \App\Http\Controllers\AdminRegionController::class)->except(['create', 'show', 'edit']);
     });
 
     Route::middleware('permission:view-gallery')->group(function () {

@@ -16,14 +16,17 @@ class ProductController extends Controller
 {
     public function index(Request $request): InertiaResponse
     {
-        $query = Product::query();
+        $query = Product::with('regionPrices.region');
         if ($request->filled('search')) {
             $query->where('name', 'like', '%' . $request->search . '%');
         }
         $products = $query->orderBy('name')->paginate(10)->withQueryString();
 
+        $regions = \App\Models\Region::where('type', 'province')->orderBy('name')->get(['id', 'name']);
+
         return Inertia::render('Products/Index', [
             'products' => $products,
+            'regions' => $regions,
             'filters' => $request->only(['search']),
         ]);
     }
@@ -64,6 +67,22 @@ class ProductController extends Controller
             ? array_values(array_filter($validated['variants'], fn($v) => !empty($v['label'])))
             : null;
         $product->save();
+
+        if (isset($validated['region_prices']) && is_array($validated['region_prices'])) {
+            $regionPricesData = [];
+            foreach ($validated['region_prices'] as $rp) {
+                if (!empty($rp['region_id']) && (!empty($rp['base_price']) || !empty($rp['reseller_price']))) {
+                    $regionPricesData[] = [
+                        'region_id' => $rp['region_id'],
+                        'base_price' => !empty($rp['base_price']) ? $rp['base_price'] : null,
+                        'reseller_price' => !empty($rp['reseller_price']) ? $rp['reseller_price'] : null,
+                    ];
+                }
+            }
+            if (!empty($regionPricesData)) {
+                $product->regionPrices()->createMany($regionPricesData);
+            }
+        }
 
         return redirect()->route('products.index')
             ->with('success', 'Produk berhasil ditambahkan!');
@@ -107,6 +126,23 @@ class ProductController extends Controller
             ? array_values(array_filter($validated['variants'], fn($v) => !empty($v['label'])))
             : null;
         $product->save();
+
+        if (isset($validated['region_prices']) && is_array($validated['region_prices'])) {
+            $product->regionPrices()->delete();
+            $regionPricesData = [];
+            foreach ($validated['region_prices'] as $rp) {
+                if (!empty($rp['region_id']) && (!empty($rp['base_price']) || !empty($rp['reseller_price']))) {
+                    $regionPricesData[] = [
+                        'region_id' => $rp['region_id'],
+                        'base_price' => !empty($rp['base_price']) ? $rp['base_price'] : null,
+                        'reseller_price' => !empty($rp['reseller_price']) ? $rp['reseller_price'] : null,
+                    ];
+                }
+            }
+            if (!empty($regionPricesData)) {
+                $product->regionPrices()->createMany($regionPricesData);
+            }
+        }
 
         return redirect()->route('products.index')
             ->with('success', 'Produk berhasil diperbarui!');

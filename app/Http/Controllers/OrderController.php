@@ -24,9 +24,11 @@ class OrderController extends Controller
     public function checkout(): InertiaResponse
     {
         $paymentMethods = PaymentMethod::active()->ordered()->get(['name', 'code', 'type', 'account_number', 'account_name']);
+        $provinces = \App\Models\Region::where('type', 'province')->get(['id', 'name']);
 
         return Inertia::render('CheckoutPage', [
             'paymentMethods' => $paymentMethods,
+            'provinces'      => $provinces,
             'isGuest'        => ! auth()->check(),
             'isPartner'      => auth()->check() && auth()->user()->hasRole('reseller'),
             'user'           => auth()->user()?->only(['name', 'email', 'phone']),
@@ -86,6 +88,8 @@ class OrderController extends Controller
                         : (auth()->check() ? \Illuminate\Validation\Rule::unique('users', 'email')->ignore(auth()->id()) : ''),
                 ],
                 'customer_address' => 'required|string|max:1000',
+                'province_id' => 'required|exists:regions,id',
+                'city_id' => 'required|exists:regions,id',
                 'subtotal' => 'required|numeric|min:0',
                 'shipping_cost' => 'nullable|numeric|min:0',
                 'total' => 'required|numeric|min:0',
@@ -146,6 +150,8 @@ class OrderController extends Controller
                     'email' => $validated['customer_email'],
                     'phone' => $validated['customer_phone'],
                     'address' => $validated['customer_address'],
+                    'province_id' => $validated['province_id'],
+                    'city_id' => $validated['city_id'],
                 ]);
 
                 // Auto login the user
@@ -164,6 +170,8 @@ class OrderController extends Controller
                 'customer_phone' => $validated['customer_phone'],
                 'customer_email' => $validated['customer_email'] ?? null,
                 'customer_address' => $validated['customer_address'] ?? null,
+                'province_id' => $validated['province_id'],
+                'city_id' => $validated['city_id'],
                 'items' => $validated['items'],
                 'subtotal' => $validated['subtotal'],
                 'shipping_cost' => $validated['shipping_cost'] ?? 0,

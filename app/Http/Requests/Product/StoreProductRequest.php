@@ -29,6 +29,10 @@ class StoreProductRequest extends FormRequest
             'variants'           => ['nullable', 'array'],
             'variants.*.label'   => ['required_with:variants', 'string', 'max:100'],
             'variants.*.price_adj' => ['nullable', 'numeric', 'min:0'],
+            'region_prices'      => ['nullable', 'array'],
+            'region_prices.*.region_id' => ['required_with:region_prices', 'exists:regions,id'],
+            'region_prices.*.base_price' => ['nullable', 'numeric', 'min:0'],
+            'region_prices.*.reseller_price' => ['nullable', 'numeric', 'min:0'],
         ];
     }
 }

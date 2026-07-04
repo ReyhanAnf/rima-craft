@@ -7,6 +7,7 @@ import { useToastStore } from '@/stores/toast';
 
 const props = defineProps({
     paymentMethods: { type: Array, default: () => [] },
+    provinces:      { type: Array, default: () => [] },
     errors:         { type: Object, default: () => ({}) },
     isGuest:        { type: Boolean, default: true },
     isPartner:      { type: Boolean, default: false },
@@ -40,6 +41,8 @@ const form = useForm({
     customer_email:   props.user?.email   ?? '',
     customer_phone:   props.user?.phone   ?? '',
     customer_address: '',
+    province_id:      '',
+    city_id:          '',
     payment_method:   '',
     notes:            cart.notes,
     create_account:   false,
@@ -54,17 +57,27 @@ const form = useForm({
     down_payment_amount:  0,
 });
 
+// Region states
+const cities = ref([]);
+const loadingCities = ref(false);
+const calculatingTotals = ref(false);
+
+const subtotal = ref(cart.totalPrice);
+const shippingCost = ref(0);
+const finalTotal = ref(cart.totalPrice);
+const updatedItems = ref([...cart.items]);
+
 // DP state (partner only)
 const paymentMode = ref('full')
 const dpAmount    = ref(0)
 const dpError     = ref('')
 
 const remainingBalance = computed(() =>
-    paymentMode.value === 'dp' ? Math.max(0, cart.totalPrice - dpAmount.value) : 0
+    paymentMode.value === 'dp' ? Math.max(0, finalTotal.value - dpAmount.value) : 0
 )
 
 function validateDp() {
-    const min = cart.totalPrice * 0.3
+    const min = finalTotal.value * 0.3
     dpError.value = dpAmount.value < min
         ? `DP minimal ${formatPrice(min)} (30% dari total)`
         : ''
@@ -75,15 +88,68 @@ const submitting = ref(false);
 const canSubmit = computed(() =>
     cart.items.length > 0 &&
     form.payment_method !== '' &&
-    (paymentMode.value !== 'dp' || (dpAmount.value >= cart.totalPrice * 0.3 && !dpError.value))
+    form.province_id !== '' &&
+    form.city_id !== '' &&
+    (paymentMode.value !== 'dp' || (dpAmount.value >= finalTotal.value * 0.3 && !dpError.value))
 );
+
+async function onProvinceChange() {
+    form.city_id = '';
+    cities.value = [];
+    if (!form.province_id) return;
+    
+    loadingCities.value = true;
+    try {
+        const response = await fetch(`/api/regions/${form.province_id}/cities`);
+        if (response.ok) {
+            cities.value = await response.json();
+        }
+    } catch (e) {
+        console.error('Failed to fetch cities', e);
+    } finally {
+        loadingCities.value = false;
+    }
+}
+
+async function onCityChange() {
+    if (!form.city_id) return;
+    
+    calculatingTotals.value = true;
+    try {
+        const response = await fetch('/api/regions/calculate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+            },
+            body: JSON.stringify({
+                city_id: form.city_id,
+                items: cart.items,
+            }),
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            subtotal.value = data.subtotal;
+            shippingCost.value = data.shipping_cost;
+            finalTotal.value = data.total;
+            updatedItems.value = data.items;
+            validateDp();
+        }
+    } catch (e) {
+        console.error('Failed to calculate totals', e);
+    } finally {
+        calculatingTotals.value = false;
+    }
+}
 
 function submit() {
     if (!canSubmit.value) return;
 
-    form.subtotal  = cart.totalPrice;
-    form.total     = cart.totalPrice;
-    form.items     = JSON.stringify(cart.items);
+    form.subtotal  = subtotal.value;
+    form.shipping_cost = shippingCost.value;
+    form.total     = finalTotal.value;
+    form.items     = JSON.stringify(updatedItems.value);
     form.payment_mode        = paymentMode.value;
     form.down_payment_amount = paymentMode.value === 'dp' ? dpAmount.value : 0;
 
@@ -178,15 +244,53 @@ function formatPrice(val) {
                                         <p v-if="form.errors.customer_email" class="mt-1 text-xs text-red-500">{{ form.errors.customer_email }}</p>
                                     </div>
 
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                                Provinsi <span class="text-red-500">*</span>
+                                            </label>
+                                            <select
+                                                v-model="form.province_id"
+                                                @change="onProvinceChange"
+                                                required
+                                                class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all outline-none"
+                                            >
+                                                <option value="" disabled>Pilih Provinsi</option>
+                                                <option v-for="prov in provinces" :key="prov.id" :value="prov.id">
+                                                    {{ prov.name }}
+                                                </option>
+                                            </select>
+                                            <p v-if="form.errors.province_id" class="mt-1 text-xs text-red-500">{{ form.errors.province_id }}</p>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                                Kota/Kabupaten <span class="text-red-500">*</span>
+                                            </label>
+                                            <select
+                                                v-model="form.city_id"
+                                                @change="onCityChange"
+                                                :disabled="!form.province_id || loadingCities"
+                                                required
+                                                class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all outline-none"
+                                            >
+                                                <option value="" disabled>{{ loadingCities ? 'Memuat...' : 'Pilih Kota/Kabupaten' }}</option>
+                                                <option v-for="city in cities" :key="city.id" :value="city.id">
+                                                    {{ city.name }}
+                                                </option>
+                                            </select>
+                                            <p v-if="form.errors.city_id" class="mt-1 text-xs text-red-500">{{ form.errors.city_id }}</p>
+                                        </div>
+                                    </div>
+
                                     <div>
                                         <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                                            Alamat Pengiriman <span class="text-red-500">*</span>
+                                            Alamat Pengiriman (Jalan, RT/RW, Kecamatan) <span class="text-red-500">*</span>
                                         </label>
                                         <textarea
                                             v-model="form.customer_address"
                                             required rows="3"
                                             class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all outline-none resize-none"
-                                            placeholder="Masukkan alamat lengkap untuk pengiriman"
+                                            placeholder="Masukkan nama jalan, nomor rumah, RT/RW, kecamatan, dan kodepos"
                                         />
                                         <p v-if="form.errors.customer_address" class="mt-1 text-xs text-red-500">{{ form.errors.customer_address }}</p>
                                     </div>
@@ -366,7 +470,7 @@ function formatPrice(val) {
 
                                 <!-- Items -->
                                 <div
-                                    v-for="item in cart.items"
+                                    v-for="item in updatedItems"
                                     :key="item.id"
                                     class="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
                                 >
@@ -375,27 +479,32 @@ function formatPrice(val) {
                                     </div>
                                     <div class="flex-1 min-w-0">
                                         <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ item.name }}</p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ formatPrice(item.price) }}</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                                            {{ formatPrice(item.price) }}
+                                            <span v-if="item.has_discount" class="ml-1 text-[10px] bg-red-100 text-red-600 px-1 py-0.5 rounded">Diskon Reseller</span>
+                                        </p>
                                     </div>
-                                    <p class="text-sm font-bold text-gray-900 dark:text-white">{{ formatPrice(item.price * item.qty) }}</p>
+                                    <p class="text-sm font-bold text-gray-900 dark:text-white">{{ formatPrice(item.subtotal || (item.price * item.qty)) }}</p>
                                 </div>
                             </div>
 
                             <!-- Totals -->
-                            <div v-if="cart.items.length > 0">
+                            <div v-if="updatedItems.length > 0">
                                 <div class="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-2">
                                     <div class="flex justify-between text-sm">
                                         <span class="text-gray-600 dark:text-gray-400">Subtotal</span>
-                                        <span class="font-semibold text-gray-900 dark:text-white">{{ formatPrice(cart.totalPrice) }}</span>
+                                        <span class="font-semibold text-gray-900 dark:text-white">{{ formatPrice(subtotal) }}</span>
                                     </div>
                                     <div class="flex justify-between text-sm">
                                         <span class="text-gray-600 dark:text-gray-400">Ongkos Kirim</span>
-                                        <span class="font-semibold text-gray-900 dark:text-white">Gratis</span>
+                                        <span class="font-semibold text-gray-900 dark:text-white">
+                                            {{ form.city_id ? (shippingCost > 0 ? formatPrice(shippingCost) : 'Gratis') : 'Pilih Kota/Kab' }}
+                                        </span>
                                     </div>
                                     <div class="border-t border-gray-200 dark:border-gray-700 pt-3">
                                         <div class="flex justify-between text-base font-bold">
                                             <span class="text-gray-900 dark:text-white">Total</span>
-                                            <span class="text-amber-600 dark:text-amber-400">{{ formatPrice(cart.totalPrice) }}</span>
+                                            <span class="text-amber-600 dark:text-amber-400">{{ formatPrice(finalTotal) }}</span>
                                         </div>
                                     </div>
                                 </div>

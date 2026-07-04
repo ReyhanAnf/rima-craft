@@ -14,14 +14,19 @@ class ProductPriceService
      * 
      * @param Product $product
      * @param User|null $user
+     * @param \App\Models\Region|null $region
      * @return array{price: float, formatted: string, is_reseller: bool, has_discount: bool}
      */
-    public function getProductPrice(Product $product, ?User $user = null): array
+    public function getProductPrice(Product $product, ?User $user = null, ?\App\Models\Region $region = null): array
     {
         $isReseller = $user && $user->hasRole('reseller');
-        $price = $product->getPriceForUser($user);
-        $basePrice = (float) $product->base_price;
-        $hasDiscount = $isReseller && $product->reseller_price && $product->reseller_price < $basePrice;
+        $price = $product->getPriceForUser($user, $region);
+        
+        $regionPrice = $region ? $product->regionPrices()->where('region_id', $region->id)->first() : null;
+        $basePrice = $regionPrice ? (float) $regionPrice->base_price : (float) $product->base_price;
+        $resellerPrice = $regionPrice ? (float) $regionPrice->reseller_price : (float) $product->reseller_price;
+        
+        $hasDiscount = $isReseller && $resellerPrice && $resellerPrice < $basePrice;
         
         return [
             'price' => $price,
@@ -30,8 +35,8 @@ class ProductPriceService
             'has_discount' => $hasDiscount,
             'base_price' => $basePrice,
             'base_price_formatted' => $this->formatRupiah($basePrice),
-            'reseller_price' => $product->reseller_price ? (float) $product->reseller_price : null,
-            'reseller_price_formatted' => $product->reseller_price ? $this->formatRupiah((float) $product->reseller_price) : null,
+            'reseller_price' => $resellerPrice ? (float) $resellerPrice : null,
+            'reseller_price_formatted' => $resellerPrice ? $this->formatRupiah((float) $resellerPrice) : null,
         ];
     }
 
@@ -50,20 +55,24 @@ class ProductPriceService
      * Calculate discount percentage
      * 
      * @param Product $product
+     * @param \App\Models\Region|null $region
      * @return float
      */
-    public function getDiscountPercentage(Product $product): float
+    public function getDiscountPercentage(Product $product, ?\App\Models\Region $region = null): float
     {
-        if (!$product->reseller_price || $product->reseller_price <= 0) {
+        $regionPrice = $region ? $product->regionPrices()->where('region_id', $region->id)->first() : null;
+        $basePrice = $regionPrice ? (float) $regionPrice->base_price : (float) $product->base_price;
+        $resellerPrice = $regionPrice ? (float) $regionPrice->reseller_price : (float) $product->reseller_price;
+
+        if (!$resellerPrice || $resellerPrice <= 0) {
             return 0;
         }
         
-        $basePrice = (float) $product->base_price;
         if ($basePrice <= 0) {
             return 0;
         }
         
-        $discount = (($basePrice - $product->reseller_price) / $basePrice) * 100;
+        $discount = (($basePrice - $resellerPrice) / $basePrice) * 100;
         return round($discount, 1);
     }
 
@@ -73,13 +82,18 @@ class ProductPriceService
      * @param Product $product
      * @param int $quantity
      * @param User $user
+     * @param \App\Models\Region|null $region
      * @return array{unit_price: float, total: float, savings: float}
      */
-    public function getBulkPrice(Product $product, int $quantity, User $user): array
+    public function getBulkPrice(Product $product, int $quantity, User $user, ?\App\Models\Region $region = null): array
     {
-        $unitPrice = $product->getPriceForUser($user);
+        $unitPrice = $product->getPriceForUser($user, $region);
         $total = $unitPrice * $quantity;
-        $baseTotal = (float) $product->base_price * $quantity;
+        
+        $regionPrice = $region ? $product->regionPrices()->where('region_id', $region->id)->first() : null;
+        $basePrice = $regionPrice ? (float) $regionPrice->base_price : (float) $product->base_price;
+        
+        $baseTotal = $basePrice * $quantity;
         $savings = $baseTotal - $total;
         
         return [
