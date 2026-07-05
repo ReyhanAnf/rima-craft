@@ -23,7 +23,7 @@ class OrderController extends Controller
      */
     public function checkout(): InertiaResponse
     {
-        $paymentMethods = PaymentMethod::active()->ordered()->get(['name', 'code', 'type', 'account_number', 'account_name']);
+        $paymentMethods = PaymentMethod::active()->ordered()->get(['name', 'code', 'type', 'account_number', 'account_name', 'icon']);
         $provinces = \App\Models\Region::where('type', 'province')->get(['id', 'name']);
 
         return Inertia::render('CheckoutPage', [
@@ -31,7 +31,14 @@ class OrderController extends Controller
             'provinces'      => $provinces,
             'isGuest'        => ! auth()->check(),
             'isPartner'      => auth()->check() && auth()->user()->hasRole('reseller'),
-            'user'           => auth()->user()?->only(['name', 'email', 'phone']),
+            'user'           => auth()->user() ? [
+                'name'        => auth()->user()->name,
+                'email'       => auth()->user()->email,
+                'phone'       => auth()->user()->contact?->phone ?? auth()->user()->phone,
+                'address'     => auth()->user()->contact?->address ?? '',
+                'province_id' => auth()->user()->contact?->province_id ?? '',
+                'city_id'     => auth()->user()->contact?->city_id ?? '',
+            ] : null,
             'config'         => [
                 'business_name'    => config('settings.business_name', 'Rima Craft'),
                 'business_phone'   => config('settings.business_phone', '6281234567890'),
@@ -58,7 +65,7 @@ class OrderController extends Controller
     /**
      * Store a new order (public endpoint)
      */
-    public function store(Request $request)
+    public function store(Request $request, \App\Services\ProductPriceService $priceService)
     {
         try {
             // Decode items from JSON string to array
@@ -71,7 +78,7 @@ class OrderController extends Controller
             }
 
             foreach ($items as $index => $item) {
-                if (!isset($item['id']) || !isset($item['name']) || !isset($item['qty']) || !isset($item['price'])) {
+                if (!isset($item['id']) || !isset($item['qty'])) {
                     return back()->withErrors(['items' => 'Data item tidak lengkap.']);
                 }
             }
@@ -90,9 +97,6 @@ class OrderController extends Controller
                 'customer_address' => 'required|string|max:1000',
                 'province_id' => 'required|exists:regions,id',
                 'city_id' => 'required|exists:regions,id',
-                'subtotal' => 'required|numeric|min:0',
-                'shipping_cost' => 'nullable|numeric|min:0',
-                'total' => 'required|numeric|min:0',
                 'notes' => 'nullable|string|max:1000',
                 'payment_method' => 'required|string|exists:payment_methods,code',
                 'order_method' => 'required|in:whatsapp,form',
@@ -103,8 +107,48 @@ class OrderController extends Controller
                 'down_payment_amount' => 'nullable|numeric|min:0',
             ]);
 
-            // Add items to validated data
-            $validated['items'] = $items;
+            // Server-side Recalculation to prevent Price Manipulation
+            $city = \App\Models\Region::with('shippingRate')->find($validated['city_id']);
+            $user = auth()->user();
+            $calculatedSubtotal = 0;
+            $calculatedItems = [];
+
+            foreach ($items as $item) {
+                $product = \App\Models\Product::find($item['id']);
+                if (!$product) {
+                    return back()->withErrors(['items' => "Produk tidak ditemukan."])->withInput();
+                }
+                
+                $priceData = $priceService->getProductPrice($product, $user, $city);
+                $unitPrice = (float) $priceData['price'];
+                $qty = (int) $item['qty'];
+
+                if ($qty <= 0) {
+                    return back()->withErrors(['items' => "Jumlah kuantitas tidak valid."])->withInput();
+                }
+
+                $itemSubtotal = $unitPrice * $qty;
+                $calculatedSubtotal += $itemSubtotal;
+
+                $calculatedItems[] = [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'qty' => $qty,
+                    'price' => $unitPrice,
+                    'subtotal' => $itemSubtotal,
+                    'has_discount' => $priceData['has_discount'],
+                    'image' => $product->image_path ? (str_starts_with($product->image_path, 'http') || str_starts_with($product->image_path, '/') ? $product->image_path : '/storage/' . $product->image_path) : null,
+                ];
+            }
+
+            $calculatedShippingCost = $city && $city->shippingRate ? (float) $city->shippingRate->shipping_cost : 0.0;
+            $calculatedTotal = $calculatedSubtotal + $calculatedShippingCost;
+
+            // Enforce calculations onto validated data
+            $validated['subtotal'] = $calculatedSubtotal;
+            $validated['shipping_cost'] = $calculatedShippingCost;
+            $validated['total'] = $calculatedTotal;
+            $validated['items'] = $calculatedItems;
 
             $paymentMode = $request->input('payment_mode', 'full');
             $downPayment = 0;
@@ -112,7 +156,7 @@ class OrderController extends Controller
             $paymentStatus = 'unpaid';
 
             if ($paymentMode === 'dp' && auth()->user()?->hasRole('reseller')) {
-                $total = (float) ($validated['total'] ?? 0);
+                $total = (float) $calculatedTotal;
                 $dp    = (float) ($validated['down_payment_amount'] ?? 0);
                 if ($dp < $total * 0.3) {
                     return back()->withErrors(['down_payment_amount' => 'DP minimal 30% dari total order.'])->withInput();
@@ -128,7 +172,7 @@ class OrderController extends Controller
             $userId = auth()->id();
             if ($request->input('create_account') && !$userId) {
                 // Find or create customer role
-                $customerRole = Role::where('slug', 'customer')->first();
+                $customerRole = Role::where('name', 'customer')->first();
                 
                 $user = User::create([
                     'name' => $validated['customer_name'],

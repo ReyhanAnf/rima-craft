@@ -21,15 +21,15 @@ class CustomerPortalController extends Controller
         $user = Auth::user();
         
         // Get customer's recent orders
-        $recentOrders = Sale::where('customer_id', $user->id)
-            ->orderByDesc('date')
+        $recentOrders = \App\Models\Order::where('user_id', $user->id)
+            ->orderByDesc('created_at')
             ->limit(5)
             ->get();
         
         // Get order statistics
-        $totalOrders = Sale::where('customer_id', $user->id)->count();
-        $pendingOrders = Sale::where('customer_id', $user->id)
-            ->where('shipping_status', 'pending')
+        $totalOrders = \App\Models\Order::where('user_id', $user->id)->count();
+        $pendingOrders = \App\Models\Order::where('user_id', $user->id)
+            ->where('status', 'pending')
             ->count();
         
         return Inertia::render('Portal/Customer/Dashboard', [
@@ -44,23 +44,22 @@ class CustomerPortalController extends Controller
      */
     public function orders(Request $request): InertiaResponse
     {
-        $query = Sale::where('customer_id', Auth::id())
-            ->with('items.product');
+        $query = \App\Models\Order::where('user_id', Auth::id());
         
         // Filter by status
         if ($request->filled('status')) {
-            $query->where('shipping_status', $request->status);
+            $query->where('status', $request->status);
         }
         
         // Filter by date range
         if ($request->filled('date_from')) {
-            $query->where('date', '>=', $request->date_from);
+            $query->whereDate('created_at', '>=', $request->date_from);
         }
         if ($request->filled('date_to')) {
-            $query->where('date', '<=', $request->date_to);
+            $query->whereDate('created_at', '<=', $request->date_to);
         }
         
-        $orders = $query->orderByDesc('date')->paginate(15)->withQueryString();
+        $orders = $query->orderByDesc('created_at')->paginate(15)->withQueryString();
         
         return Inertia::render('Portal/Customer/Orders', [
             'orders' => $orders,
@@ -75,10 +74,12 @@ class CustomerPortalController extends Controller
     {
         $user = Auth::user();
         $contact = $user->contact;
+        $provinces = \App\Models\Region::where('type', 'province')->orderBy('name')->get(['id', 'name']);
         
         return Inertia::render('Portal/Customer/Profile', [
             'user' => $user,
             'contact' => $contact,
+            'provinces' => $provinces,
         ]);
     }
 
@@ -91,18 +92,36 @@ class CustomerPortalController extends Controller
             'name' => 'required|string|max:255',
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string',
+            'province_id' => 'nullable|exists:regions,id',
+            'city_id' => 'nullable|exists:regions,id',
+            'current_password' => 'nullable|string|required_with:new_password',
+            'new_password' => 'nullable|string|min:8|confirmed',
         ]);
 
         $user = Auth::user();
-        $user->update([
+        
+        $userUpdate = [
             'name' => $request->name,
-        ]);
+        ];
+
+        if ($request->filled('new_password')) {
+            if (!\Illuminate\Support\Facades\Hash::check($request->current_password, $user->password)) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'current_password' => ['Password saat ini tidak cocok.'],
+                ]);
+            }
+            $userUpdate['password'] = \Illuminate\Support\Facades\Hash::make($request->new_password);
+        }
+
+        $user->update($userUpdate);
 
         // Update contact if exists
         if ($user->contact) {
             $user->contact->update([
                 'phone' => $request->phone,
                 'address' => $request->address,
+                'province_id' => $request->province_id,
+                'city_id' => $request->city_id,
             ]);
         }
 

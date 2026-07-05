@@ -34,6 +34,11 @@ class Product extends Model
         return $this->hasMany(ProductRegionPrice::class);
     }
 
+    public function userPrices()
+    {
+        return $this->hasMany(ProductUserPrice::class);
+    }
+
     /**
      * Get price based on user role and optional region
      * 
@@ -43,8 +48,23 @@ class Product extends Model
      */
     public function getPriceForUser(?User $user = null, ?Region $region = null): float
     {
+        // 1. User-specific reseller override (Highest Priority)
+        if ($user) {
+            $userPrice = $this->userPrices()->where('user_id', $user->id)->first();
+            if ($userPrice) {
+                return (float) $userPrice->price;
+            }
+        }
+
+        // 2. Region Price Override (Second Priority: City -> Province)
         if ($region) {
+            // First check specific region price (e.g., City)
             $regionPrice = $this->regionPrices()->where('region_id', $region->id)->first();
+            
+            // If not found, and the region is a city/regency with parent province, check parent
+            if (!$regionPrice && $region->parent_id) {
+                $regionPrice = $this->regionPrices()->where('region_id', $region->parent_id)->first();
+            }
             
             if ($regionPrice) {
                 if ($user && $user->hasRole('reseller')) {
@@ -56,6 +76,7 @@ class Product extends Model
             }
         }
 
+        // 3. Fallback to product default reseller or base price
         if ($user && $user->hasRole('reseller')) {
             return $this->reseller_price && $this->reseller_price > 0 
                 ? (float) $this->reseller_price 

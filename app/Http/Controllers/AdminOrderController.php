@@ -104,63 +104,9 @@ class AdminOrderController extends Controller
             if ($oldPaymentStatus !== $newPaymentStatus) {
                 $order->update(['payment_status' => $newPaymentStatus]);
                 
-                // Realtime Sync: If status changed to PAID, record payment transaction to cash ledger
-                if ($newPaymentStatus === 'paid') {
-                    \Illuminate\Support\Facades\DB::transaction(function () use ($order) {
-                        // 1. Get default cash account
-                        $account = \App\Models\Account::first();
-                        if ($account) {
-                            // 2. Determine amount to record: use remaining_balance if DP exists, else full total
-                            $amountToRecord = $order->remaining_balance > 0
-                                ? (float) $order->remaining_balance
-                                : (float) $order->total;
-
-                            // 3. Build description based on whether DP was involved
-                            $description = $order->down_payment_amount > 0
-                                ? 'Pelunasan Piutang Order (B2C) #' . $order->order_number
-                                : 'Pendapatan Pesanan Online (B2C) #' . $order->order_number;
-
-                            // 4. Create Payment record linked to Order
-                            $payment = \App\Models\Payment::create([
-                                'account_id'   => $account->id,
-                                'date'         => now()->format('Y-m-d'),
-                                'amount'       => $amountToRecord,
-                                'payable_type' => \App\Models\Order::class,
-                                'payable_id'   => $order->id,
-                            ]);
-
-                            // 5. Create CashLedger entry categorized as B2C online sale income
-                            \App\Models\CashLedger::create([
-                                'account_id'     => $account->id,
-                                'date'           => now()->format('Y-m-d'),
-                                'type'           => 'in',
-                                'category'       => \App\Models\CashLedger::CATEGORY_SALE_INCOME,
-                                'amount'         => $amountToRecord,
-                                'balance_after'  => $account->balance + $amountToRecord,
-                                'description'    => $description,
-                                'reference_type' => get_class($payment),
-                                'reference_id'   => $payment->id,
-                            ]);
-
-                            // 6. Update cash account balance
-                            $account->balance += $amountToRecord;
-                            $account->save();
-                        }
-
-                        // 7. Deduct product stock when payment is verified
-                        if (is_array($order->items)) {
-                            foreach ($order->items as $item) {
-                                $product = \App\Models\Product::find($item['id']);
-                                if ($product) {
-                                    $product->current_stock = max(0, $product->current_stock - $item['qty']);
-                                    $product->save();
-                                }
-                            }
-                        }
-
-                        // 8. Clear remaining balance now that order is fully paid
-                        $order->update(['remaining_balance' => 0]);
-                    });
+                // Realtime Sync: Record payment transaction to cash ledger based on status transitions
+                if ($newPaymentStatus === 'partial' || $newPaymentStatus === 'paid') {
+                    $this->syncPaymentToLedger($order, $oldPaymentStatus, $newPaymentStatus);
                 }
 
                 // 'partial' payment_status: DP noted, no cash entry needed here (handled separately)
@@ -204,5 +150,89 @@ class AdminOrderController extends Controller
 
         return redirect()->route('orders.index')
             ->with('success', 'Pesanan berhasil dihapus!');
+    }
+
+    /**
+     * Sync payment transaction to the cash ledger based on status transitions.
+     */
+    private function syncPaymentToLedger(Order $order, string $oldPaymentStatus, string $newPaymentStatus): void
+    {
+        \Illuminate\Support\Facades\DB::transaction(function () use ($order, $oldPaymentStatus, $newPaymentStatus) {
+            $account = \App\Models\Account::first();
+            if (!$account) return;
+
+            $amountToRecord = 0;
+            $description = '';
+
+            if ($newPaymentStatus === 'partial' && $oldPaymentStatus === 'unpaid') {
+                // Record DP payment
+                $amountToRecord = (float) $order->down_payment_amount;
+                $description = 'Uang Muka (DP) Order #' . $order->order_number;
+            } elseif ($newPaymentStatus === 'paid') {
+                if ($oldPaymentStatus === 'partial') {
+                    // Record settlement payment
+                    $amountToRecord = (float) $order->remaining_balance;
+                    $description = 'Pelunasan Piutang Order #' . $order->order_number;
+                } else {
+                    // Direct full payment (or skipped partial step)
+                    $amountToRecord = (float) $order->total;
+                    $description = 'Pembayaran Lunas Order #' . $order->order_number;
+                }
+            }
+
+            if ($amountToRecord > 0) {
+                $payment = \App\Models\Payment::create([
+                    'account_id'   => $account->id,
+                    'date'         => now()->format('Y-m-d'),
+                    'amount'       => $amountToRecord,
+                    'payable_type' => \App\Models\Order::class,
+                    'payable_id'   => $order->id,
+                ]);
+
+                $label = 'Online';
+                if ($order->payment_method === 'cod') {
+                    $label = 'COD';
+                } else {
+                    $methodDetail = \App\Models\PaymentMethod::where('code', $order->payment_method)->first();
+                    if ($methodDetail) {
+                        $label = $methodDetail->name;
+                    } else if ($order->payment_method) {
+                        $label = strtoupper($order->payment_method);
+                    }
+                }
+
+                \App\Models\CashLedger::create([
+                    'account_id'     => $account->id,
+                    'payment_label'  => $label,
+                    'date'           => now()->format('Y-m-d'),
+                    'type'           => 'in',
+                    'category'       => \App\Models\CashLedger::CATEGORY_SALE_INCOME,
+                    'amount'         => $amountToRecord,
+                    'balance_after'  => $account->balance + $amountToRecord,
+                    'description'    => $description,
+                    'reference_type' => get_class($payment),
+                    'reference_id'   => $payment->id,
+                ]);
+
+                $account->balance += $amountToRecord;
+                $account->save();
+            }
+
+            // 7. Deduct product stock when payment is verified
+            if ($newPaymentStatus === 'paid') {
+                if (is_array($order->items)) {
+                    foreach ($order->items as $item) {
+                        $product = \App\Models\Product::find($item['id']);
+                        if ($product) {
+                            $product->current_stock = max(0, $product->current_stock - $item['qty']);
+                            $product->save();
+                        }
+                    }
+                }
+
+                // 8. Clear remaining balance now that order is fully paid
+                $order->update(['remaining_balance' => 0]);
+            }
+        });
     }
 }

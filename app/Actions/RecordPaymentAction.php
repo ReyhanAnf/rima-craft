@@ -25,7 +25,7 @@ class RecordPaymentAction
     public function handle(array $data): Payment
     {
         return DB::transaction(function () use ($data): Payment {
-            $account = Account::lockForUpdate()->findOrFail($data['account_id']);
+            $account = Account::lockForUpdate()->findOrFail(1);
             $payableClass = 'App\\Models\\' . $data['payable_type'];
 
             /** @var \Illuminate\Database\Eloquent\Model $payable */
@@ -65,6 +65,7 @@ class RecordPaymentAction
 
             CashLedger::create([
                 'account_id' => $account->id,
+                'payment_label' => 'Cash',
                 'date' => $data['date'],
                 'type' => $txType,
                 'amount' => $data['amount'],

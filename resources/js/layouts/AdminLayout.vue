@@ -70,6 +70,19 @@ const hasPermission = (perm) => {
     return permissions.value.includes(perm);
 };
 
+const isRouteActive = (itemRoute) => {
+    if (route().current(itemRoute)) return true;
+    if (route().current('my-orders.show')) {
+        if (itemRoute === 'customer.orders' && roles.value.includes('customer')) {
+            return true;
+        }
+        if (itemRoute === 'reseller.orders' && roles.value.includes('reseller')) {
+            return true;
+        }
+    }
+    return false;
+};
+
 // Filtered navigation structure grouped by category
 const categorizedNavigation = computed(() => {
     const list = [];
@@ -159,7 +172,7 @@ const mobileBottomItems = computed(() => {
         items.push({ name: 'Penjualan', route: 'sales.index', icon: 'M9 8h6m-6 2h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' });
     }
     if (flatNavigation.value.some(item => item.route === 'finance.index')) {
-        items.push({ name: 'Buku Kas', route: 'finance.index', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' });
+        items.push({ name: 'Keuangan', route: 'finance.index', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' });
     }
     return items;
 });
@@ -178,12 +191,18 @@ const mobileBottomItems = computed(() => {
             <!-- Sidebar Header -->
             <div class="h-16 flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-800">
                 <Link :href="route(dashboardRouteName || 'dashboard')" class="flex items-center gap-2 overflow-hidden">
-                    <div class="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <img v-if="siteConfig.logo_url" :src="`/storage/${siteConfig.logo_url}`" class="w-8 h-8 object-contain rounded-lg flex-shrink-0 bg-white p-0.5 border border-gray-200" alt="Logo" />
+                    <div v-else class="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center flex-shrink-0">
                         <span class="text-white font-bold">R</span>
                     </div>
-                    <span v-show="adminStore.isSidebarOpen" class="font-bold text-lg text-gray-900 dark:text-white transition-opacity duration-200">
-                        {{ siteConfig.business_name || 'Rima Craft' }}
-                    </span>
+                    <div v-show="adminStore.isSidebarOpen" class="flex flex-col min-w-0">
+                        <span class="font-bold text-sm text-gray-900 dark:text-white leading-tight truncate">
+                            {{ siteConfig.business_name || 'Rima Craft' }}
+                        </span>
+                        <span v-if="siteConfig.business_subtitle" class="text-[9px] text-gray-500 dark:text-gray-400 font-medium leading-none truncate mt-0.5">
+                            {{ siteConfig.business_subtitle }}
+                        </span>
+                    </div>
                 </Link>
             </div>
 
@@ -206,7 +225,7 @@ const mobileBottomItems = computed(() => {
                         :href="route(item.route)"
                         :class="[
                             'flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold transition-all group',
-                            route().current(item.route)
+                            isRouteActive(item.route)
                                 ? 'bg-amber-500 text-gray-950 shadow-md shadow-amber-500/10'
                                 : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/60 hover:text-gray-900 dark:hover:text-white'
                         ]"
@@ -235,6 +254,25 @@ const mobileBottomItems = computed(() => {
                     <span v-show="adminStore.isSidebarOpen" class="truncate">Download App</span>
                 </button>
             </div>
+
+            <!-- Sidebar Sponsors Footer -->
+            <div v-show="adminStore.isSidebarOpen && (siteConfig.sponsor_1_name || siteConfig.sponsor_2_name || siteConfig.sponsor_3_name || siteConfig.sponsor_4_name)" class="p-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/20 dark:bg-gray-900/10">
+                <p class="text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-2">Sponsor:</p>
+                <div class="flex flex-wrap items-center gap-3">
+                    <div v-if="siteConfig.sponsor_1_name" class="flex items-center gap-1.5" :title="siteConfig.sponsor_1_name">
+                        <img v-if="siteConfig.sponsor_1_logo_url" :src="`/storage/${siteConfig.sponsor_1_logo_url}`" class="h-5 w-auto object-contain rounded bg-white p-0.5 border border-gray-200" />
+                    </div>
+                    <div v-if="siteConfig.sponsor_2_name" class="flex items-center gap-1.5" :title="siteConfig.sponsor_2_name">
+                        <img v-if="siteConfig.sponsor_2_logo_url" :src="`/storage/${siteConfig.sponsor_2_logo_url}`" class="h-5 w-auto object-contain rounded bg-white p-0.5 border border-gray-200" />
+                    </div>
+                    <div v-if="siteConfig.sponsor_3_name" class="flex items-center gap-1.5" :title="siteConfig.sponsor_3_name">
+                        <img v-if="siteConfig.sponsor_3_logo_url" :src="`/storage/${siteConfig.sponsor_3_logo_url}`" class="h-5 w-auto object-contain rounded bg-white p-0.5 border border-gray-200" />
+                    </div>
+                    <div v-if="siteConfig.sponsor_4_name" class="flex items-center gap-1.5" :title="siteConfig.sponsor_4_name">
+                        <img v-if="siteConfig.sponsor_4_logo_url" :src="`/storage/${siteConfig.sponsor_4_logo_url}`" class="h-5 w-auto object-contain rounded bg-white p-0.5 border border-gray-200" />
+                    </div>
+                </div>
+            </div>
         </aside>
 
         <!-- Main Body -->
@@ -249,13 +287,19 @@ const mobileBottomItems = computed(() => {
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
                 </button>
-                <div class="lg:hidden flex items-center gap-2">
-                    <div class="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                <div class="lg:hidden flex items-center gap-2 min-w-0">
+                    <img v-if="siteConfig.logo_url" :src="`/storage/${siteConfig.logo_url}`" class="w-8 h-8 object-contain rounded-lg flex-shrink-0 bg-white p-0.5 border border-gray-250" alt="Logo" />
+                    <div v-else class="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center flex-shrink-0">
                         <span class="text-white font-bold">R</span>
                     </div>
-                    <span class="font-bold text-md text-gray-900 dark:text-white">
-                        {{ siteConfig.business_name || 'Rima Craft' }}
-                    </span>
+                    <div class="flex flex-col min-w-0">
+                        <span class="font-bold text-sm text-gray-900 dark:text-white leading-tight truncate">
+                            {{ siteConfig.business_name || 'Rima Craft' }}
+                        </span>
+                        <span v-if="siteConfig.business_subtitle" class="text-[8px] text-gray-500 dark:text-gray-400 font-medium leading-none truncate">
+                            {{ siteConfig.business_subtitle }}
+                        </span>
+                    </div>
                 </div>
 
                 <!-- Actions -->
@@ -293,8 +337,33 @@ const mobileBottomItems = computed(() => {
             </header>
 
             <!-- Main Content Area -->
-            <main class="flex-1 overflow-y-auto p-6 pb-24 lg:pb-6">
-                <slot />
+            <main class="flex-1 overflow-y-auto p-6 pb-24 lg:pb-6 flex flex-col justify-between">
+                <div>
+                    <slot />
+                </div>
+
+                <!-- Admin Footer (Sponsors) -->
+                <div v-if="siteConfig.sponsor_1_name || siteConfig.sponsor_2_name || siteConfig.sponsor_3_name || siteConfig.sponsor_4_name" class="mt-12 pt-6 border-t border-gray-200 dark:border-gray-800 flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <span class="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Didukung & Disponsori Oleh:</span>
+                    <div class="flex flex-wrap items-center gap-6">
+                        <div v-if="siteConfig.sponsor_1_name" class="flex items-center gap-2">
+                            <img v-if="siteConfig.sponsor_1_logo_url" :src="`/storage/${siteConfig.sponsor_1_logo_url}`" class="h-5 w-auto object-contain rounded bg-white p-0.5 border border-gray-200" :alt="siteConfig.sponsor_1_name" />
+                            <span class="text-[10px] font-semibold text-gray-500 dark:text-gray-400">{{ siteConfig.sponsor_1_name }}</span>
+                        </div>
+                        <div v-if="siteConfig.sponsor_2_name" class="flex items-center gap-2">
+                            <img v-if="siteConfig.sponsor_2_logo_url" :src="`/storage/${siteConfig.sponsor_2_logo_url}`" class="h-5 w-auto object-contain rounded bg-white p-0.5 border border-gray-200" :alt="siteConfig.sponsor_2_name" />
+                            <span class="text-[10px] font-semibold text-gray-500 dark:text-gray-400">{{ siteConfig.sponsor_2_name }}</span>
+                        </div>
+                        <div v-if="siteConfig.sponsor_3_name" class="flex items-center gap-2">
+                            <img v-if="siteConfig.sponsor_3_logo_url" :src="`/storage/${siteConfig.sponsor_3_logo_url}`" class="h-5 w-auto object-contain rounded bg-white p-0.5 border border-gray-200" :alt="siteConfig.sponsor_3_name" />
+                            <span class="text-[10px] font-semibold text-gray-500 dark:text-gray-400">{{ siteConfig.sponsor_3_name }}</span>
+                        </div>
+                        <div v-if="siteConfig.sponsor_4_name" class="flex items-center gap-2">
+                            <img v-if="siteConfig.sponsor_4_logo_url" :src="`/storage/${siteConfig.sponsor_4_logo_url}`" class="h-5 w-auto object-contain rounded bg-white p-0.5 border border-gray-200" :alt="siteConfig.sponsor_4_name" />
+                            <span class="text-[10px] font-semibold text-gray-500 dark:text-gray-400">{{ siteConfig.sponsor_4_name }}</span>
+                        </div>
+                    </div>
+                </div>
             </main>
         </div>
 
@@ -308,7 +377,7 @@ const mobileBottomItems = computed(() => {
                     :href="route(item.route)"
                     :class="[
                         'flex flex-col items-center gap-1 py-1 px-3 rounded-lg text-center',
-                        route().current(item.route) ? 'text-amber-500 font-bold' : 'text-gray-500 dark:text-gray-400'
+                        isRouteActive(item.route) ? 'text-amber-500 font-bold' : 'text-gray-500 dark:text-gray-400'
                     ]"
                 >
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -365,7 +434,7 @@ const mobileBottomItems = computed(() => {
                             @click="isMobileMenuOpen = false"
                             :class="[
                                 'flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold transition-all',
-                                route().current(item.route)
+                                isRouteActive(item.route)
                                     ? 'bg-amber-500 text-gray-950 shadow-md shadow-amber-500/10'
                                     : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/60 hover:text-gray-900 dark:hover:text-white'
                             ]"

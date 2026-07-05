@@ -30,6 +30,8 @@ const cart = useCartStore();
 const theme = useThemeStore();
 const scrolled = ref(false);
 
+const siteConfig = computed(() => page.props.siteConfig || {});
+
 function onScroll() {
     scrolled.value = window.pageYOffset > 20;
 }
@@ -50,10 +52,16 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll));
             :class="scrolled ? 'h-16' : 'h-24'"
         >
             <div class="flex items-center">
-                <Link href="/" class="block">
-                    <h1 class="text-2xl md:text-3xl font-serif font-bold tracking-[0.15em] text-gray-900 dark:text-white uppercase transition-colors">
-                        {{ businessName }}
-                    </h1>
+                <Link href="/" class="flex items-center gap-3">
+                    <img v-if="siteConfig.logo_url" :src="`/storage/${siteConfig.logo_url}`" class="h-10 w-auto object-contain rounded" alt="Logo" />
+                    <div>
+                        <h1 class="text-xl md:text-2xl font-serif font-bold tracking-[0.10em] text-gray-900 dark:text-white uppercase transition-colors leading-none">
+                            {{ businessName }}
+                        </h1>
+                        <p v-if="siteConfig.business_subtitle" class="text-[9px] md:text-[10px] text-gray-500 dark:text-gray-400 font-medium tracking-normal mt-1.5 leading-tight">
+                            {{ siteConfig.business_subtitle }}
+                        </p>
+                    </div>
                 </Link>
             </div>
 

@@ -70,29 +70,52 @@ class DashboardRepository
         $endStr = $endDate->toDateString();
 
         $offlineSales = (float) Sale::whereBetween('date', [$startStr, $endStr])->sum('grand_total');
-        $onlineSales = (float) \App\Models\Order::where('payment_status', 'paid')
+        $onlinePaidSales = (float) \App\Models\Order::where('payment_status', 'paid')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->sum('total');
-            
+        $onlinePartialSales = (float) \App\Models\Order::where('payment_status', 'partial')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->sum('down_payment_amount');
+        $onlineSales = $onlinePaidSales + $onlinePartialSales;
+        
         $totalSales = $offlineSales + $onlineSales;
         $totalPurchases = (float) Purchase::whereBetween('date', [$startStr, $endStr])->sum('total_amount');
         
         // Sum of all production costs (materials HPP + labor + overhead)
-        $totalProductionCost = (float) CashLedger::whereIn('category', [
-            CashLedger::CATEGORY_PRODUCTION_MATERIAL,
-            CashLedger::CATEGORY_PRODUCTION_LABOR,
-            CashLedger::CATEGORY_PRODUCTION_OVERHEAD
-        ])->whereBetween('date', [$startStr, $endStr])->sum('amount');
+        $prodMaterial = (float) CashLedger::where('category', CashLedger::CATEGORY_PRODUCTION_MATERIAL)
+            ->whereBetween('date', [$startStr, $endStr])->sum('amount');
+        $prodLabor = (float) CashLedger::where('category', CashLedger::CATEGORY_PRODUCTION_LABOR)
+            ->whereBetween('date', [$startStr, $endStr])->sum('amount');
+        $prodOverhead = (float) CashLedger::where('category', CashLedger::CATEGORY_PRODUCTION_OVERHEAD)
+            ->whereBetween('date', [$startStr, $endStr])->sum('amount');
+        $totalProductionCost = $prodMaterial + $prodLabor + $prodOverhead;
 
         // Net gross profit = Sales - Purchases (raw material buys) - Production costs (actually used in production)
         $grossProfit = $totalSales - $totalPurchases - $totalProductionCost;
+        $profitMargin = $totalSales > 0 ? ($grossProfit / $totalSales) * 100 : 0;
 
         $cashInflow = (float) CashLedger::where('type', 'in')->whereBetween('date', [$startStr, $endStr])->sum('amount');
         $cashOutflow = (float) CashLedger::where('type', 'out')->whereBetween('date', [$startStr, $endStr])->sum('amount');
 
         $totalKas = (float) Account::sum('balance');
 
-        return compact('totalSales', 'totalPurchases', 'totalProductionCost', 'grossProfit', 'cashInflow', 'cashOutflow', 'totalKas');
+        $productionBreakdown = [
+            'material' => $prodMaterial,
+            'labor' => $prodLabor,
+            'overhead' => $prodOverhead,
+        ];
+
+        return compact(
+            'totalSales', 
+            'totalPurchases', 
+            'totalProductionCost', 
+            'grossProfit', 
+            'profitMargin',
+            'cashInflow', 
+            'cashOutflow', 
+            'totalKas', 
+            'productionBreakdown'
+        );
     }
 
     /**
@@ -249,12 +272,26 @@ class DashboardRepository
             ->groupBy('date')
             ->pluck('total', 'date');
 
-        // 2. Fetch online sales (paid orders)
-        $onlineSalesByDate = \App\Models\Order::where('payment_status', 'paid')
+        // 2. Fetch online sales (paid and partial orders)
+        $onlinePaidSalesByDate = \App\Models\Order::where('payment_status', 'paid')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->selectRaw('DATE(created_at) as date_only, SUM(total) as total')
             ->groupBy('date_only')
             ->pluck('total', 'date_only');
+
+        $onlinePartialSalesByDate = \App\Models\Order::where('payment_status', 'partial')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->selectRaw('DATE(created_at) as date_only, SUM(down_payment_amount) as total')
+            ->groupBy('date_only')
+            ->pluck('total', 'date_only');
+
+        $onlineSalesByDate = [];
+        foreach ($onlinePaidSalesByDate as $dateStr => $total) {
+            $onlineSalesByDate[$dateStr] = (float) $total;
+        }
+        foreach ($onlinePartialSalesByDate as $dateStr => $total) {
+            $onlineSalesByDate[$dateStr] = ($onlineSalesByDate[$dateStr] ?? 0.0) + (float) $total;
+        }
 
         // 3. Merge sales
         $mergedSalesByDate = [];
@@ -325,7 +362,7 @@ class DashboardRepository
                 'total_amount' => (float) $sale->grand_total,
             ]);
 
-        $online = \App\Models\Order::where('payment_status', 'paid')
+        $online = \App\Models\Order::whereIn('payment_status', ['paid', 'partial'])
             ->whereBetween('created_at', [$startDate, $endDate])
             ->latest()
             ->take(5)

@@ -22,14 +22,42 @@ class SettingController extends Controller
 
     public function update(Request $request): RedirectResponse
     {
-        $data = $request->except(['_token', '_method', 'looping_video', 'hero_image', 'gallery_1_image', 'gallery_2_image']);
+        $isDevAdmin = auth()->user()->hasRole('dev-admin');
+
+        $data = $request->except([
+            '_token', '_method', 
+            'looping_video', 'hero_image', 'gallery_1_image', 'gallery_2_image',
+            'logo', 'sponsor_1_logo', 'sponsor_2_logo', 'sponsor_3_logo', 'sponsor_4_logo'
+        ]);
+
+        $devKeys = [
+            'business_subtitle',
+            'sponsor_1_name', 'sponsor_1_logo_url',
+            'sponsor_2_name', 'sponsor_2_logo_url',
+            'sponsor_3_name', 'sponsor_3_logo_url',
+            'sponsor_4_name', 'sponsor_4_logo_url',
+        ];
+
+        if (!$isDevAdmin) {
+            foreach ($devKeys as $key) {
+                unset($data[$key]);
+            }
+        }
 
         $filesToUpload = [
             'looping_video' => 'looping_video_url',
             'hero_image' => 'hero_image_url',
             'gallery_1_image' => 'gallery_1_url',
-            'gallery_2_image' => 'gallery_2_url'
+            'gallery_2_image' => 'gallery_2_url',
+            'logo' => 'logo_url',
         ];
+
+        if ($isDevAdmin) {
+            $filesToUpload['sponsor_1_logo'] = 'sponsor_1_logo_url';
+            $filesToUpload['sponsor_2_logo'] = 'sponsor_2_logo_url';
+            $filesToUpload['sponsor_3_logo'] = 'sponsor_3_logo_url';
+            $filesToUpload['sponsor_4_logo'] = 'sponsor_4_logo_url';
+        }
 
         foreach ($filesToUpload as $input => $key) {
             if ($request->hasFile($input)) {
@@ -42,7 +70,7 @@ class SettingController extends Controller
         foreach ($data as $key => $value) {
             Setting::updateOrCreate(
                 ['key' => $key],
-                ['value' => $value]
+                ['value' => $value ?? '']
             );
         }
 

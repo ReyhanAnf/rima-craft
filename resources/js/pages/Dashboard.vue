@@ -1,11 +1,11 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import AdminLayout from '@/layouts/AdminLayout.vue';
 import Card from 'primevue/card';
 import Button from 'primevue/button';
-import SelectButton from 'primevue/selectbutton';
 import Chart from 'primevue/chart';
+import DatePicker from 'primevue/datepicker';
 
 const props = defineProps({
     range: String,
@@ -15,6 +15,8 @@ const props = defineProps({
     totalPurchases: Number,
     totalProductionCost: Number,
     grossProfit: Number,
+    profitMargin: Number,
+    productionBreakdown: Object,
     cashInflow: Number,
     cashOutflow: Number,
     totalKas: Number,
@@ -34,6 +36,7 @@ const props = defineProps({
 
 const currentTab = ref('general');
 
+// Trend Chart
 const chartJsData = computed(() => {
     const categories = props.chartData?.categories || [];
     const sales = props.chartData?.sales || [];
@@ -45,50 +48,44 @@ const chartJsData = computed(() => {
             {
                 label: 'Penjualan',
                 data: sales,
-                borderColor: '#10b981', // emerald-500
+                borderColor: '#f59e0b', // amber-500
                 borderWidth: 3,
-                pointBackgroundColor: '#10b981',
+                pointBackgroundColor: '#f59e0b',
                 pointBorderColor: '#ffffff',
                 pointBorderWidth: 2,
                 pointRadius: 4,
                 pointHoverRadius: 6,
-                pointHoverBackgroundColor: '#10b981',
-                pointHoverBorderColor: '#ffffff',
-                pointHoverBorderWidth: 2,
                 tension: 0.4,
                 fill: true,
                 backgroundColor: (context) => {
                     const chart = context.chart;
                     const { ctx, chartArea } = chart;
-                    if (!chartArea) return 'rgba(16, 185, 129, 0.1)';
+                    if (!chartArea) return 'rgba(245, 158, 11, 0.05)';
                     const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-                    gradient.addColorStop(0, 'rgba(16, 185, 129, 0.3)');
-                    gradient.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+                    gradient.addColorStop(0, 'rgba(245, 158, 11, 0.25)');
+                    gradient.addColorStop(1, 'rgba(245, 158, 11, 0.0)');
                     return gradient;
                 },
             },
             {
-                label: 'Belanja',
+                label: 'Belanja Bahan',
                 data: purchases,
-                borderColor: '#f43f5e', // rose-500
+                borderColor: '#3b82f6', // blue-500
                 borderWidth: 3,
-                pointBackgroundColor: '#f43f5e',
+                pointBackgroundColor: '#3b82f6',
                 pointBorderColor: '#ffffff',
                 pointBorderWidth: 2,
                 pointRadius: 4,
                 pointHoverRadius: 6,
-                pointHoverBackgroundColor: '#f43f5e',
-                pointHoverBorderColor: '#ffffff',
-                pointHoverBorderWidth: 2,
                 tension: 0.4,
                 fill: true,
                 backgroundColor: (context) => {
                     const chart = context.chart;
                     const { ctx, chartArea } = chart;
-                    if (!chartArea) return 'rgba(244, 63, 94, 0.1)';
+                    if (!chartArea) return 'rgba(59, 130, 246, 0.05)';
                     const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-                    gradient.addColorStop(0, 'rgba(244, 63, 94, 0.3)');
-                    gradient.addColorStop(1, 'rgba(244, 63, 94, 0.0)');
+                    gradient.addColorStop(0, 'rgba(59, 130, 246, 0.2)');
+                    gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
                     return gradient;
                 },
             }
@@ -134,21 +131,14 @@ const chartOptions = computed(() => {
                 pointStyle: 'circle',
                 titleFont: {
                     size: 13,
-                    weight: 'bold',
-                    family: 'system-ui, -apple-system, sans-serif'
-                },
-                bodyFont: {
-                    size: 12,
-                    family: 'system-ui, -apple-system, sans-serif'
+                    weight: 'bold'
                 },
                 callbacks: {
                     label: (context) => {
                         let label = context.dataset.label || '';
-                        if (label) {
-                            label += ': ';
-                        }
+                        if (label) label += ': ';
                         if (context.parsed.y !== null) {
-                            label += new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(context.parsed.y);
+                            label += formatCurrency(context.parsed.y);
                         }
                         return label;
                     }
@@ -159,28 +149,15 @@ const chartOptions = computed(() => {
             x: {
                 ticks: {
                     color: textColor,
-                    font: {
-                        size: 11,
-                        family: 'system-ui, -apple-system, sans-serif'
-                    }
+                    font: { size: 11 }
                 },
-                grid: {
-                    display: false
-                }
+                grid: { display: false }
             },
             y: {
                 ticks: {
                     color: textColor,
-                    font: {
-                        size: 11,
-                        family: 'system-ui, -apple-system, sans-serif'
-                    },
-                    callback: (value) => {
-                        return new Intl.NumberFormat('id-ID', {
-                            notation: 'compact',
-                            compactDisplay: 'short'
-                        }).format(value);
-                    }
+                    font: { size: 11 },
+                    callback: (value) => formatCompact(value)
                 },
                 grid: {
                     color: gridColor,
@@ -192,6 +169,55 @@ const chartOptions = computed(() => {
             mode: 'index',
             intersect: false
         },
+        responsive: true,
+        maintainAspectRatio: false
+    };
+});
+
+// Cost Breakdown Doughnut Chart
+const doughnutChartData = computed(() => {
+    const breakdown = props.productionBreakdown || { material: 0, labor: 0, overhead: 0 };
+    return {
+        labels: ['Bahan Baku', 'Upah Tenaga Kerja', 'Biaya Overhead'],
+        datasets: [
+            {
+                data: [breakdown.material, breakdown.labor, breakdown.overhead],
+                backgroundColor: ['#f59e0b', '#10b981', '#6366f1'], // amber, emerald, indigo
+                borderWidth: 0,
+                hoverOffset: 4
+            }
+        ]
+    };
+});
+
+const doughnutOptions = computed(() => {
+    const isDark = document.documentElement.classList.contains('dark');
+    const textColor = isDark ? '#cbd5e1' : '#334155';
+
+    return {
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                    color: textColor,
+                    boxWidth: 10,
+                    usePointStyle: true,
+                    pointStyle: 'circle',
+                    font: { size: 11, weight: '500' }
+                }
+            },
+            tooltip: {
+                callbacks: {
+                    label: (context) => {
+                        const val = context.raw || 0;
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
+                        return ` ${context.label}: ${formatCurrency(val)} (${pct}%)`;
+                    }
+                }
+            }
+        },
+        cutout: '70%',
         responsive: true,
         maintainAspectRatio: false
     };
@@ -210,6 +236,21 @@ const selectedRange = ref(props.range);
 const customStartDate = ref(props.startDate ? props.startDate.split('T')[0] : '');
 const customEndDate = ref(props.endDate ? props.endDate.split('T')[0] : '');
 
+const dates = ref(null);
+if (props.startDate || props.endDate) {
+    const from = props.startDate ? new Date(props.startDate) : null;
+    const to = props.endDate ? new Date(props.endDate) : null;
+    dates.value = [from, to];
+}
+
+const formatDateString = (date) => {
+    if (!date) return '';
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
 const filterRange = (val) => {
     if (val !== 'custom') {
         router.get(route('dashboard'), { range: val }, { preserveState: true });
@@ -224,6 +265,17 @@ const applyCustomDate = () => {
     }, { preserveState: true });
 };
 
+watch(dates, (newVal) => {
+    if (newVal && newVal.length === 2) {
+        const [from, to] = newVal;
+        if (from && to) {
+            customStartDate.value = formatDateString(from);
+            customEndDate.value = formatDateString(to);
+            applyCustomDate();
+        }
+    }
+});
+
 const formatCurrency = (val) => {
     return new Intl.NumberFormat('id-ID', {
         style: 'currency',
@@ -233,11 +285,32 @@ const formatCurrency = (val) => {
     }).format(val || 0);
 };
 
+const formatCompact = (val) => {
+    return new Intl.NumberFormat('id-ID', {
+        notation: 'compact',
+        compactDisplay: 'short'
+    }).format(val || 0);
+};
+
 const formatDate = (dateStr) => {
     if (!dateStr) return '-';
     const date = new Date(dateStr);
     return date.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
 };
+
+// Calculate max spent to set width ratio of progress bars
+const maxCustomerSpent = computed(() => {
+    if (!props.topCustomers || props.topCustomers.length === 0) return 1;
+    return Math.max(...props.topCustomers.map(c => Number(c.total_spent) || 1));
+});
+const maxSupplierReceived = computed(() => {
+    if (!props.topSuppliers || props.topSuppliers.length === 0) return 1;
+    return Math.max(...props.topSuppliers.map(s => Number(s.total_received) || 1));
+});
+const maxProductQty = computed(() => {
+    if (!props.topProducts || props.topProducts.length === 0) return 1;
+    return Math.max(...props.topProducts.map(p => Number(p.total_sold) || 1));
+});
 </script>
 
 <template>
@@ -245,39 +318,42 @@ const formatDate = (dateStr) => {
         <Head title="Dashboard Admin" />
 
         <div class="space-y-6">
-            <!-- Header -->
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 dark:border-gray-800 pb-5">
+            <!-- Header greeting -->
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-gray-100 dark:border-gray-800 pb-5">
                 <div>
-                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-1">
-                        Halo, {{ $page.props.auth.user.name }}!
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                        <span>Halo, {{ $page.props.auth.user.name }}!</span>
+                        <span class="text-amber-500 wave-animation">👋</span>
                     </h2>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">
-                        Berikut performa operasional & keuangan Rima Craft.
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Berikut performa & analisis data operasional keuangan Rima Craft terkini.
                     </p>
                 </div>
 
                 <!-- Tab Switcher -->
-                <div class="inline-flex bg-gray-100 dark:bg-gray-900 p-1 rounded-xl border border-gray-200 dark:border-gray-800">
+                <div class="inline-flex bg-gray-150/70 dark:bg-gray-950 p-1.5 rounded-xl border border-gray-200/50 dark:border-gray-800">
                     <button
                         @click="currentTab = 'general'"
                         :class="[
-                            'px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-2',
+                            'px-4 py-2 text-xs font-bold rounded-lg transition-all duration-200 flex items-center gap-2',
                             currentTab === 'general'
-                                ? 'bg-white dark:bg-gray-800 text-amber-600 dark:text-amber-400 shadow-sm border border-gray-200/50 dark:border-gray-700'
+                                ? 'bg-white dark:bg-gray-800 text-amber-600 dark:text-amber-400 shadow border border-gray-100 dark:border-gray-700'
                                 : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
                         ]"
                     >
+                        <i class="pi pi-th-large text-sm"></i>
                         Ringkasan Umum
                     </button>
                     <button
                         @click="currentTab = 'analytics'"
                         :class="[
-                            'px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-2',
+                            'px-4 py-2 text-xs font-bold rounded-lg transition-all duration-200 flex items-center gap-2',
                             currentTab === 'analytics'
-                                ? 'bg-white dark:bg-gray-800 text-amber-600 dark:text-amber-400 shadow-sm border border-gray-200/50 dark:border-gray-700'
+                                ? 'bg-white dark:bg-gray-800 text-amber-600 dark:text-amber-400 shadow border border-gray-100 dark:border-gray-700'
                                 : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
                         ]"
                     >
+                        <i class="pi pi-chart-bar text-sm"></i>
                         Detail Analitik & Grafik
                     </button>
                 </div>
@@ -286,7 +362,7 @@ const formatDate = (dateStr) => {
             <!-- Date Filter Panel -->
             <div class="bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div class="flex flex-wrap items-center gap-1.5">
-                    <span class="text-xs font-bold text-gray-400 uppercase tracking-wider mr-2">Periode:</span>
+                    <span class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mr-2">Filter Periode:</span>
                     <button
                         v-for="opt in rangeOptions"
                         :key="opt.value"
@@ -295,7 +371,7 @@ const formatDate = (dateStr) => {
                             'px-3 py-1.5 text-xs font-semibold rounded-lg transition-all border',
                             selectedRange === opt.value
                                 ? 'bg-amber-500 text-gray-950 border-amber-500 font-bold shadow'
-                                : 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                : 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200/60 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-750'
                         ]"
                     >
                         {{ opt.label }}
@@ -303,14 +379,20 @@ const formatDate = (dateStr) => {
                 </div>
 
                 <!-- Custom Range Inputs -->
-                <div v-if="selectedRange === 'custom'" class="flex items-center gap-2 self-start md:self-auto">
-                    <input type="date" v-model="customStartDate" class="px-2 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 text-gray-900 dark:text-white" />
-                    <span class="text-gray-400 text-xs">-</span>
-                    <input type="date" v-model="customEndDate" class="px-2 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 text-gray-900 dark:text-white" />
-                    <Button label="Terapkan" @click="applyCustomDate" size="small" class="!bg-amber-500 !border-amber-500 !text-gray-950 font-bold" />
+                <div v-if="selectedRange === 'custom'" class="flex items-center gap-2 self-start md:self-auto min-w-[240px]">
+                    <DatePicker 
+                        v-model="dates" 
+                        selectionMode="range" 
+                        :manualInput="false" 
+                        placeholder="Pilih rentang tanggal..." 
+                        showIcon 
+                        iconDisplay="input" 
+                        class="w-full" 
+                        dateFormat="dd M yy" 
+                    />
                 </div>
                 <div v-else class="text-[11px] font-medium text-gray-400 dark:text-gray-500">
-                    Rentang: <span class="font-bold text-gray-600 dark:text-gray-300">{{ formatDate(props.startDate) }}</span> s/d <span class="font-bold text-gray-600 dark:text-gray-300">{{ formatDate(props.endDate) }}</span>
+                    Menampilkan data: <span class="font-bold text-gray-600 dark:text-gray-300">{{ formatDate(props.startDate) }}</span> s/d <span class="font-bold text-gray-600 dark:text-gray-300">{{ formatDate(props.endDate) }}</span>
                 </div>
             </div>
 
@@ -319,178 +401,307 @@ const formatDate = (dateStr) => {
                 <!-- Financial Cards -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                     <!-- Revenue -->
-                    <div class="bg-white dark:bg-gray-900 rounded-xl p-5 border-l-4 border-emerald-500 border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md transition">
-                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Total Pendapatan (Omset)</p>
-                        <h3 class="text-xl font-bold text-gray-900 dark:text-white mt-1">{{ formatCurrency(totalSales) }}</h3>
-                        <div class="text-xs text-gray-400 mt-2">Kotor hasil transaksi Penjualan</div>
+                    <div class="bg-white dark:bg-gray-900 rounded-xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm relative overflow-hidden group hover:shadow-md transition duration-300">
+                        <div class="flex justify-between items-start">
+                            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Total Pendapatan</span>
+                            <span class="p-2 bg-emerald-50 dark:bg-emerald-950/40 rounded-lg text-emerald-600 dark:text-emerald-400">
+                                <i class="pi pi-arrow-up-right text-xs"></i>
+                            </span>
+                        </div>
+                        <h3 class="text-xl font-extrabold text-gray-900 dark:text-white mt-3">{{ formatCurrency(totalSales) }}</h3>
+                        <p class="text-xs text-gray-400 dark:text-gray-500 mt-2">Kotor hasil penjualan online & offline</p>
+                        <div class="absolute bottom-0 left-0 h-1 bg-emerald-500 w-full"></div>
                     </div>
 
                     <!-- Purchases -->
-                    <div class="bg-white dark:bg-gray-900 rounded-xl p-5 border-l-4 border-rose-500 border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md transition">
-                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Belanja Bahan Baku</p>
-                        <h3 class="text-xl font-bold text-gray-900 dark:text-white mt-1">{{ formatCurrency(totalPurchases) }}</h3>
-                        <div class="text-xs text-gray-400 mt-2">Belanja bahan & supplier</div>
+                    <div class="bg-white dark:bg-gray-900 rounded-xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm relative overflow-hidden group hover:shadow-md transition duration-300">
+                        <div class="flex justify-between items-start">
+                            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Belanja Bahan</span>
+                            <span class="p-2 bg-rose-50 dark:bg-rose-950/40 rounded-lg text-rose-600 dark:text-rose-400">
+                                <i class="pi pi-shopping-bag text-xs"></i>
+                            </span>
+                        </div>
+                        <h3 class="text-xl font-extrabold text-gray-900 dark:text-white mt-3">{{ formatCurrency(totalPurchases) }}</h3>
+                        <p class="text-xs text-gray-400 dark:text-gray-500 mt-2">Belanja bahan baku ke supplier</p>
+                        <div class="absolute bottom-0 left-0 h-1 bg-rose-500 w-full"></div>
                     </div>
 
                     <!-- Production Cost -->
-                    <div class="bg-white dark:bg-gray-900 rounded-xl p-5 border-l-4 border-amber-500 border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md transition">
-                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Biaya Produksi (HPP/Upah)</p>
-                        <h3 class="text-xl font-bold text-gray-900 dark:text-white mt-1">{{ formatCurrency(totalProductionCost) }}</h3>
-                        <div class="text-xs text-gray-400 mt-2">Bahan terpakai, upah & overhead</div>
+                    <div class="bg-white dark:bg-gray-900 rounded-xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm relative overflow-hidden group hover:shadow-md transition duration-300">
+                        <div class="flex justify-between items-start">
+                            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Biaya Produksi</span>
+                            <span class="p-2 bg-blue-50 dark:bg-blue-950/40 rounded-lg text-blue-600 dark:text-blue-400">
+                                <i class="pi pi-cog text-xs"></i>
+                            </span>
+                        </div>
+                        <h3 class="text-xl font-extrabold text-gray-900 dark:text-white mt-3">{{ formatCurrency(totalProductionCost) }}</h3>
+                        <p class="text-xs text-gray-400 dark:text-gray-500 mt-2">Bahan terpakai, upah & overhead</p>
+                        <div class="absolute bottom-0 left-0 h-1 bg-blue-500 w-full"></div>
                     </div>
 
                     <!-- Profit -->
-                    <div class="bg-white dark:bg-gray-900 rounded-xl p-5 border-l-4 border-teal-500 border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md transition">
-                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Estimasi Laba Kotor</p>
-                        <h3 class="text-xl font-bold text-teal-600 dark:text-teal-400 mt-1">{{ formatCurrency(grossProfit) }}</h3>
-                        <div class="text-xs text-gray-400 mt-2">Omset - Belanja - Biaya Produksi</div>
+                    <div class="bg-amber-50/30 dark:bg-amber-950/10 rounded-xl p-5 border border-amber-200 dark:border-amber-900/40 shadow-sm relative overflow-hidden group hover:shadow-md transition duration-300">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="text-[10px] font-bold text-amber-800 dark:text-amber-400 uppercase tracking-wider">Laba Kotor</span>
+                                <span class="ml-2 text-[9px] font-bold bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300 px-1.5 py-0.5 rounded-full">
+                                    {{ profitMargin.toFixed(1) }}% GPM
+                                </span>
+                            </div>
+                            <span class="p-2 bg-amber-100/50 dark:bg-amber-950/50 rounded-lg text-amber-600 dark:text-amber-400">
+                                <i class="pi pi-chart-line text-xs"></i>
+                            </span>
+                        </div>
+                        <h3 class="text-xl font-extrabold text-amber-600 dark:text-amber-450 mt-3">{{ formatCurrency(grossProfit) }}</h3>
+                        <p class="text-xs text-gray-505 dark:text-gray-400 mt-2">Omset - Belanja - HPP Produksi</p>
+                        <div class="absolute bottom-0 left-0 h-1 bg-amber-500 w-full"></div>
                     </div>
 
                     <!-- Cashflow -->
-                    <div class="bg-white dark:bg-gray-900 rounded-xl p-5 border-l-4 border-indigo-500 border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md transition">
-                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Arus Kas Aktual</p>
-                        <h3 class="text-xl font-bold text-indigo-600 dark:text-indigo-400 mt-1">{{ formatCurrency(cashInflow - cashOutflow) }}</h3>
-                        <div class="text-xs text-gray-400 mt-2">Masuk: {{ formatCurrency(cashInflow) }} | Keluar: {{ formatCurrency(cashOutflow) }}</div>
+                    <div class="bg-white dark:bg-gray-900 rounded-xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm relative overflow-hidden group hover:shadow-md transition duration-300">
+                        <div class="flex justify-between items-start">
+                            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Arus Kas Aktual</span>
+                            <span class="p-2 bg-indigo-50 dark:bg-indigo-950/40 rounded-lg text-indigo-600 dark:text-indigo-400">
+                                <i class="pi pi-wallet text-xs"></i>
+                            </span>
+                        </div>
+                        <h3 class="text-xl font-extrabold text-indigo-600 dark:text-indigo-400 mt-3">{{ formatCurrency(cashInflow - cashOutflow) }}</h3>
+                        <p class="text-xs text-gray-400 dark:text-gray-500 mt-2">
+                            Masuk: {{ formatCompact(cashInflow) }} | Keluar: {{ formatCompact(cashOutflow) }}
+                        </p>
+                        <div class="absolute bottom-0 left-0 h-1 bg-indigo-500 w-full"></div>
                     </div>
                 </div>
 
                 <!-- Grid Details: Receivables, Production, Low Stock -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <Card class="!border !border-gray-200 dark:!border-gray-800 !bg-white dark:!bg-gray-900">
-                        <template #title>Saldo & Piutang</template>
-                        <template #content>
-                            <div class="space-y-4">
-                                <div class="flex justify-between items-center border-b border-gray-100 dark:border-gray-800 pb-2">
-                                    <span class="text-xs text-gray-500">Total Kas Terdaftar</span>
-                                    <span class="font-semibold">{{ formatCurrency(totalKas) }}</span>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Balance & Outstanding Credit -->
+                    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm">
+                        <h3 class="text-sm font-bold text-gray-850 dark:text-gray-100 flex items-center gap-2 mb-4">
+                            <i class="pi pi-book text-amber-500"></i>
+                            <span>Buku Keuangan & Piutang</span>
+                        </h3>
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center border-b border-gray-50 dark:border-gray-800 pb-3">
+                                <div>
+                                    <p class="text-xs font-bold text-gray-900 dark:text-white">Saldo Kas</p>
+                                    <p class="text-[10px] text-gray-400">Total saldo di seluruh kas terdaftar</p>
                                 </div>
-                                <div class="flex justify-between items-center border-b border-gray-100 dark:border-gray-800 pb-2">
-                                    <span class="text-xs text-gray-500">Piutang Pelanggan</span>
-                                    <span class="font-semibold text-rose-500">{{ formatCurrency(totalReceivables) }}</span>
-                                </div>
-                                <div class="flex justify-between items-center pb-2">
-                                    <span class="text-xs text-gray-500">Utang ke Supplier</span>
-                                    <span class="font-semibold text-amber-500">{{ formatCurrency(totalPayables) }}</span>
-                                </div>
+                                <span class="font-extrabold text-sm text-gray-800 dark:text-white">{{ formatCurrency(totalKas) }}</span>
                             </div>
-                        </template>
-                    </Card>
+                            <div class="flex justify-between items-center border-b border-gray-50 dark:border-gray-800 pb-3">
+                                <div>
+                                    <p class="text-xs font-bold text-gray-900 dark:text-white">Piutang Pelanggan</p>
+                                    <p class="text-[10px] text-gray-400">Pesanan belum lunas dari pembeli</p>
+                                </div>
+                                <span class="font-extrabold text-sm text-rose-500">{{ formatCurrency(totalReceivables) }}</span>
+                            </div>
+                            <div class="flex justify-between items-center pb-1">
+                                <div>
+                                    <p class="text-xs font-bold text-gray-900 dark:text-white">Utang Dagang</p>
+                                    <p class="text-[10px] text-gray-400">Tunggakan belanja ke supplier</p>
+                                </div>
+                                <span class="font-extrabold text-sm text-amber-500">{{ formatCurrency(totalPayables) }}</span>
+                            </div>
+                        </div>
+                    </div>
 
-                    <Card class="!border !border-gray-200 dark:!border-gray-800 !bg-white dark:!bg-gray-900">
-                        <template #title>Status Produksi</template>
-                        <template #content>
-                            <div class="space-y-4">
-                                <div class="flex justify-between items-center border-b border-gray-100 dark:border-gray-800 pb-2">
-                                    <span class="text-xs text-gray-500">Sedang Berjalan</span>
-                                    <span class="font-semibold text-amber-500">{{ pendingProductions }} Batch</span>
+                    <!-- Production Status -->
+                    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <h3 class="text-sm font-bold text-gray-850 dark:text-gray-100 flex items-center gap-2 mb-4">
+                                <i class="pi pi-spin pi-cog text-amber-500"></i>
+                                <span>Status Kegiatan Produksi</span>
+                            </h3>
+                            <div class="grid grid-cols-2 gap-4 mt-6">
+                                <div class="text-center p-3 bg-amber-50/50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/20 rounded-xl">
+                                    <p class="text-2xl font-black text-amber-600 dark:text-amber-400">{{ pendingProductions }}</p>
+                                    <p class="text-[10px] font-bold text-amber-700 dark:text-amber-500 uppercase tracking-wider mt-1">Pending Batch</p>
                                 </div>
-                                <div class="flex justify-between items-center pb-2">
-                                    <span class="text-xs text-gray-500">Selesai Diproduksi</span>
-                                    <span class="font-semibold text-emerald-500">{{ completedProductions }} Batch</span>
+                                <div class="text-center p-3 bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/20 rounded-xl">
+                                    <p class="text-2xl font-black text-emerald-600 dark:text-emerald-400">{{ completedProductions }}</p>
+                                    <p class="text-[10px] font-bold text-emerald-700 dark:text-emerald-500 uppercase tracking-wider mt-1">Selesai Batch</p>
                                 </div>
                             </div>
-                        </template>
-                    </Card>
+                        </div>
+                        <div class="border-t border-gray-100 dark:border-gray-800 pt-4 mt-4 text-center">
+                            <Link href="/productions" class="text-xs text-amber-500 hover:underline font-bold">Buka Modul Produksi →</Link>
+                        </div>
+                    </div>
 
-                    <Card class="!border !border-gray-200 dark:!border-gray-800 !bg-white dark:!bg-gray-900">
-                        <template #title>Stok Bahan Baku</template>
-                        <template #content>
-                            <div class="space-y-4">
-                                <div class="flex justify-between items-center pb-2">
-                                    <span class="text-xs text-gray-500">Bahan Hampir Habis</span>
-                                    <span class="font-semibold text-red-500">{{ lowStockMaterialsCount }} Item</span>
+                    <!-- Inventory Warning Card -->
+                    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <h3 class="text-sm font-bold text-gray-855 dark:text-gray-100 flex items-center gap-2 mb-2">
+                                <i class="pi pi-exclamation-triangle text-rose-500"></i>
+                                <span>Peringatan Stok Bahan Baku</span>
+                            </h3>
+                            <p class="text-[10px] text-gray-400">Bahan baku yang saat ini berada di bawah batas minimum stok.</p>
+                            
+                            <div class="mt-4 space-y-2">
+                                <div v-if="lowStockMaterialsCount > 0" class="flex items-center gap-3 p-3 bg-rose-50/50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 rounded-xl text-rose-700 dark:text-rose-400">
+                                    <i class="pi pi-info-circle text-lg"></i>
+                                    <div class="text-xs">
+                                        Ada <span class="font-bold">{{ lowStockMaterialsCount }} item</span> bahan baku hampir habis! Segera lakukan pemesanan.
+                                    </div>
                                 </div>
-                                <div v-if="lowStockMaterialsCount > 0">
-                                    <Link href="/materials" class="text-xs text-amber-500 hover:underline">Lihat Detail Bahan</Link>
+                                <div v-else class="flex items-center gap-3 p-3 bg-emerald-50/50 dark:bg-emerald-950/25 border border-emerald-100 dark:border-emerald-900/30 rounded-xl text-emerald-750 dark:text-emerald-400">
+                                    <i class="pi pi-check-circle text-lg"></i>
+                                    <div class="text-xs">Stok seluruh bahan baku aman.</div>
                                 </div>
                             </div>
-                        </template>
-                    </Card>
+                        </div>
+                        <div class="border-t border-gray-100 dark:border-gray-800 pt-4 mt-4 text-center">
+                            <Link href="/materials" class="text-xs text-amber-500 hover:underline font-bold">Detail Bahan & Pembelian →</Link>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- TAB 2: ANALYTICS (Leaderboard / Recent Sales) -->
+            <!-- TAB 2: ANALYTICS -->
             <div v-if="currentTab === 'analytics'" class="space-y-6">
-                <!-- Analytics Chart -->
-                <div class="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
-                    <div class="flex items-center justify-between mb-6">
+                <!-- Advanced Charts Grid (Line + Doughnut side-by-side) -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Trends Chart (Line) -->
+                    <div class="lg:col-span-2 bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col justify-between">
                         <div>
-                            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Tren Penjualan vs Belanja</h3>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">Grafik perbandingan pendapatan penjualan (omset) dan pengeluaran belanja bahan baku</p>
+                            <h3 class="text-base font-bold text-gray-900 dark:text-white">Tren Finansial</h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Komparasi total nilai penjualan kotor (omset) dan pengeluaran belanja bahan.</p>
+                        </div>
+                        <div class="h-80 mt-6">
+                            <Chart type="line" :data="chartJsData" :options="chartOptions" class="h-full w-full" />
                         </div>
                     </div>
-                    <div class="h-80">
-                        <Chart type="line" :data="chartJsData" :options="chartOptions" class="h-full w-full" />
+
+                    <!-- HPP Cost Breakdown Chart (Doughnut) -->
+                    <div class="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <h3 class="text-base font-bold text-gray-900 dark:text-white">Komposisi HPP Produksi</h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Proporsi pengeluaran biaya produksi terpakai dalam periode ini.</p>
+                        </div>
+                        <div class="h-64 mt-6 relative flex items-center justify-center">
+                            <Chart type="doughnut" :data="doughnutChartData" :options="doughnutOptions" class="h-full w-full" />
+                            <div class="absolute flex flex-col items-center justify-center">
+                                <span class="text-[10px] text-gray-400 dark:text-gray-505 uppercase font-bold tracking-wider">Total HPP</span>
+                                <span class="text-base font-black text-gray-800 dark:text-white mt-0.5">{{ formatCompact(totalProductionCost) }}</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Recent Sales List -->
-                <div class="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
-                    <h3 class="text-lg font-bold mb-4">Penjualan Terbaru</h3>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm">
-                            <thead>
-                                <tr class="text-gray-400 border-b border-gray-200 dark:border-gray-800">
-                                    <th class="pb-2">Invoice</th>
-                                    <th class="pb-2">Pelanggan</th>
-                                    <th class="pb-2">Tanggal</th>
-                                    <th class="pb-2 text-right">Total</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="sale in recentSales" :key="sale.id" class="border-b border-gray-100 dark:border-gray-800 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800/40">
-                                    <td class="py-3 font-semibold">{{ sale.invoice_number }}</td>
-                                    <td class="py-3">{{ sale.contact?.name || 'Umum' }}</td>
-                                    <td class="py-3">{{ formatDate(sale.sale_date) }}</td>
-                                    <td class="py-3 text-right font-bold">{{ formatCurrency(sale.total_amount) }}</td>
-                                </tr>
-                                <tr v-if="recentSales.length === 0">
-                                    <td colspan="4" class="text-center py-4 text-gray-400">Tidak ada transaksi penjualan dalam periode ini.</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                <!-- Recent Sales List & Top Leaderboards Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Recent Sales (Left / 2 Columns) -->
+                    <div class="lg:col-span-2 bg-white dark:bg-gray-900 p-5 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-sm font-bold text-gray-900 dark:text-white">Riwayat Transaksi Penjualan Terbaru</h3>
+                            <Link href="/sales" class="text-xs text-amber-500 hover:underline">Semua Penjualan</Link>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs text-gray-600 dark:text-gray-400">
+                                <thead>
+                                    <tr class="text-gray-400 border-b border-gray-200 dark:border-gray-800 font-bold uppercase tracking-wider text-[10px]">
+                                        <th class="pb-3 pl-2">Invoice / Ref</th>
+                                        <th class="pb-3">Pelanggan</th>
+                                        <th class="pb-3">Tanggal</th>
+                                        <th class="pb-3 text-right pr-2">Total Transaksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                                    <tr v-for="sale in recentSales" :key="sale.id" class="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition duration-150">
+                                        <td class="py-3.5 pl-2 font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
+                                            <span :class="['w-2 h-2 rounded-full', sale.id.startsWith('online') ? 'bg-amber-500' : 'bg-indigo-500']"></span>
+                                            {{ sale.invoice_number }}
+                                        </td>
+                                        <td class="py-3.5">{{ sale.contact?.name || 'Umum' }}</td>
+                                        <td class="py-3.5 text-gray-550 dark:text-gray-450">{{ formatDate(sale.sale_date) }}</td>
+                                        <td class="py-3.5 text-right font-extrabold text-gray-955 dark:text-white pr-2">{{ formatCurrency(sale.total_amount) }}</td>
+                                    </tr>
+                                    <tr v-if="recentSales.length === 0">
+                                        <td colspan="4" class="text-center py-6 text-gray-450">Tidak ada transaksi penjualan dalam periode ini.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Top Selling Products Leaderboard -->
+                    <div class="bg-white dark:bg-gray-900 p-5 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <h3 class="text-sm font-bold text-gray-900 dark:text-white mb-4">Produk Paling Laris</h3>
+                            <div class="space-y-4">
+                                <div v-for="(p, idx) in topProducts" :key="idx" class="space-y-1.5">
+                                    <div class="flex justify-between items-center text-xs">
+                                        <span class="font-semibold text-gray-800 dark:text-gray-200 truncate max-w-xs">{{ idx + 1 }}. {{ p.product?.name || 'Produk' }}</span>
+                                        <span class="font-bold text-gray-900 dark:text-white">{{ p.total_sold }} pcs</span>
+                                    </div>
+                                    <!-- Progress Bar wrapper -->
+                                    <div class="h-2 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                                        <div class="h-full bg-amber-500 rounded-full" :style="{ width: `${(p.total_sold / maxProductQty) * 100}%` }"></div>
+                                    </div>
+                                </div>
+                                <div v-if="topProducts.length === 0" class="text-center py-6 text-xs text-gray-450 italic">Belum ada produk terjual.</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Grid Top Lists -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <Card class="!border !border-gray-200 dark:!border-gray-800 !bg-white dark:!bg-gray-900">
-                        <template #title>Pelanggan Teratas</template>
-                        <template #content>
-                            <ul class="space-y-3">
-                                <li v-for="(c, idx) in topCustomers" :key="idx" class="flex justify-between items-center text-xs">
-                                    <span>{{ idx + 1 }}. {{ c.name }}</span>
-                                    <span class="font-bold">{{ formatCurrency(c.total_spent) }}</span>
-                                </li>
-                            </ul>
-                        </template>
-                    </Card>
+                <!-- Leaderboards Grid (Customers & Suppliers) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Top Customers -->
+                    <div class="bg-white dark:bg-gray-900 p-5 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
+                        <h3 class="text-sm font-bold text-gray-900 dark:text-white mb-4">Pelanggan Kontributor Utama</h3>
+                        <div class="space-y-4">
+                            <div v-for="(c, idx) in topCustomers" :key="idx" class="space-y-1.5">
+                                <div class="flex justify-between items-center text-xs">
+                                    <span class="font-semibold text-gray-800 dark:text-gray-200">{{ idx + 1 }}. {{ c.name }}</span>
+                                    <span class="font-bold text-gray-900 dark:text-white">{{ formatCurrency(c.total_spent) }}</span>
+                                </div>
+                                <div class="h-2 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                                    <div class="h-full bg-emerald-500 rounded-full" :style="{ width: `${(c.total_spent / maxCustomerSpent) * 100}%` }"></div>
+                                </div>
+                            </div>
+                            <div v-if="topCustomers.length === 0" class="text-center py-6 text-xs text-gray-450 italic">Belum ada data pelanggan.</div>
+                        </div>
+                    </div>
 
-                    <Card class="!border !border-gray-200 dark:!border-gray-800 !bg-white dark:!bg-gray-900">
-                        <template #title>Produk Terlaris</template>
-                        <template #content>
-                            <ul class="space-y-3">
-                                <li v-for="(p, idx) in topProducts" :key="idx" class="flex justify-between items-center text-xs">
-                                    <span>{{ idx + 1 }}. {{ p.name }}</span>
-                                    <span class="font-bold">{{ p.total_qty }} pcs</span>
-                                </li>
-                            </ul>
-                        </template>
-                    </Card>
-
-                    <Card class="!border !border-gray-200 dark:!border-gray-800 !bg-white dark:!bg-gray-900">
-                        <template #title>Supplier Utama</template>
-                        <template #content>
-                            <ul class="space-y-3">
-                                <li v-for="(s, idx) in topSuppliers" :key="idx" class="flex justify-between items-center text-xs">
-                                    <span>{{ idx + 1 }}. {{ s.name }}</span>
-                                    <span class="font-bold">{{ formatCurrency(s.total_spent) }}</span>
-                                </li>
-                            </ul>
-                        </template>
-                    </Card>
+                    <!-- Top Suppliers -->
+                    <div class="bg-white dark:bg-gray-900 p-5 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
+                        <h3 class="text-sm font-bold text-gray-900 dark:text-white mb-4">Supplier Pengeluaran Terbesar</h3>
+                        <div class="space-y-4">
+                            <div v-for="(s, idx) in topSuppliers" :key="idx" class="space-y-1.5">
+                                <div class="flex justify-between items-center text-xs">
+                                    <span class="font-semibold text-gray-800 dark:text-gray-200">{{ idx + 1 }}. {{ s.name }}</span>
+                                    <span class="font-bold text-gray-900 dark:text-white">{{ formatCurrency(s.total_received) }}</span>
+                                </div>
+                                <div class="h-2 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                                    <div class="h-full bg-rose-500 rounded-full" :style="{ width: `${(s.total_received / maxSupplierReceived) * 100}%` }"></div>
+                                </div>
+                            </div>
+                            <div v-if="topSuppliers.length === 0" class="text-center py-6 text-xs text-gray-450 italic">Belum ada data supplier.</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </AdminLayout>
 </template>
+
+<style scoped>
+.wave-animation {
+    animation: wave 2s infinite;
+    transform-origin: 70% 70%;
+    display: inline-block;
+}
+
+@keyframes wave {
+    0% { transform: rotate( 0.0deg) }
+    10% { transform: rotate(14.0deg) }
+    20% { transform: rotate(-8.0deg) }
+    30% { transform: rotate(14.0deg) }
+    40% { transform: rotate(-4.0deg) }
+    50% { transform: rotate(10.0deg) }
+    60% { transform: rotate( 0.0deg) }
+    100% { transform: rotate( 0.0deg) }
+}
+</style>

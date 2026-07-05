@@ -40,7 +40,7 @@ class AuthController extends Controller
 
         // Check if user has admin access (super-admin, owner, operator)
         $user = auth()->user();
-        $adminRoles = ['super-admin', 'owner', 'operator'];
+        $adminRoles = ['dev-admin', 'super-admin', 'owner', 'operator'];
         $hasAdminRole = $user->roles()->whereIn('name', $adminRoles)->exists();
 
         if (!$hasAdminRole) {

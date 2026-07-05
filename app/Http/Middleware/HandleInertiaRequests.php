@@ -44,9 +44,9 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $user ? $user->only(['id', 'name', 'email', 'phone']) : null,
                 'roles' => $user ? $user->roles->pluck('name')->toArray() : [],
-                'permissions' => $user ? \App\Models\Permission::whereHas('roles', function ($q) use ($user) {
+                'permissions' => $user ? ($user->hasRole('dev-admin') ? \App\Models\Permission::pluck('name')->toArray() : \App\Models\Permission::whereHas('roles', function ($q) use ($user) {
                     $q->whereIn('role_id', $user->roles->pluck('id')->toArray());
-                })->pluck('name')->toArray() : [],
+                })->pluck('name')->toArray()) : [],
             ],
 
             // Global site config passed to all Vue pages
@@ -54,6 +54,16 @@ class HandleInertiaRequests extends Middleware
                 'business_name'    => config('settings.business_name', 'Rima Craft'),
                 'business_phone'   => config('settings.business_phone', '6281234567890'),
                 'hero_description' => config('settings.hero_description', ''),
+                'logo_url'         => config('settings.logo_url'),
+                'business_subtitle'=> config('settings.business_subtitle'),
+                'sponsor_1_name'   => config('settings.sponsor_1_name'),
+                'sponsor_1_logo_url'=> config('settings.sponsor_1_logo_url'),
+                'sponsor_2_name'   => config('settings.sponsor_2_name'),
+                'sponsor_2_logo_url'=> config('settings.sponsor_2_logo_url'),
+                'sponsor_3_name'   => config('settings.sponsor_3_name'),
+                'sponsor_3_logo_url'=> config('settings.sponsor_3_logo_url'),
+                'sponsor_4_name'   => config('settings.sponsor_4_name'),
+                'sponsor_4_logo_url'=> config('settings.sponsor_4_logo_url'),
                 'checkout_url'     => route('order.checkout'),
                 'order_store_url'  => route('order.store'),
                 'catalog_url'      => route('catalog.index'),

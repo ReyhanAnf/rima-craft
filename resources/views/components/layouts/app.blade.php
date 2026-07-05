@@ -361,14 +361,7 @@
                                         <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Tanggal Bayar</label>
                                         <input type="date" name="date" value="{{ date('Y-m-d') }}" required class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-950 outline-none focus:ring-2 focus:ring-primary-500">
                                     </div>
-                                    <div>
-                                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Rekening / Kas Pembayaran</label>
-                                        <select name="account_id" required class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-950 outline-none focus:ring-2 focus:ring-primary-500">
-                                            @foreach($globalAccounts as $acc)
-                                                <option value="{{ $acc->id }}">{{ $acc->name }} (Saldo: Rp {{ number_format($acc->balance, 0, ',', '.') }})</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
+                                    <input type="hidden" name="account_id" value="1">
                                     <div>
                                         <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Nominal Dibayar (Rp)</label>
                                         <input type="number" name="amount" x-model="amount" min="1" :max="total - paid" required class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-950 outline-none focus:ring-2 focus:ring-primary-500 font-bold text-primary-700 dark:text-primary-400">

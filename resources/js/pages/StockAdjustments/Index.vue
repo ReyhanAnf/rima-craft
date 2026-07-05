@@ -7,6 +7,7 @@ import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import Textarea from 'primevue/textarea';
 import Dropdown from 'primevue/dropdown';
+import DatePicker from 'primevue/datepicker';
 import Dialog from 'primevue/dialog';
 import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
@@ -35,6 +36,33 @@ watch(() => page.props.flash, (flash) => {
 const filterType = ref(props.filters.type || '');
 const dateFrom = ref(props.filters.date_from || '');
 const dateTo = ref(props.filters.date_to || '');
+
+const dates = ref(null);
+if (props.filters.date_from || props.filters.date_to) {
+    const from = props.filters.date_from ? new Date(props.filters.date_from) : null;
+    const to = props.filters.date_to ? new Date(props.filters.date_to) : null;
+    dates.value = [from, to];
+}
+
+const formatDateString = (date) => {
+    if (!date) return '';
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
+watch(dates, (newVal) => {
+    if (!newVal || newVal.length === 0) {
+        dateFrom.value = '';
+        dateTo.value = '';
+    } else {
+        const [from, to] = newVal;
+        dateFrom.value = from ? formatDateString(from) : '';
+        dateTo.value = to ? formatDateString(to) : '';
+    }
+    applyFilters();
+});
 
 const typeOptions = [
     { label: 'Semua Aksi', value: '' },
@@ -120,18 +148,23 @@ const formatDate = (dateStr) => {
             </div>
 
             <!-- Filters -->
-            <div class="bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="flex flex-col gap-1.5">
                     <label class="text-[10px] font-bold text-gray-400 dark:text-gray-505 uppercase tracking-wider">Aksi Penyesuaian</label>
                     <Dropdown v-model="filterType" :options="typeOptions" optionLabel="label" optionValue="value" class="w-full" @change="applyFilters" />
                 </div>
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-[10px] font-bold text-gray-400 dark:text-gray-505 uppercase tracking-wider">Dari Tanggal</label>
-                    <input type="date" v-model="dateFrom" class="px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 text-gray-900 dark:text-white w-full h-[38px]" @change="applyFilters" />
-                </div>
-                <div class="flex flex-col gap-1.5">
-                    <label class="text-[10px] font-bold text-gray-400 dark:text-gray-505 uppercase tracking-wider">Sampai Tanggal</label>
-                    <input type="date" v-model="dateTo" class="px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 text-gray-900 dark:text-white w-full h-[38px]" @change="applyFilters" />
+                    <label class="text-[10px] font-bold text-gray-400 dark:text-gray-505 uppercase tracking-wider">Rentang Tanggal Log</label>
+                    <DatePicker 
+                        v-model="dates" 
+                        selectionMode="range" 
+                        :manualInput="false" 
+                        placeholder="Pilih rentang tanggal..." 
+                        showIcon 
+                        iconDisplay="input" 
+                        class="w-full" 
+                        dateFormat="dd M yy" 
+                    />
                 </div>
             </div>
 

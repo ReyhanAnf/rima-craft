@@ -34,7 +34,16 @@ class UserRequest extends FormRequest
                 Rule::unique('users')->ignore($userId),
             ],
             'password' => $userId ? 'nullable|string|min:8|confirmed' : 'required|string|min:8|confirmed',
-            'role' => 'required|string|exists:roles,name',
+            'role' => [
+                'required',
+                'string',
+                'exists:roles,name',
+                function ($attribute, $value, $fail) {
+                    if ($value === 'dev-admin' && !auth()->user()->hasRole('dev-admin')) {
+                        $fail('Hanya akun Developer Admin yang dapat menetapkan peran Developer Admin.');
+                    }
+                }
+            ],
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string',
         ];

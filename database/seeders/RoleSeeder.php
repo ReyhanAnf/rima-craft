@@ -17,6 +17,7 @@ class RoleSeeder extends Seeder
     public function run(): void
     {
         $roles = [
+            'dev-admin',
             'super-admin',
             'owner',
             'operator',
@@ -42,6 +43,23 @@ class RoleSeeder extends Seeder
 
             if (!$admin->hasRole('super-admin')) {
                 $admin->roles()->attach($adminRole->id);
+            }
+        }
+
+        // create dev-admin user
+        $devAdminRole = Role::where('name', 'dev-admin')->first();
+        if ($devAdminRole) {
+            $devAdmin = User::firstOrCreate(
+                ['email' => 'andreafirdausr@gmail.com'],
+                [
+                    'name' => 'Developer Admin',
+                    'password' => Hash::make('password'),
+                    'role' => 'dev-admin' // Keep the column in sync for now
+                ]
+            );
+
+            if (!$devAdmin->hasRole('dev-admin')) {
+                $devAdmin->roles()->attach($devAdminRole->id);
             }
         }
     }

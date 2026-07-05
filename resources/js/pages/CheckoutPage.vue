@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useForm, router, usePage } from '@inertiajs/vue3';
 import PublicLayout from '@/layouts/PublicLayout.vue';
 import { useCartStore } from '@/stores/cart';
@@ -40,9 +40,9 @@ const form = useForm({
     customer_name:    props.user?.name    ?? '',
     customer_email:   props.user?.email   ?? '',
     customer_phone:   props.user?.phone   ?? '',
-    customer_address: '',
-    province_id:      '',
-    city_id:          '',
+    customer_address: props.user?.address ?? '',
+    province_id:      props.user?.province_id ?? '',
+    city_id:          props.user?.city_id ?? '',
     payment_method:   '',
     notes:            cart.notes,
     create_account:   false,
@@ -84,6 +84,7 @@ function validateDp() {
 }
 
 const submitting = ref(false);
+const showMobileSummary = ref(false);
 
 const canSubmit = computed(() =>
     cart.items.length > 0 &&
@@ -171,209 +172,351 @@ function formatPrice(val) {
     if (isNaN(n)) return 'Rp -';
     return 'Rp ' + n.toLocaleString('id-ID');
 }
+
+onMounted(async () => {
+    if (form.province_id) {
+        loadingCities.value = true;
+        try {
+            const response = await fetch(`/api/regions/${form.province_id}/cities`);
+            if (response.ok) {
+                cities.value = await response.json();
+                if (form.city_id) {
+                    await onCityChange();
+                }
+            }
+        } catch (e) {
+            console.error('Failed to load initial cities', e);
+        } finally {
+            loadingCities.value = false;
+        }
+    }
+});
 </script>
 
 <template>
     <PublicLayout :config="config">
-        <div class="min-h-screen bg-gray-50 dark:bg-gray-950 py-12">
-            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="min-h-screen bg-gray-50 dark:bg-gray-950 pt-28 md:pt-36 pb-12">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
                 <!-- Header -->
-                <div class="text-center mb-8">
-                    <h1 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">Form Pemesanan</h1>
-                    <p class="text-gray-600 dark:text-gray-400">Lengkapi data di bawah untuk memproses pesanan Anda</p>
+                <div class="text-center mb-8 md:mb-12">
+                    <h1 class="text-3xl md:text-5xl font-black text-gray-900 dark:text-white tracking-tight mb-2">Form Pemesanan</h1>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm md:text-base max-w-xl mx-auto">Selesaikan pesanan Anda dengan mengisi detail pengiriman dan metode pembayaran di bawah ini.</p>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Mobile Sticky/Collapsible Summary Drawer (visible on mobile only) -->
+                <div class="lg:hidden mb-6 sticky top-[64px] z-40 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-md">
+                    <button 
+                        @click="showMobileSummary = !showMobileSummary" 
+                        class="w-full flex items-center justify-between p-4 focus:outline-none"
+                    >
+                        <div class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                            <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                            </svg>
+                            <span class="text-sm font-bold text-left">
+                                {{ showMobileSummary ? 'Sembunyikan Ringkasan' : 'Tampilkan Ringkasan' }}
+                                <span class="ml-1 px-2 py-0.5 rounded-full text-xs bg-amber-100 dark:bg-amber-900 text-amber-600 dark:text-amber-400">
+                                    {{ cart.items.length }} produk
+                                </span>
+                            </span>
+                            <svg class="w-4 h-4 transition-transform duration-200" :class="{ 'rotate-180': showMobileSummary }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </div>
+                        <span class="text-base font-black text-amber-600 dark:text-amber-400">{{ formatPrice(finalTotal) }}</span>
+                    </button>
+
+                    <!-- Mobile Drawer Dropdown -->
+                    <div v-show="showMobileSummary" class="border-t border-gray-150 dark:border-gray-800 p-4 bg-gray-50/50 dark:bg-gray-900/50 max-h-[60vh] overflow-y-auto">
+                        <div class="space-y-3 mb-4">
+                            <div v-for="item in updatedItems" :key="item.id" class="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm">
+                                <div class="relative w-14 h-14 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                    <img v-if="item.image" :src="item.image" :alt="item.name" class="w-full h-full object-cover" />
+                                    <svg v-else class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                    <span class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-amber-500 text-white font-bold text-[10px] flex items-center justify-center shadow">
+                                        {{ item.qty }}
+                                    </span>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-bold text-gray-900 dark:text-white truncate">{{ item.name }}</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                                        {{ formatPrice(item.price) }}
+                                        <span v-if="item.has_discount" class="ml-1 text-[9px] bg-red-100 text-red-600 px-1 py-0.5 rounded font-semibold">Reseller</span>
+                                    </p>
+                                </div>
+                                <p class="text-sm font-bold text-gray-900 dark:text-white">{{ formatPrice(item.subtotal || (item.price * item.qty)) }}</p>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-gray-200 dark:border-gray-800 pt-3 space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600 dark:text-gray-400">Subtotal</span>
+                                <span class="font-semibold text-gray-900 dark:text-white">{{ formatPrice(subtotal) }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600 dark:text-gray-400">Ongkos Kirim</span>
+                                <span class="font-semibold text-gray-900 dark:text-white">
+                                    {{ form.city_id ? (shippingCost > 0 ? formatPrice(shippingCost) : 'Gratis') : 'Pilih Kota/Kab' }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
                     <!-- Left: Order Form -->
-                    <div class="lg:col-span-2">
-                        <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 md:p-8 shadow-sm">
+                    <div class="lg:col-span-7 xl:col-span-8 space-y-6">
+                        <div class="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-6 md:p-10 shadow-sm relative overflow-hidden">
+                            <div class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-amber-400 to-amber-600"></div>
 
                             <!-- Server-side errors -->
-                            <div v-if="Object.keys(errors).length" class="mb-6 p-4 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 text-sm border border-red-200 dark:border-red-800/50">
-                                <ul class="list-disc pl-5 space-y-1">
-                                    <li v-for="(msg, field) in errors" :key="field">{{ msg }}</li>
-                                </ul>
+                            <div v-if="Object.keys(errors).length" class="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 text-sm border border-red-200 dark:border-red-800/50">
+                                <div class="flex gap-2">
+                                    <svg class="w-5 h-5 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                    <div>
+                                        <p class="font-bold mb-1">Terjadi kesalahan:</p>
+                                        <ul class="list-disc pl-5 space-y-1">
+                                            <li v-for="(msg, field) in errors" :key="field">{{ msg }}</li>
+                                        </ul>
+                                    </div>
+                                </div>
                             </div>
 
-                            <form @submit.prevent="submit" class="space-y-6">
+                            <form @submit.prevent="submit" class="space-y-8">
 
-                                <!-- Customer Info -->
-                                <div class="space-y-4">
-                                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">Informasi Pelanggan</h3>
+                                <!-- Step 1: Customer Info -->
+                                <div class="space-y-6">
+                                    <div class="flex items-center gap-3 border-b border-gray-150 dark:border-gray-800 pb-4">
+                                        <div class="w-8 h-8 rounded-full bg-amber-500 text-gray-950 font-bold text-sm flex items-center justify-center shadow">1</div>
+                                        <h3 class="text-xl font-black text-gray-900 dark:text-white">Informasi Pengiriman</h3>
+                                    </div>
 
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div>
-                                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                            <label class="block text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                                                 Nama Lengkap <span class="text-red-500">*</span>
                                             </label>
-                                            <input
-                                                v-model="form.customer_name"
-                                                type="text" required
-                                                class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all outline-none"
-                                                placeholder="Masukkan nama lengkap"
-                                            />
-                                            <p v-if="form.errors.customer_name" class="mt-1 text-xs text-red-500">{{ form.errors.customer_name }}</p>
+                                            <div class="relative">
+                                                <input
+                                                    v-model="form.customer_name"
+                                                    type="text" required
+                                                    class="w-full pl-4 pr-10 py-3.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all outline-none"
+                                                    placeholder="Masukkan nama lengkap"
+                                                />
+                                                <svg class="w-5 h-5 text-gray-400 absolute right-3.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                            </div>
+                                            <p v-if="form.errors.customer_name" class="mt-1.5 text-xs text-red-500">{{ form.errors.customer_name }}</p>
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                                                No. WhatsApp <span class="text-red-500">*</span>
+                                            <label class="block text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                                                No. WhatsApp (Aktif) <span class="text-red-500">*</span>
                                             </label>
-                                            <input
-                                                v-model="form.customer_phone"
-                                                type="tel" required
-                                                class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all outline-none"
-                                                placeholder="081234567890"
-                                            />
-                                            <p v-if="form.errors.customer_phone" class="mt-1 text-xs text-red-500">{{ form.errors.customer_phone }}</p>
+                                            <div class="relative">
+                                                <input
+                                                    v-model="form.customer_phone"
+                                                    type="tel" required
+                                                    class="w-full pl-4 pr-10 py-3.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all outline-none"
+                                                    placeholder="Contoh: 081234567890"
+                                                />
+                                                <svg class="w-5 h-5 text-gray-400 absolute right-3.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.94.725l.548 2.2a1 1 0 01-.321.988l-1.305.98a10.582 10.582 0 004.872 4.872l.98-1.305a1 1 0 01.988-.321l2.2.548a1 1 0 01.725.94V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                                            </div>
+                                            <p v-if="form.errors.customer_phone" class="mt-1.5 text-xs text-red-500">{{ form.errors.customer_phone }}</p>
                                         </div>
                                     </div>
 
                                     <div>
-                                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                        <label class="block text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                                             Email <span class="text-red-500">*</span>
                                         </label>
-                                        <input
-                                            v-model="form.customer_email"
-                                            type="email" required
-                                            class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all outline-none"
-                                            placeholder="nama@email.com"
-                                        />
-                                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Email akan digunakan untuk login jika Anda membuat akun</p>
-                                        <p v-if="form.errors.customer_email" class="mt-1 text-xs text-red-500">{{ form.errors.customer_email }}</p>
+                                        <div class="relative">
+                                            <input
+                                                v-model="form.customer_email"
+                                                type="email" required
+                                                :disabled="!isGuest"
+                                                class="w-full pl-4 pr-10 py-3.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all outline-none disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:dark:bg-gray-900"
+                                                placeholder="nama@email.com"
+                                            />
+                                            <svg class="w-5 h-5 text-gray-400 absolute right-3.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                                        </div>
+                                        <p v-if="!isGuest" class="mt-1.5 text-[10px] text-amber-600 dark:text-amber-400 font-semibold">
+                                            Email terkunci karena Anda sedang login. Silakan logout jika ingin menggunakan email lain.
+                                        </p>
+                                        <p v-else class="mt-1.5 text-[11px] text-gray-500 dark:text-gray-400">
+                                            Email ini akan digunakan untuk konfirmasi struk belanja dan info pengiriman.
+                                        </p>
+                                        <p v-if="form.errors.customer_email" class="mt-1.5 text-xs text-red-500">{{ form.errors.customer_email }}</p>
                                     </div>
 
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div>
-                                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                            <label class="block text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                                                 Provinsi <span class="text-red-500">*</span>
                                             </label>
                                             <select
                                                 v-model="form.province_id"
                                                 @change="onProvinceChange"
                                                 required
-                                                class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all outline-none"
+                                                class="w-full px-4 py-3.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all outline-none cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%2522%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M7%209l3%203%203-3%22%20stroke%3D%22%23a1a1aa%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem_1.25rem] bg-[right_1rem_center] bg-no-repeat"
                                             >
                                                 <option value="" disabled>Pilih Provinsi</option>
                                                 <option v-for="prov in provinces" :key="prov.id" :value="prov.id">
                                                     {{ prov.name }}
                                                 </option>
                                             </select>
-                                            <p v-if="form.errors.province_id" class="mt-1 text-xs text-red-500">{{ form.errors.province_id }}</p>
+                                            <p v-if="form.errors.province_id" class="mt-1.5 text-xs text-red-500">{{ form.errors.province_id }}</p>
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                            <label class="block text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                                                 Kota/Kabupaten <span class="text-red-500">*</span>
                                             </label>
-                                            <select
-                                                v-model="form.city_id"
-                                                @change="onCityChange"
-                                                :disabled="!form.province_id || loadingCities"
-                                                required
-                                                class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all outline-none"
-                                            >
-                                                <option value="" disabled>{{ loadingCities ? 'Memuat...' : 'Pilih Kota/Kabupaten' }}</option>
-                                                <option v-for="city in cities" :key="city.id" :value="city.id">
-                                                    {{ city.name }}
-                                                </option>
-                                            </select>
-                                            <p v-if="form.errors.city_id" class="mt-1 text-xs text-red-500">{{ form.errors.city_id }}</p>
+                                            <div class="relative">
+                                                <select
+                                                    v-model="form.city_id"
+                                                    @change="onCityChange"
+                                                    :disabled="!form.province_id || loadingCities"
+                                                    required
+                                                    class="w-full px-4 py-3.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all outline-none cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%2522%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M7%209l3%203%203-3%22%20stroke%3D%22%23a1a1aa%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem_1.25rem] bg-[right_1rem_center] bg-no-repeat disabled:bg-gray-100 disabled:dark:bg-gray-900"
+                                                >
+                                                    <option value="" disabled>{{ loadingCities ? 'Memuat...' : 'Pilih Kota/Kabupaten' }}</option>
+                                                    <option v-for="city in cities" :key="city.id" :value="city.id">
+                                                        {{ city.name }}
+                                                    </option>
+                                                </select>
+                                                <span v-if="loadingCities" class="absolute right-10 top-1/2 -translate-y-1/2 flex h-4 w-4">
+                                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                                                    <span class="relative inline-flex rounded-full h-4 w-4 bg-amber-500 animate-spin border border-white border-t-transparent"></span>
+                                                </span>
+                                            </div>
+                                            <p v-if="form.errors.city_id" class="mt-1.5 text-xs text-red-500">{{ form.errors.city_id }}</p>
                                         </div>
                                     </div>
 
                                     <div>
-                                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                                            Alamat Pengiriman (Jalan, RT/RW, Kecamatan) <span class="text-red-500">*</span>
+                                        <label class="block text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                                            Alamat Lengkap Pengiriman <span class="text-red-500">*</span>
                                         </label>
                                         <textarea
                                             v-model="form.customer_address"
                                             required rows="3"
-                                            class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all outline-none resize-none"
-                                            placeholder="Masukkan nama jalan, nomor rumah, RT/RW, kecamatan, dan kodepos"
+                                            class="w-full px-4 py-3.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all outline-none resize-none"
+                                            placeholder="Nama jalan, nomor rumah, RT/RW, kelurahan, kecamatan, kota, provinsi, dan kodepos"
                                         />
-                                        <p v-if="form.errors.customer_address" class="mt-1 text-xs text-red-500">{{ form.errors.customer_address }}</p>
+                                        <p v-if="form.errors.customer_address" class="mt-1.5 text-xs text-red-500">{{ form.errors.customer_address }}</p>
                                     </div>
                                 </div>
 
-                                <!-- Create Account (guest only) -->
-                                <div v-if="isGuest" class="bg-gradient-to-r from-amber-50 to-amber-100/50 dark:from-amber-900/20 dark:to-amber-800/10 border border-amber-200 dark:border-amber-800/50 rounded-xl p-5">
-                                    <label class="flex items-start gap-3 cursor-pointer">
+                                <!-- Create Account Option -->
+                                <div v-if="isGuest" class="bg-gradient-to-br from-amber-50/50 to-amber-100/30 dark:from-amber-950/20 dark:to-amber-900/10 border border-amber-200/50 dark:border-amber-900/30 rounded-2xl p-5 md:p-6 shadow-sm">
+                                    <label class="flex items-start gap-4 cursor-pointer">
                                         <input
                                             v-model="form.create_account"
                                             type="checkbox"
-                                            class="mt-1 w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500"
+                                            class="mt-1 w-5 h-5 text-amber-600 border-gray-300 rounded focus:ring-amber-500 focus:ring-offset-2"
                                         />
                                         <div class="flex-1">
-                                            <p class="text-sm font-bold text-gray-900 dark:text-white mb-1">Buat Akun Sekarang</p>
-                                            <p class="text-xs text-gray-600 dark:text-gray-400">Dapatkan akses untuk melacak pesanan dan melihat riwayat pembelian Anda</p>
+                                            <span class="text-base font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
+                                                Buat Akun Rima Craft
+                                                <span class="text-[10px] font-semibold text-amber-700 bg-amber-100 dark:bg-amber-900 dark:text-amber-300 px-1.5 py-0.5 rounded">Praktis</span>
+                                            </span>
+                                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Dapatkan kemudahan melacak status pesanan secara real-time dan melihat riwayat belanja.</p>
                                         </div>
                                     </label>
 
                                     <Transition name="expand">
-                                        <div v-if="form.create_account" class="mt-4 space-y-4 pt-4 border-t border-amber-200 dark:border-amber-800/50">
-                                            <div>
-                                                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                                                    Password <span class="text-red-500">*</span>
-                                                </label>
-                                                <input
-                                                    v-model="form.password"
-                                                    type="password"
-                                                    :required="form.create_account"
-                                                    minlength="8"
-                                                    class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all outline-none"
-                                                    placeholder="Minimal 8 karakter"
-                                                />
-                                                <p v-if="form.errors.password" class="mt-1 text-xs text-red-500">{{ form.errors.password }}</p>
-                                            </div>
-                                            <div>
-                                                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                                                    Konfirmasi Password <span class="text-red-500">*</span>
-                                                </label>
-                                                <input
-                                                    v-model="form.password_confirmation"
-                                                    type="password"
-                                                    :required="form.create_account"
-                                                    minlength="8"
-                                                    class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all outline-none"
-                                                    placeholder="Ulangi password"
-                                                />
-                                                <p v-if="form.errors.password_confirmation" class="mt-1 text-xs text-red-500">{{ form.errors.password_confirmation }}</p>
+                                        <div v-if="form.create_account" class="mt-5 space-y-4 pt-5 border-t border-amber-200/50 dark:border-amber-800/40">
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-2">Password <span class="text-red-500">*</span></label>
+                                                    <input
+                                                        v-model="form.password"
+                                                        type="password"
+                                                        :required="form.create_account"
+                                                        minlength="8"
+                                                        class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 outline-none transition-all"
+                                                        placeholder="Minimal 8 karakter"
+                                                    />
+                                                    <p v-if="form.errors.password" class="mt-1 text-xs text-red-500">{{ form.errors.password }}</p>
+                                                </div>
+                                                <div>
+                                                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-2">Konfirmasi Password <span class="text-red-500">*</span></label>
+                                                    <input
+                                                        v-model="form.password_confirmation"
+                                                        type="password"
+                                                        :required="form.create_account"
+                                                        minlength="8"
+                                                        class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 outline-none transition-all"
+                                                        placeholder="Ulangi password"
+                                                    />
+                                                    <p v-if="form.errors.password_confirmation" class="mt-1 text-xs text-red-500">{{ form.errors.password_confirmation }}</p>
+                                                </div>
                                             </div>
                                         </div>
                                     </Transition>
                                 </div>
 
-                                <!-- Payment Methods -->
-                                <div class="space-y-4">
-                                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">Metode Pembayaran</h3>
+                                <!-- Step 2: Payment Methods -->
+                                <div class="space-y-6">
+                                    <div class="flex items-center gap-3 border-b border-gray-150 dark:border-gray-800 pb-4">
+                                        <div class="w-8 h-8 rounded-full bg-amber-500 text-gray-950 font-bold text-sm flex items-center justify-center shadow">2</div>
+                                        <h3 class="text-xl font-black text-gray-900 dark:text-white">Metode Pembayaran</h3>
+                                    </div>
 
-                                    <div class="grid grid-cols-1 gap-4">
-                                        <div v-for="(methods, type) in groupedMethods" :key="type">
-                                            <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+                                    <div class="space-y-6">
+                                        <div v-for="(methods, type) in groupedMethods" :key="type" class="space-y-3">
+                                            <p class="text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider">
                                                 {{ typeLabel[type] ?? type }}
                                             </p>
-                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                 <label
                                                     v-for="method in methods"
                                                     :key="method.code"
-                                                    class="flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all hover:border-amber-300 dark:hover:border-amber-600"
+                                                    class="relative flex items-center p-4 border-2 rounded-2xl cursor-pointer transition-all hover:border-amber-400 dark:hover:border-amber-600 bg-white dark:bg-gray-900 group"
                                                     :class="form.payment_method === method.code
-                                                        ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20'
-                                                        : 'border-gray-200 dark:border-gray-700'"
+                                                        ? 'border-amber-500 ring-2 ring-amber-500/10 bg-amber-50/20 dark:bg-amber-950/20 shadow-sm'
+                                                        : 'border-gray-200 dark:border-gray-800'"
                                                 >
                                                     <input
                                                         v-model="form.payment_method"
                                                         type="radio"
                                                         :value="method.code"
                                                         required
-                                                        class="w-4 h-4 text-amber-600 border-gray-300 focus:ring-amber-500"
+                                                        class="w-4 h-4 text-amber-600 border-gray-300 focus:ring-amber-500 bg-transparent"
                                                     />
-                                                    <div class="ml-3 flex-1">
-                                                        <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ method.name }}</p>
-                                                        <p v-if="method.account_number" class="text-xs text-gray-500 dark:text-gray-400">
-                                                            {{ method.account_number }} - {{ method.account_name }}
-                                                        </p>
+                                                    <div class="ml-3 flex-1 flex items-center justify-between gap-2">
+                                                        <div class="min-w-0">
+                                                            <!-- Display Name if no icon exists, or inside a clean layout -->
+                                                            <p class="text-sm font-bold text-gray-900 dark:text-white">{{ method.name }}</p>
+                                                            <p v-if="method.account_number" class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 font-medium truncate">
+                                                                {{ method.account_number }}
+                                                            </p>
+                                                        </div>
+
+                                                        <!-- Show Payment Method Icon/Logo -->
+                                                        <div class="flex-shrink-0 flex items-center justify-end h-8">
+                                                            <img v-if="method.icon" :src="method.icon.startsWith('http') || method.icon.startsWith('/') ? method.icon : `/storage/${method.icon}`" :alt="method.name" class="h-8 max-w-[80px] object-contain" />
+                                                            <template v-else>
+                                                                <!-- Render nice styled default SVG logos based on codes -->
+                                                                <div v-if="method.code === 'bca'" class="text-blue-700 font-extrabold italic text-sm tracking-wider font-mono">BCA</div>
+                                                                <div v-else-if="method.code === 'mandiri'" class="text-blue-900 font-black italic text-xs tracking-tight">mandiri</div>
+                                                                <div v-else-if="method.code === 'bri'" class="text-blue-600 font-extrabold text-sm tracking-tighter">BRI</div>
+                                                                <div v-else-if="method.code === 'bni'" class="text-orange-500 font-extrabold italic text-sm">BNI</div>
+                                                                <div v-else-if="method.code === 'gopay'" class="text-cyan-500 font-bold text-xs flex items-center gap-0.5">
+                                                                    <span class="w-2.5 h-2.5 rounded-full bg-cyan-500 inline-block"></span>gopay
+                                                                </div>
+                                                                <div v-else-if="method.code === 'ovo'" class="text-purple-600 font-black text-xs">OVO</div>
+                                                                <div v-else-if="method.code === 'dana'" class="text-blue-500 font-extrabold text-xs italic">DANA</div>
+                                                                <div v-else-if="method.code === 'qris'" class="text-red-500 font-black text-xs tracking-widest border-2 border-red-500 px-1 py-0.5 rounded bg-red-50">QRIS</div>
+                                                                <div v-else-if="method.code === 'cod'" class="text-emerald-600 font-bold text-[10px] uppercase bg-emerald-50 dark:bg-emerald-950/20 px-2 py-1 rounded border border-emerald-300 dark:border-emerald-800 flex items-center gap-1">
+                                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                                                                    COD
+                                                                </div>
+                                                                <svg v-else class="w-6 h-6 text-gray-300 group-hover:text-amber-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                                                                </svg>
+                                                            </template>
+                                                        </div>
                                                     </div>
                                                 </label>
                                             </div>
@@ -382,88 +525,120 @@ function formatPrice(val) {
                                     <p v-if="form.errors.payment_method" class="text-xs text-red-500">{{ form.errors.payment_method }}</p>
                                 </div>
 
-                                <!-- DP Option — partner only -->
-                                <div v-if="isPartner" class="space-y-4 p-5 bg-blue-50 dark:bg-blue-900/10 rounded-xl border border-blue-200 dark:border-blue-800/50">
-                                    <h3 class="text-base font-bold text-gray-900 dark:text-white">Opsi Pembayaran Partner</h3>
-                                    <div class="flex gap-3">
-                                        <label class="flex items-start gap-3 cursor-pointer p-3 rounded-lg border-2 flex-1 transition-all"
-                                               :class="paymentMode === 'full' ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900'">
-                                            <input type="radio" v-model="paymentMode" value="full" class="mt-0.5 w-4 h-4 text-amber-600" />
+                                <!-- Step 3: DP Option — partner only -->
+                                <div v-if="isPartner" class="bg-blue-50/50 dark:bg-blue-950/10 border border-blue-200 dark:border-blue-800/40 rounded-2xl p-6 space-y-5">
+                                    <div class="flex items-center gap-3 border-b border-blue-200/50 dark:border-blue-800/40 pb-3">
+                                        <div class="w-8 h-8 rounded-full bg-blue-500 text-white font-bold text-sm flex items-center justify-center shadow">3</div>
+                                        <h3 class="text-lg font-black text-gray-900 dark:text-white">Opsi Pembayaran Partner</h3>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <label class="flex items-start gap-3 cursor-pointer p-4 rounded-xl border-2 flex-1 transition-all"
+                                               :class="paymentMode === 'full' ? 'border-amber-500 bg-amber-50/20 dark:bg-amber-950/20' : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900'">
+                                            <input type="radio" v-model="paymentMode" value="full" class="mt-0.5 w-4 h-4 text-amber-600 focus:ring-amber-500" />
                                             <div>
                                                 <p class="text-sm font-bold text-gray-900 dark:text-white">Bayar Lunas</p>
-                                                <p class="text-xs text-gray-500">Bayar penuh sekarang</p>
+                                                <p class="text-xs text-gray-500 mt-1">Bayar penuh seluruh pesanan sekarang</p>
                                             </div>
                                         </label>
-                                        <label class="flex items-start gap-3 cursor-pointer p-3 rounded-lg border-2 flex-1 transition-all"
-                                               :class="paymentMode === 'dp' ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900'">
-                                            <input type="radio" v-model="paymentMode" value="dp" class="mt-0.5 w-4 h-4 text-amber-600" />
+                                        <label class="flex items-start gap-3 cursor-pointer p-4 rounded-xl border-2 flex-1 transition-all"
+                                               :class="paymentMode === 'dp' ? 'border-amber-500 bg-amber-50/20 dark:bg-amber-950/20' : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900'">
+                                            <input type="radio" v-model="paymentMode" value="dp" class="mt-0.5 w-4 h-4 text-amber-600 focus:ring-amber-500" />
                                             <div>
-                                                <p class="text-sm font-bold text-gray-900 dark:text-white">Bayar DP</p>
-                                                <p class="text-xs text-gray-500">Min. 30% di muka, sisa jadi piutang</p>
+                                                <p class="text-sm font-bold text-gray-900 dark:text-white">Bayar DP (Uang Muka)</p>
+                                                <p class="text-xs text-gray-500 mt-1">Minimum 30% di muka, sisanya dicatat sebagai piutang</p>
                                             </div>
                                         </label>
                                     </div>
+
                                     <Transition name="expand">
-                                        <div v-if="paymentMode === 'dp'" class="space-y-3 pt-3 border-t border-blue-200 dark:border-blue-800/50">
+                                        <div v-if="paymentMode === 'dp'" class="space-y-4 pt-4 border-t border-blue-200/50 dark:border-blue-900/30">
                                             <div>
-                                                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                                                    Nominal DP <span class="text-red-500">*</span>
+                                                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-2">
+                                                    Nominal Pembayaran DP (Min 30%) <span class="text-red-500">*</span>
                                                 </label>
-                                                <input type="number" v-model.number="dpAmount" @input="validateDp" min="0"
-                                                       class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 outline-none transition-all"
-                                                       placeholder="Masukkan nominal DP" />
-                                                <p v-if="dpError" class="mt-1 text-xs text-red-500">{{ dpError }}</p>
+                                                <div class="relative">
+                                                    <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-gray-400 text-sm">Rp</span>
+                                                    <input type="number" v-model.number="dpAmount" @input="validateDp" min="0"
+                                                           class="w-full pl-10 pr-4 py-3.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 outline-none transition-all font-bold"
+                                                           placeholder="Masukkan nominal DP" />
+                                                </div>
+                                                <p v-if="dpError" class="mt-2 text-xs text-red-500 flex items-center gap-1">
+                                                    <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                                    {{ dpError }}
+                                                </p>
                                             </div>
-                                            <div v-if="dpAmount > 0" class="flex justify-between items-center text-sm font-semibold p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800/50">
-                                                <span class="text-gray-700 dark:text-gray-300">Sisa Piutang:</span>
-                                                <span class="text-amber-700 dark:text-amber-400">{{ formatPrice(remainingBalance) }}</span>
+                                            <div v-if="dpAmount > 0" class="flex justify-between items-center text-sm font-semibold p-4 bg-amber-50/50 dark:bg-amber-950/20 rounded-xl border border-amber-200/50 dark:border-amber-900/30">
+                                                <span class="text-gray-700 dark:text-gray-300">Sisa Piutang Akhir:</span>
+                                                <span class="text-amber-700 dark:text-amber-400 font-extrabold text-base">{{ formatPrice(remainingBalance) }}</span>
                                             </div>
                                         </div>
                                     </Transition>
                                 </div>
 
-                                <!-- Notes -->
-                                <div>
-                                    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                                        Catatan Pesanan (Opsional)
-                                    </label>
-                                    <textarea
-                                        v-model="form.notes"
-                                        rows="2"
-                                        class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all outline-none resize-none"
-                                        placeholder="Request khusus, instruksi pengiriman, dll"
-                                    />
+                                <!-- Step 4: Notes -->
+                                <div class="space-y-4">
+                                    <div class="flex items-center gap-3 border-b border-gray-150 dark:border-gray-800 pb-4">
+                                        <div class="w-8 h-8 rounded-full bg-amber-500 text-gray-950 font-bold text-sm flex items-center justify-center shadow">
+                                            {{ isPartner ? 4 : 3 }}
+                                        </div>
+                                        <h3 class="text-xl font-black text-gray-900 dark:text-white">Catatan Pesanan</h3>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
+                                            Catatan Tambahan (Opsional)
+                                        </label>
+                                        <textarea
+                                            v-model="form.notes"
+                                            rows="2.5"
+                                            class="w-full px-4 py-3.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all outline-none resize-none"
+                                            placeholder="Tulis instruksi khusus (contoh: request warna kemasan, titik koordinat, dll)..."
+                                        />
+                                    </div>
                                 </div>
 
-                                <!-- Submit -->
-                                <button
-                                    type="submit"
-                                    :disabled="submitting || !canSubmit"
-                                    class="w-full py-4 px-6 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-gray-950 rounded-xl font-bold text-sm shadow-lg shadow-amber-500/20 hover:shadow-amber-600/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    {{ submitting ? 'Memproses...' : 'Buat Pesanan' }}
-                                </button>
-
-                                <p class="text-xs text-center text-gray-500 dark:text-gray-400">
-                                    Setelah membuat pesanan, Anda akan diarahkan ke halaman konfirmasi dengan instruksi pembayaran
-                                </p>
+                                <!-- Submit Button -->
+                                <div class="pt-4">
+                                    <button
+                                        type="submit"
+                                        :disabled="submitting || !canSubmit"
+                                        class="w-full py-4 px-6 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-gray-950 rounded-2xl font-black text-base shadow-lg shadow-amber-500/20 hover:shadow-amber-600/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transform active:scale-[0.99]"
+                                    >
+                                        <span v-if="submitting" class="h-5 w-5 animate-spin rounded-full border-2 border-gray-950 border-t-transparent"></span>
+                                        <span>{{ submitting ? 'Memproses Pesanan...' : 'Buat Pesanan Sekarang' }}</span>
+                                    </button>
+                                    <p class="text-[11px] text-center text-gray-500 dark:text-gray-400 mt-3">
+                                        Dengan mengeklik tombol di atas, data pesanan Anda akan dicatat dan Anda akan diarahkan ke halaman detail transaksi & instruksi pembayaran.
+                                    </p>
+                                </div>
                             </form>
                         </div>
                     </div>
 
-                    <!-- Right: Order Summary -->
-                    <div class="lg:col-span-1">
-                        <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm sticky top-24">
-                            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Ringkasan Pesanan</h3>
+                    <!-- Right: Order Summary (Desktop only side panel) -->
+                    <div class="hidden lg:block lg:col-span-5 xl:col-span-4 sticky top-24">
+                        <div class="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-8 shadow-sm overflow-hidden relative">
+                            <div class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-amber-500 to-amber-600"></div>
 
-                            <div class="space-y-3 mb-6">
+                            <div class="flex items-center justify-between border-b border-gray-150 dark:border-gray-800 pb-4 mb-6">
+                                <h3 class="text-xl font-black text-gray-900 dark:text-white flex items-center gap-2">
+                                    <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                                    Ringkasan Belanja
+                                </h3>
+                                <span class="px-2.5 py-1 rounded-full text-xs font-black bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400">
+                                    {{ cart.items.length }} produk
+                                </span>
+                            </div>
+
+                            <div class="space-y-4 mb-6 max-h-[360px] overflow-y-auto pr-1">
                                 <!-- Empty state -->
-                                <div v-if="cart.items.length === 0" class="text-center py-8">
-                                    <svg class="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div v-if="cart.items.length === 0" class="text-center py-10">
+                                    <svg class="w-14 h-14 text-gray-300 dark:text-gray-700 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
                                     </svg>
-                                    <p class="text-sm text-gray-500 dark:text-gray-400">Keranjang masih kosong</p>
-                                    <a :href="config.catalog_url ?? '/'" class="inline-block mt-3 text-sm text-amber-600 hover:text-amber-700 font-medium">
+                                    <p class="text-sm font-semibold text-gray-500 dark:text-gray-400">Keranjang belanja kosong</p>
+                                    <a :href="config.catalog_url ?? '/'" class="inline-block mt-3 text-xs text-amber-600 hover:text-amber-700 font-bold">
                                         Mulai Belanja →
                                     </a>
                                 </div>
@@ -472,51 +647,57 @@ function formatPrice(val) {
                                 <div
                                     v-for="item in updatedItems"
                                     :key="item.id"
-                                    class="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                                    class="flex items-center gap-4 p-3 bg-gray-50 dark:bg-gray-800/40 hover:bg-gray-100/50 dark:hover:bg-gray-800/80 rounded-2xl border border-gray-100 dark:border-gray-800 transition-all shadow-sm"
                                 >
-                                    <div class="flex-shrink-0 w-12 h-12 bg-amber-100 dark:bg-amber-900/30 rounded-lg flex items-center justify-center">
-                                        <span class="text-sm font-bold text-amber-600 dark:text-amber-400">{{ item.qty }}</span>
+                                    <!-- Product Image with floating Qty Badge -->
+                                    <div class="relative w-16 h-16 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-inner">
+                                        <img v-if="item.image" :src="item.image" :alt="item.name" class="w-full h-full object-cover" />
+                                        <svg v-else class="w-7 h-7 text-gray-300 dark:text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                        <span class="absolute -top-1 -right-1 w-5.5 h-5.5 rounded-full bg-amber-500 text-white font-extrabold text-[10px] flex items-center justify-center shadow">
+                                            {{ item.qty }}
+                                        </span>
                                     </div>
                                     <div class="flex-1 min-w-0">
-                                        <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ item.name }}</p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                                        <p class="text-sm font-bold text-gray-900 dark:text-white truncate" :title="item.name">{{ item.name }}</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                                             {{ formatPrice(item.price) }}
-                                            <span v-if="item.has_discount" class="ml-1 text-[10px] bg-red-100 text-red-600 px-1 py-0.5 rounded">Diskon Reseller</span>
+                                            <span v-if="item.has_discount" class="ml-1 text-[9px] bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400 px-1 py-0.5 rounded font-black">Reseller</span>
                                         </p>
                                     </div>
-                                    <p class="text-sm font-bold text-gray-900 dark:text-white">{{ formatPrice(item.subtotal || (item.price * item.qty)) }}</p>
+                                    <p class="text-sm font-extrabold text-gray-900 dark:text-white flex-shrink-0">
+                                        {{ formatPrice(item.subtotal || (item.price * item.qty)) }}
+                                    </p>
                                 </div>
                             </div>
 
-                            <!-- Totals -->
-                            <div v-if="updatedItems.length > 0">
-                                <div class="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-2">
-                                    <div class="flex justify-between text-sm">
-                                        <span class="text-gray-600 dark:text-gray-400">Subtotal</span>
-                                        <span class="font-semibold text-gray-900 dark:text-white">{{ formatPrice(subtotal) }}</span>
-                                    </div>
-                                    <div class="flex justify-between text-sm">
-                                        <span class="text-gray-600 dark:text-gray-400">Ongkos Kirim</span>
-                                        <span class="font-semibold text-gray-900 dark:text-white">
-                                            {{ form.city_id ? (shippingCost > 0 ? formatPrice(shippingCost) : 'Gratis') : 'Pilih Kota/Kab' }}
-                                        </span>
-                                    </div>
-                                    <div class="border-t border-gray-200 dark:border-gray-700 pt-3">
-                                        <div class="flex justify-between text-base font-bold">
-                                            <span class="text-gray-900 dark:text-white">Total</span>
-                                            <span class="text-amber-600 dark:text-amber-400">{{ formatPrice(finalTotal) }}</span>
-                                        </div>
+                            <!-- Totals and details -->
+                            <div v-if="updatedItems.length > 0" class="border-t border-gray-150 dark:border-gray-800 pt-5 space-y-3.5">
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-500 dark:text-gray-400 font-medium">Subtotal</span>
+                                    <span class="font-bold text-gray-900 dark:text-white">{{ formatPrice(subtotal) }}</span>
+                                </div>
+                                <div class="flex justify-between text-sm items-center">
+                                    <span class="text-gray-500 dark:text-gray-400 font-medium">Ongkos Kirim</span>
+                                    <span class="font-bold text-gray-900 dark:text-white">
+                                        {{ form.city_id ? (shippingCost > 0 ? formatPrice(shippingCost) : 'Gratis') : 'Pilih Kota/Kab' }}
+                                    </span>
+                                </div>
+                                
+                                <div class="border-t border-gray-150 dark:border-gray-800 pt-4">
+                                    <div class="flex justify-between text-base items-baseline">
+                                        <span class="text-gray-900 dark:text-white font-black">Total Akhir</span>
+                                        <span class="text-2xl font-black text-amber-600 dark:text-amber-400 tracking-tight">{{ formatPrice(finalTotal) }}</span>
                                     </div>
                                 </div>
 
                                 <a
                                     :href="config.catalog_url ?? '/'"
-                                    class="mt-6 flex items-center justify-center gap-2 w-full py-3 px-4 rounded-lg border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
+                                    class="mt-6 flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl border border-gray-200 dark:border-gray-800 text-xs font-black text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 transition-all"
                                 >
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                                     </svg>
-                                    Tambah Produk Lain
+                                    Kembali ke Galeri Produk
                                 </a>
                             </div>
                         </div>

@@ -21,17 +21,15 @@ class FinanceController extends Controller
 
     public function index(Request $request): InertiaResponse
     {
-        $accountId = $request->filled('account_id') ? (int) $request->account_id : null;
         $startDate = $request->input('start_date', date('Y-m-01'));
         $endDate = $request->input('end_date', date('Y-m-t'));
-        
-        // Filter by transaction type
         $type = $request->input('type');
         
-        $data = $this->financeRepo->getLedgerReport($accountId, $startDate, $endDate, $type);
+        $data = $this->financeRepo->getLedgerReport(null, $startDate, $endDate, $type);
 
         return Inertia::render('Finance/Index', [
             'accounts' => $data['accounts'],
+            'mainAccount' => $data['mainAccount'],
             'ledgers' => $data['ledgers'],
             'startDate' => $data['startDate'],
             'endDate' => $data['endDate'],
@@ -39,7 +37,9 @@ class FinanceController extends Controller
             'totalExpense' => $data['totalExpense'],
             'netCashFlow' => $data['netCashFlow'],
             'breakdowns' => $data['breakdowns'],
-            'filters' => $request->only(['account_id', 'start_date', 'end_date', 'type']),
+            'labelBreakdown' => $data['labelBreakdown'],
+            'monthlyStats' => $data['monthlyStats'],
+            'filters' => $request->only(['start_date', 'end_date', 'type']),
         ]);
     }
 

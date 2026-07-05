@@ -11,7 +11,7 @@ class AdminRegionController extends Controller
 {
     public function index(Request $request): Response
     {
-        $query = Region::with('parent');
+        $query = Region::with(['parent', 'shippingRate']);
         
         if ($request->filled('search')) {
             $query->where('name', 'like', '%' . $request->search . '%');
@@ -41,12 +41,17 @@ class AdminRegionController extends Controller
             'shipping_cost' => 'nullable|numeric|min:0',
         ]);
 
-        Region::create([
+        $region = Region::create([
             'type' => $validated['type'],
             'name' => $validated['name'],
             'parent_id' => $validated['type'] === 'city' ? $validated['parent_id'] : null,
-            'shipping_cost' => $validated['shipping_cost'] ?? 0,
         ]);
+
+        if ($validated['type'] === 'city') {
+            $region->shippingRate()->create([
+                'shipping_cost' => $validated['shipping_cost'] ?? 0,
+            ]);
+        }
 
         return redirect()->back()->with('success', 'Wilayah berhasil ditambahkan!');
     }
@@ -64,8 +69,14 @@ class AdminRegionController extends Controller
             'type' => $validated['type'],
             'name' => $validated['name'],
             'parent_id' => $validated['type'] === 'city' ? $validated['parent_id'] : null,
-            'shipping_cost' => $validated['shipping_cost'] ?? 0,
         ]);
+
+        if ($validated['type'] === 'city') {
+            $region->shippingRate()->updateOrCreate(
+                ['region_id' => $region->id],
+                ['shipping_cost' => $validated['shipping_cost'] ?? 0]
+            );
+        }
 
         return redirect()->back()->with('success', 'Wilayah berhasil diperbarui!');
     }

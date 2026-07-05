@@ -33,6 +33,9 @@ class UpdateProductRequest extends FormRequest
             'region_prices.*.region_id' => ['required_with:region_prices', 'exists:regions,id'],
             'region_prices.*.base_price' => ['nullable', 'numeric', 'min:0'],
             'region_prices.*.reseller_price' => ['nullable', 'numeric', 'min:0'],
+            'user_prices'      => ['nullable', 'array'],
+            'user_prices.*.user_id' => ['required_with:user_prices', 'exists:users,id'],
+            'user_prices.*.price' => ['required_with:user_prices', 'numeric', 'min:0'],
         ];
     }
 }

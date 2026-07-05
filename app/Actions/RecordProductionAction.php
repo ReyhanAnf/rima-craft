@@ -118,6 +118,7 @@ class RecordProductionAction
                     $runningBalance -= $totalMaterialCost;
                     CashLedger::create([
                         'account_id'     => $account->id,
+                        'payment_label'  => 'Cash',
                         'date'           => $production->date,
                         'type'           => 'out',
                         'category'       => CashLedger::CATEGORY_PRODUCTION_MATERIAL,
@@ -134,6 +135,7 @@ class RecordProductionAction
                     $runningBalance -= $laborCost;
                     CashLedger::create([
                         'account_id'     => $account->id,
+                        'payment_label'  => 'Cash',
                         'date'           => $production->date,
                         'type'           => 'out',
                         'category'       => CashLedger::CATEGORY_PRODUCTION_LABOR,
@@ -150,6 +152,7 @@ class RecordProductionAction
                     $runningBalance -= $overheadCost;
                     CashLedger::create([
                         'account_id'     => $account->id,
+                        'payment_label'  => 'Cash',
                         'date'           => $production->date,
                         'type'           => 'out',
                         'category'       => CashLedger::CATEGORY_PRODUCTION_OVERHEAD,
@@ -166,6 +169,7 @@ class RecordProductionAction
                     $runningBalance -= $additionalCost;
                     CashLedger::create([
                         'account_id'     => $account->id,
+                        'payment_label'  => 'Cash',
                         'date'           => $production->date,
                         'type'           => 'out',
                         'category'       => CashLedger::CATEGORY_OTHER,

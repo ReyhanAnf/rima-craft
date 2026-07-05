@@ -5,6 +5,7 @@ import AdminLayout from '@/layouts/AdminLayout.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
+import DatePicker from 'primevue/datepicker';
 import InputNumber from 'primevue/inputnumber';
 import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
@@ -31,6 +32,34 @@ const showFilters = ref(false);
 const searchQuery = ref(props.filters.search || '');
 const dateFrom = ref(props.filters.date_from || '');
 const dateTo = ref(props.filters.date_to || '');
+
+const dates = ref(null);
+if (props.filters.date_from || props.filters.date_to) {
+    const from = props.filters.date_from ? new Date(props.filters.date_from) : null;
+    const to = props.filters.date_to ? new Date(props.filters.date_to) : null;
+    dates.value = [from, to];
+}
+
+const formatDateString = (date) => {
+    if (!date) return '';
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
+watch(dates, (newVal) => {
+    if (!newVal || newVal.length === 0) {
+        dateFrom.value = '';
+        dateTo.value = '';
+    } else {
+        const [from, to] = newVal;
+        dateFrom.value = from ? formatDateString(from) : '';
+        dateTo.value = to ? formatDateString(to) : '';
+    }
+    applyFilters();
+});
+
 const paymentStatus = ref(props.filters.payment_status || '');
 const minAmount = ref(props.filters.min_amount ? Number(props.filters.min_amount) : null);
 const maxAmount = ref(props.filters.max_amount ? Number(props.filters.max_amount) : null);
@@ -115,16 +144,19 @@ const formatDate = (dateStr) => {
             <!-- Filters Panel -->
             <div v-show="showFilters" class="bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm space-y-4">
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <!-- Date From -->
-                    <div class="flex flex-col gap-1.5">
-                        <label class="text-xs font-semibold">Tanggal Mulai</label>
-                        <input type="date" v-model="dateFrom" class="px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 text-gray-900 dark:text-white" @change="applyFilters" />
-                    </div>
-
-                    <!-- Date To -->
-                    <div class="flex flex-col gap-1.5">
-                        <label class="text-xs font-semibold">Tanggal Akhir</label>
-                        <input type="date" v-model="dateTo" class="px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 text-gray-900 dark:text-white" @change="applyFilters" />
+                    <!-- Date Range -->
+                    <div class="flex flex-col gap-1.5 lg:col-span-2">
+                        <label class="text-xs font-semibold">Rentang Tanggal</label>
+                        <DatePicker 
+                            v-model="dates" 
+                            selectionMode="range" 
+                            :manualInput="false" 
+                            placeholder="Pilih rentang tanggal..." 
+                            showIcon 
+                            iconDisplay="input" 
+                            class="w-full" 
+                            dateFormat="dd M yy" 
+                        />
                     </div>
 
                     <!-- Payment Status -->

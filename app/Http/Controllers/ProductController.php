@@ -22,12 +22,50 @@ class ProductController extends Controller
         }
         $products = $query->orderBy('name')->paginate(10)->withQueryString();
 
-        $regions = \App\Models\Region::where('type', 'province')->orderBy('name')->get(['id', 'name']);
+        $regions = \App\Models\Region::with('parent')
+            ->whereIn('type', ['province', 'city'])
+            ->get()
+            ->map(function ($r) {
+                return [
+                    'id' => $r->id,
+                    'name' => $r->type === 'province'
+                        ? 'Provinsi: ' . $r->name
+                        : 'Kota/Kab: ' . $r->name . ' (' . ($r->parent ? $r->parent->name : '') . ')',
+                ];
+            })
+            ->sortBy('name')
+            ->values();
 
         return Inertia::render('Products/Index', [
             'products' => $products,
             'regions' => $regions,
             'filters' => $request->only(['search']),
+        ]);
+    }
+
+    public function create(): InertiaResponse
+    {
+        $regions = \App\Models\Region::with('parent')
+            ->whereIn('type', ['province', 'city'])
+            ->get()
+            ->map(function ($r) {
+                return [
+                    'id' => $r->id,
+                    'name' => $r->type === 'province'
+                        ? 'Provinsi: ' . $r->name
+                        : 'Kota/Kab: ' . $r->name . ' (' . ($r->parent ? $r->parent->name : '') . ')',
+                ];
+            })
+            ->sortBy('name')
+            ->values();
+
+        $resellers = \App\Models\User::whereHas('roles', function ($query) {
+            $query->where('name', 'reseller');
+        })->orderBy('name')->get(['id', 'name', 'email']);
+
+        return Inertia::render('Products/Create', [
+            'regions' => $regions,
+            'resellers' => $resellers,
         ]);
     }
 
@@ -84,8 +122,52 @@ class ProductController extends Controller
             }
         }
 
+        if (isset($validated['user_prices']) && is_array($validated['user_prices'])) {
+            $userPricesData = [];
+            foreach ($validated['user_prices'] as $up) {
+                if (!empty($up['user_id']) && !empty($up['price'])) {
+                    $userPricesData[] = [
+                        'user_id' => $up['user_id'],
+                        'price' => $up['price'],
+                    ];
+                }
+            }
+            if (!empty($userPricesData)) {
+                $product->userPrices()->createMany($userPricesData);
+            }
+        }
+
         return redirect()->route('products.index')
             ->with('success', 'Produk berhasil ditambahkan!');
+    }
+
+    public function edit(Product $product): InertiaResponse
+    {
+        $regions = \App\Models\Region::with('parent')
+            ->whereIn('type', ['province', 'city'])
+            ->get()
+            ->map(function ($r) {
+                return [
+                    'id' => $r->id,
+                    'name' => $r->type === 'province'
+                        ? 'Provinsi: ' . $r->name
+                        : 'Kota/Kab: ' . $r->name . ' (' . ($r->parent ? $r->parent->name : '') . ')',
+                ];
+            })
+            ->sortBy('name')
+            ->values();
+
+        $resellers = \App\Models\User::whereHas('roles', function ($query) {
+            $query->where('name', 'reseller');
+        })->orderBy('name')->get(['id', 'name', 'email']);
+
+        $product->load(['regionPrices', 'userPrices']);
+
+        return Inertia::render('Products/Edit', [
+            'product' => $product,
+            'regions' => $regions,
+            'resellers' => $resellers,
+        ]);
     }
 
     public function update(UpdateProductRequest $request, Product $product)
@@ -141,6 +223,23 @@ class ProductController extends Controller
             }
             if (!empty($regionPricesData)) {
                 $product->regionPrices()->createMany($regionPricesData);
+            }
+        }
+
+        // Sync user-specific reseller prices
+        $product->userPrices()->delete();
+        if (isset($validated['user_prices']) && is_array($validated['user_prices'])) {
+            $userPricesData = [];
+            foreach ($validated['user_prices'] as $up) {
+                if (!empty($up['user_id']) && isset($up['price'])) {
+                    $userPricesData[] = [
+                        'user_id' => $up['user_id'],
+                        'price'   => $up['price'],
+                    ];
+                }
+            }
+            if (!empty($userPricesData)) {
+                $product->userPrices()->createMany($userPricesData);
             }
         }
 

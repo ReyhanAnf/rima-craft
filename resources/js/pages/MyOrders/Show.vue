@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue';
-import { Link } from '@inertiajs/vue3';
-import PublicLayout from '@/layouts/PublicLayout.vue';
+import { Link, router } from '@inertiajs/vue3';
+import AdminLayout from '@/layouts/AdminLayout.vue';
 
 const props = defineProps({
     order: { type: Object, required: true },
@@ -99,11 +99,25 @@ function stepTimestamp(step) {
     const val = props.order[step.timestampField];
     return val ? formatDateShort(val) : null;
 }
+
+const processing = ref(false);
+
+function completeOrder() {
+    if (confirm('Apakah Anda yakin barang pesanan ini sudah diterima dengan baik?')) {
+        processing.value = true;
+        router.patch(route('my-orders.complete', props.order.order_number), {}, {
+            preserveScroll: true,
+            onFinish: () => {
+                processing.value = false;
+            }
+        });
+    }
+}
 </script>
 
 <template>
-    <PublicLayout>
-        <div class="min-h-screen bg-gray-50 px-4 py-10 dark:bg-gray-950">
+    <AdminLayout>
+        <div class="py-6 space-y-6">
             <div class="mx-auto max-w-3xl space-y-4">
 
                 <!-- ── Section 1: Header ──────────────────────────────────── -->
@@ -318,6 +332,25 @@ function stepTimestamp(step) {
                             </li>
                         </ol>
                     </div>
+
+                    <!-- Complete Order CTA for User -->
+                    <div v-if="order.status === 'shipped'" class="mt-6 pt-6 border-t border-gray-100 dark:border-gray-800 text-center space-y-3">
+                        <p class="text-xs text-gray-600 dark:text-gray-400 font-medium">
+                            Barang Anda sedang dalam pengiriman dengan Nomor Resi di atas. Jika barang sudah sampai di tangan Anda dengan selamat, silakan konfirmasi penerimaan pesanan di bawah ini.
+                        </p>
+                        <button
+                            type="button"
+                            @click="completeOrder"
+                            :disabled="processing"
+                            class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white font-bold text-xs px-6 py-3 transition shadow-sm disabled:opacity-50"
+                        >
+                            <svg v-if="processing" class="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
+                            Konfirmasi Barang Diterima
+                        </button>
+                    </div>
                 </section>
 
                 <!-- ── Section 6: Shipping Info ───────────────────────────── -->
@@ -359,5 +392,5 @@ function stepTimestamp(step) {
 
             </div>
         </div>
-    </PublicLayout>
+    </AdminLayout>
 </template>

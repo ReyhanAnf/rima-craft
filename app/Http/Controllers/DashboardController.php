@@ -55,6 +55,8 @@ class DashboardController extends Controller
             'totalPurchases' => (float) $totalPurchases,
             'totalProductionCost' => (float) $totalProductionCost,
             'grossProfit' => (float) $grossProfit,
+            'profitMargin' => (float) $profitMargin,
+            'productionBreakdown' => $productionBreakdown,
             'cashInflow' => (float) $cashInflow,
             'cashOutflow' => (float) $cashOutflow,
             'totalKas' => (float) $totalKas,

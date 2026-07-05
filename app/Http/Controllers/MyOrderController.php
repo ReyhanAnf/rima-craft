@@ -30,4 +30,22 @@ class MyOrderController extends Controller
 
         return Inertia::render('MyOrders/Show', ['order' => $order]);
     }
+
+    public function complete(string $orderNumber)
+    {
+        $order = Order::where('order_number', $orderNumber)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        // Only allow completing if order is shipped
+        if ($order->status === 'shipped') {
+            $order->update([
+                'status' => 'completed',
+                'completed_at' => now(),
+            ]);
+            return redirect()->back()->with('success', 'Pesanan berhasil diselesaikan. Terima kasih!');
+        }
+
+        return redirect()->back()->with('error', 'Status pesanan tidak valid untuk diselesaikan.');
+    }
 }

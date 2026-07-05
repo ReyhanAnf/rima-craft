@@ -4,7 +4,7 @@ import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import AdminLayout from '@/layouts/AdminLayout.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
-import Textarea from 'primevue/textarea';
+import Editor from 'primevue/editor';
 import InputNumber from 'primevue/inputnumber';
 import Dialog from 'primevue/dialog';
 import Message from 'primevue/message';
@@ -108,6 +108,13 @@ const deleteMethod = (method) => {
         router.delete(route('payment-methods.destroy', method.id));
     }
 };
+
+
+
+function stripTags(html) {
+    if (!html) return '';
+    return html.replace(/<[^>]*>/g, '');
+}
 </script>
 
 <template>
@@ -156,7 +163,7 @@ const deleteMethod = (method) => {
                                         />
                                         <div>
                                             <div class="font-bold text-gray-900 dark:text-white">{{ method.name }}</div>
-                                            <div class="text-xs text-gray-400 max-w-xs truncate">{{ method.description }}</div>
+                                            <div class="text-xs text-gray-400 max-w-xs truncate">{{ stripTags(method.description) }}</div>
                                         </div>
                                     </div>
                                 </td>
@@ -194,103 +201,146 @@ const deleteMethod = (method) => {
                 </div>
             </div>
 
-            <!-- Create/Edit Dialog -->
-            <Dialog
-                v-model:visible="isFormOpen"
-                modal
-                :header="editingMethod ? 'Edit Metode Pembayaran' : 'Tambah Metode Pembayaran'"
-                class="w-full max-w-lg"
-                :contentStyle="{ maxHeight: '65vh', overflowY: 'auto' }"
-            >
-                <div v-if="Object.keys(form.errors).length > 0" class="mb-4">
-                    <Message severity="error" v-for="(err, key) in form.errors" :key="key" size="small" class="mb-1">
-                        {{ err }}
-                    </Message>
-                </div>
+            <!-- Create/Edit Right Side Drawer -->
+            <div v-if="isFormOpen" class="fixed inset-0 z-50 overflow-hidden" aria-labelledby="slide-over-title" role="dialog" aria-modal="true">
+                <div class="absolute inset-0 overflow-hidden">
+                    <!-- Backdrop overlay -->
+                    <div class="absolute inset-0 bg-gray-500/30 dark:bg-black/60 backdrop-blur-sm transition-opacity" @click="isFormOpen = false"></div>
+                    
+                    <div class="pointer-events-none fixed inset-y-0 right-0 flex max-w-full pl-10">
+                        <div class="pointer-events-auto w-screen max-w-md transform bg-white dark:bg-gray-900 shadow-2xl transition-all duration-300 ease-in-out border-l border-gray-200 dark:border-gray-800 flex flex-col h-full">
+                            <!-- Drawer Header -->
+                            <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between bg-gray-50 dark:bg-gray-900/50">
+                                <h3 class="text-sm font-black text-gray-950 dark:text-white uppercase tracking-wider">
+                                    {{ editingMethod ? 'Edit Metode Pembayaran' : 'Tambah Metode Pembayaran' }}
+                                </h3>
+                                <Button icon="pi pi-times" severity="secondary" text rounded @click="isFormOpen = false" class="!p-1" />
+                            </div>
 
-                <form id="paymentForm" @submit.prevent="submitForm" class="space-y-4 pt-2">
-                    <div class="flex flex-col gap-1.5">
-                        <label class="text-xs font-semibold">Nama Metode <span class="text-red-500">*</span></label>
-                        <InputText v-model="form.name" required placeholder="Contoh: Transfer Bank BCA" />
-                    </div>
+                            <!-- Drawer Body -->
+                            <div class="flex-1 overflow-y-auto p-6 space-y-4">
+                                <div v-if="Object.keys(form.errors).length > 0" class="mb-4">
+                                    <Message severity="error" v-for="(err, key) in form.errors" :key="key" size="small" class="mb-1">
+                                        {{ err }}
+                                    </Message>
+                                </div>
 
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="flex flex-col gap-1.5">
-                            <label class="text-xs font-semibold">Kode Unik <span class="text-red-500">*</span></label>
-                            <InputText v-model="form.code" required placeholder="Contoh: bca" :disabled="!!editingMethod" />
-                        </div>
-                        <div class="flex flex-col gap-1.5">
-                            <label class="text-xs font-semibold">Tipe <span class="text-red-500">*</span></label>
-                            <select v-model="form.type" required class="w-full p-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-md text-sm">
-                                <option v-for="opt in typeOptions" :key="opt.value" :value="opt.value">
-                                    {{ opt.label }}
-                                </option>
-                            </select>
-                        </div>
-                    </div>
+                                <form id="paymentForm" @submit.prevent="submitForm" class="space-y-4">
+                                    <div class="flex flex-col gap-1.5">
+                                        <label class="text-xs font-semibold">Nama Metode <span class="text-red-500">*</span></label>
+                                        <InputText v-model="form.name" required placeholder="Contoh: Transfer Bank BCA" class="w-full" />
+                                    </div>
 
-                    <div class="grid grid-cols-2 gap-4" v-if="form.type !== 'cod'">
-                        <div class="flex flex-col gap-1.5">
-                            <label class="text-xs font-semibold">Nomor Rekening / No. HP</label>
-                            <InputText v-model="form.account_number" placeholder="Contoh: 123456789" />
-                        </div>
-                        <div class="flex flex-col gap-1.5">
-                            <label class="text-xs font-semibold">Nama Pemilik Akun</label>
-                            <InputText v-model="form.account_name" placeholder="Contoh: PT Rima Craft" />
-                        </div>
-                    </div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div class="flex flex-col gap-1.5">
+                                            <label class="text-xs font-semibold">Kode Unik <span class="text-red-500">*</span></label>
+                                            <InputText v-model="form.code" required placeholder="Contoh: bca" :disabled="!!editingMethod" class="w-full" />
+                                        </div>
+                                        <div class="flex flex-col gap-1.5">
+                                            <label class="text-xs font-semibold">Tipe <span class="text-red-500">*</span></label>
+                                            <select v-model="form.type" required class="w-full p-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-md text-sm outline-none focus:border-amber-500">
+                                                <option v-for="opt in typeOptions" :key="opt.value" :value="opt.value">
+                                                    {{ opt.label }}
+                                                </option>
+                                            </select>
+                                        </div>
+                                    </div>
 
-                    <div class="flex flex-col gap-1.5">
-                        <label class="text-xs font-semibold">Instruksi Pembayaran / Deskripsi</label>
-                        <Textarea v-model="form.description" rows="3" placeholder="Masukkan instruksi transfer atau deskripsi pembayaran..." />
-                    </div>
+                                    <div class="grid grid-cols-2 gap-4" v-if="form.type !== 'cod'">
+                                        <div class="flex flex-col gap-1.5">
+                                            <label class="text-xs font-semibold">Nomor Rekening / No. HP</label>
+                                            <InputText v-model="form.account_number" placeholder="Contoh: 123456789" class="w-full" />
+                                        </div>
+                                        <div class="flex flex-col gap-1.5">
+                                            <label class="text-xs font-semibold">Nama Pemilik Akun</label>
+                                            <InputText v-model="form.account_name" placeholder="Contoh: PT Rima Craft" class="w-full" />
+                                        </div>
+                                    </div>
 
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="flex flex-col gap-1.5">
-                            <label class="text-xs font-semibold">Nomor Urut Tampil</label>
-                            <InputNumber v-model="form.sort_order" required :min="0" showButtons />
-                        </div>
-                        <div class="flex flex-col gap-1.5">
-                            <label class="text-xs font-semibold">Status Aktif</label>
-                            <div class="flex items-center gap-2 mt-2">
-                                <input type="checkbox" id="is_active" v-model="form.is_active" class="w-4 h-4 rounded text-amber-500 focus:ring-amber-500" />
-                                <label for="is_active" class="text-sm font-semibold cursor-pointer">Metode ini Aktif</label>
+                                    <!-- Rich-Text Wording Instruction Area -->
+                                    <div class="flex flex-col gap-1.5">
+                                        <label class="text-xs font-semibold">Instruksi Pembayaran / Deskripsi</label>
+                                        <Editor 
+                                            v-model="form.description" 
+                                            editorStyle="height: 180px" 
+                                            placeholder="Masukkan instruksi transfer atau deskripsi pembayaran..." 
+                                            class="w-full"
+                                        >
+                                            <template #toolbar>
+                                                <span class="ql-formats">
+                                                    <button class="ql-bold" title="Tebal"></button>
+                                                    <button class="ql-italic" title="Miring"></button>
+                                                    <button class="ql-underline" title="Garis Bawah"></button>
+                                                    <button class="ql-strike" title="Coret"></button>
+                                                </span>
+                                                <span class="ql-formats">
+                                                    <button class="ql-list" value="ordered" title="Nomor"></button>
+                                                    <button class="ql-list" value="bullet" title="Bullet"></button>
+                                                </span>
+                                                <span class="ql-formats">
+                                                    <select class="ql-align"></select>
+                                                    <button class="ql-link" title="Link"></button>
+                                                    <button class="ql-clean" title="Bersihkan Format"></button>
+                                                </span>
+                                            </template>
+                                        </Editor>
+                                    </div>
+
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div class="flex flex-col gap-1.5">
+                                            <label class="text-xs font-semibold">Nomor Urut Tampil</label>
+                                            <input 
+                                                type="number" 
+                                                v-model.number="form.sort_order" 
+                                                required 
+                                                min="0" 
+                                                class="w-full p-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-md text-sm outline-none focus:border-amber-500" 
+                                            />
+                                        </div>
+                                        <div class="flex flex-col gap-1.5">
+                                            <label class="text-xs font-semibold">Status Aktif</label>
+                                            <div class="flex items-center gap-2 mt-2">
+                                                <input type="checkbox" id="is_active" v-model="form.is_active" class="w-4 h-4 rounded text-amber-500 focus:ring-amber-500" />
+                                                <label for="is_active" class="text-sm font-semibold cursor-pointer select-none">Metode ini Aktif</label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex flex-col gap-1.5 pt-2">
+                                        <label class="text-xs font-semibold">Logo / QR Code QRIS</label>
+                                        <div class="flex gap-4 items-center">
+                                            <img
+                                                v-if="logoPreview"
+                                                :src="logoPreview"
+                                                class="w-16 h-16 object-contain rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 p-1"
+                                                alt=""
+                                            />
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                @change="onLogoChange"
+                                                class="text-xs text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-amber-50 dark:file:bg-amber-500/10 file:text-amber-700 dark:file:text-amber-400 cursor-pointer"
+                                            />
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <!-- Drawer Footer -->
+                            <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-800 flex justify-end gap-2 bg-gray-50 dark:bg-gray-900/50">
+                                <Button label="Batal" severity="secondary" text @click="isFormOpen = false" />
+                                <Button
+                                    type="submit"
+                                    form="paymentForm"
+                                    label="Simpan"
+                                    :loading="form.processing"
+                                    class="!bg-amber-500 hover:!bg-amber-600 !border-amber-500 hover:!border-amber-600 !text-gray-950 font-bold"
+                                />
                             </div>
                         </div>
                     </div>
-
-                    <div class="flex flex-col gap-1.5 pt-2">
-                        <label class="text-xs font-semibold">Logo / QR Code QRIS</label>
-                        <div class="flex gap-4 items-center">
-                            <img
-                                v-if="logoPreview"
-                                :src="logoPreview"
-                                class="w-16 h-16 object-contain rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 p-1"
-                                alt=""
-                            />
-                            <input
-                                type="file"
-                                accept="image/*"
-                                @change="onLogoChange"
-                                class="text-xs text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-amber-50 dark:file:bg-amber-500/10 file:text-amber-700 dark:file:text-amber-400 cursor-pointer"
-                            />
-                        </div>
-                    </div>
-                </form>
-
-                <template #footer>
-                    <div class="flex justify-end gap-2 border-t border-gray-150 dark:border-gray-800 pt-3">
-                        <Button label="Batal" severity="secondary" text @click="isFormOpen = false" />
-                        <Button
-                            type="submit"
-                            form="paymentForm"
-                            label="Simpan"
-                            :loading="form.processing"
-                            class="!bg-amber-500 hover:!bg-amber-600 !border-amber-500 hover:!border-amber-600 !text-gray-950 font-bold"
-                        />
-                    </div>
-                </template>
-            </Dialog>
+                </div>
+            </div>
         </div>
     </AdminLayout>
 </template>

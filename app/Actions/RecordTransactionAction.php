@@ -22,7 +22,7 @@ class RecordTransactionAction
     public function handle(array $data): CashLedger
     {
         return DB::transaction(function () use ($data): CashLedger {
-            $account = Account::lockForUpdate()->findOrFail($data['account_id']);
+            $account = Account::lockForUpdate()->findOrFail(1);
 
             if ($data['type'] === 'out' && $account->balance < $data['amount']) {
                 throw new \Exception("Saldo kas '{$account->name}' tidak mencukupi!");
@@ -34,6 +34,7 @@ class RecordTransactionAction
 
             $ledger = CashLedger::create([
                 'account_id'  => $account->id,
+                'payment_label' => $data['payment_label'] ?? 'Cash',
                 'date'        => $data['date'],
                 'type'        => $data['type'],
                 'category'    => CashLedger::CATEGORY_MANUAL,

@@ -45,8 +45,8 @@ class AppServiceProvider extends ServiceProvider
     {
         // Register gates dynamically from database permissions
         Gate::before(function (User $user, string $ability) {
-            // Super admin has all permissions
-            if ($user->hasRole('super-admin')) {
+            // Dev admin has all permissions
+            if ($user->hasRole('dev-admin')) {
                 return true;
             }
             

@@ -28,6 +28,8 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             PermissionSeeder::class,
             MasterDataSeeder::class,
+            RegionSeeder::class,
+            ShippingRateSeeder::class,
         ]);
     }
 }

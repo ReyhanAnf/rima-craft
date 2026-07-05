@@ -174,4 +174,12 @@ class Order extends Model
     {
         return $query->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);
     }
+
+    /**
+     * Get the payments associated with the order.
+     */
+    public function payments(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    {
+        return $this->morphMany(Payment::class, 'payable');
+    }
 }

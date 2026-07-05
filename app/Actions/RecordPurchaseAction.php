@@ -89,6 +89,7 @@ class RecordPurchaseAction
 
                     CashLedger::create([
                         'account_id'     => $account->id,
+                        'payment_label'  => 'Cash',
                         'date'           => $purchase->date,
                         'type'           => 'out',
                         'category'       => CashLedger::CATEGORY_PURCHASE_EXPENSE,

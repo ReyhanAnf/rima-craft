@@ -101,10 +101,9 @@ Route::middleware('auth')->group(function () {
         return redirect()->route('customer.orders');
     })->name('my-orders.index');
 
-    // Redirect /my-orders/{orderNumber} ke portal show order
-    Route::get('my-orders/{orderNumber}', function ($orderNumber) {
-        return redirect()->route('customer.orders');
-    })->name('my-orders.show');
+    // Show order details page
+    Route::get('my-orders/{orderNumber}', [MyOrderController::class, 'show'])->name('my-orders.show');
+    Route::patch('my-orders/{orderNumber}/complete', [MyOrderController::class, 'complete'])->name('my-orders.complete');
 
 
     Route::middleware(['role:customer', 'permission:view-my-profile'])

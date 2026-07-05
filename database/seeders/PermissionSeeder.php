@@ -181,7 +181,9 @@ class PermissionSeeder extends Seeder
         // But we can still assign them for clarity
         $superAdminRole = Role::where('name', 'super-admin')->first();
         if ($superAdminRole) {
-            $superAdminRole->permissions()->sync(Permission::all()->pluck('id'));
+            $superAdminRole->permissions()->sync(
+                Permission::where('name', '!=', 'manage-roles')->pluck('id')
+            );
         }
         
         // Customer: B2C/Eceran permissions

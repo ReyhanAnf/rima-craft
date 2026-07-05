@@ -17,12 +17,11 @@ class FinanceRepository
      */
     public function getLedgerReport(?int $accountId, string $startDate, string $endDate, ?string $type = null): array
     {
-        $accounts = Account::orderBy('name')->get();
-        $query = CashLedger::with('account')->orderByDesc('date')->orderByDesc('id');
+        // Consolidate: accounts is no longer needed, but we pass Kas Utama (ID 1) as accounts for compatibility
+        $accounts = Account::where('id', 1)->get();
+        $mainAccount = Account::find(1);
 
-        if ($accountId) {
-            $query->where('account_id', $accountId);
-        }
+        $query = CashLedger::with('account')->orderByDesc('date')->orderByDesc('id');
 
         $query->whereBetween('date', [$startDate, $endDate]);
         
@@ -43,9 +42,34 @@ class FinanceRepository
             ->pluck('total', 'category')
             ->toArray();
 
+        // Breakdown based on payment labels (BCA, Cash, COD, etc.)
+        $labelBreakdown = CashLedger::selectRaw("
+            payment_label,
+            SUM(CASE WHEN type = 'in' THEN amount ELSE -amount END) as net_amount
+        ")
+        ->groupBy('payment_label')
+        ->pluck('net_amount', 'payment_label')
+        ->toArray();
+
+        // Monthly Stats (Last 6 Months) for analytical charts
+        $monthlyStats = CashLedger::selectRaw("
+            DATE_FORMAT(date, '%Y-%m') as month,
+            SUM(CASE WHEN type = 'in' THEN amount ELSE 0 END) as income,
+            SUM(CASE WHEN type = 'out' THEN amount ELSE 0 END) as expense
+        ")
+        ->where('date', '>=', now()->subMonths(5)->startOfMonth()->format('Y-m-d'))
+        ->groupBy('month')
+        ->orderBy('month')
+        ->get()
+        ->toArray();
+
         $ledgers = $query->paginate(30);
 
-        return compact('accounts', 'ledgers', 'startDate', 'endDate', 'totalIncome', 'totalExpense', 'netCashFlow', 'breakdowns');
+        return compact(
+            'accounts', 'mainAccount', 'ledgers', 'startDate', 'endDate', 
+            'totalIncome', 'totalExpense', 'netCashFlow', 'breakdowns', 
+            'labelBreakdown', 'monthlyStats'
+        );
     }
 
     /**

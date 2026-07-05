@@ -69,6 +69,10 @@ class User extends Authenticatable
      */
     public function hasPermission(string $permissionName): bool
     {
+        if ($this->hasRole('dev-admin')) {
+            return true;
+        }
+
         return $this->roles()
             ->whereHas('permissions', function ($query) use ($permissionName) {
                 $query->where('name', $permissionName);

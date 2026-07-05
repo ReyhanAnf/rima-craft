@@ -18,7 +18,18 @@ class RegionController extends Controller
             return response()->json(['error' => 'Invalid province'], 400);
         }
 
-        $cities = $province->children()->orderBy('name')->get(['id', 'name', 'shipping_cost']);
+        $cities = $province->children()
+            ->with('shippingRate')
+            ->orderBy('name')
+            ->get()
+            ->map(function ($city) {
+                return [
+                    'id' => $city->id,
+                    'name' => $city->name,
+                    'shipping_cost' => $city->shippingRate ? (float) $city->shippingRate->shipping_cost : 0.0,
+                ];
+            });
+
         return response()->json($cities);
     }
 
@@ -34,10 +45,10 @@ class RegionController extends Controller
             'items.*.qty' => 'required|integer|min:1',
         ]);
 
-        $city = Region::find($validated['city_id']);
+        $city = Region::with('shippingRate')->find($validated['city_id']);
         $user = auth()->user();
         
-        $shippingCost = (float) $city->shipping_cost;
+        $shippingCost = $city->shippingRate ? (float) $city->shippingRate->shipping_cost : 0.0;
         $subtotal = 0;
         $updatedItems = [];
 

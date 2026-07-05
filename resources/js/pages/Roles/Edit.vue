@@ -1,6 +1,6 @@
 <script setup>
-import { ref } from 'vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { ref, computed } from 'vue';
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import AdminLayout from '@/layouts/AdminLayout.vue';
 import Card from 'primevue/card';
 import Button from 'primevue/button';
@@ -11,6 +11,9 @@ const props = defineProps({
     role: Object,
     groupedPermissions: Object,
 });
+
+const page = usePage();
+const isDevAdmin = computed(() => page.props.auth?.roles?.includes('dev-admin'));
 
 const form = useForm({
     name: props.role.name,
@@ -47,16 +50,31 @@ const isAllInModuleChecked = (permissionsList) => {
         <Head :title="`Edit Hak Akses: ${role.name}`" />
 
         <div class="space-y-6 max-w-4xl mx-auto pb-24">
-            <!-- Header -->
-            <div class="flex items-center gap-4">
-                <Link :href="route('roles.index')">
-                    <Button icon="pi pi-arrow-left" severity="secondary" rounded outlined />
-                </Link>
-                <div>
-                    <h2 class="text-xl font-bold text-gray-900 dark:text-white uppercase">Edit Hak Akses: {{ role.name }}</h2>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Aktifkan atau matikan hak akses menu secara spesifik untuk peran ini.</p>
+            <!-- Access Restriction Warning -->
+            <div v-if="!isDevAdmin" class="py-16 text-center space-y-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-sm p-8">
+                <div class="w-16 h-16 bg-red-50 dark:bg-red-950/20 rounded-full flex items-center justify-center mx-auto text-red-500">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                    </svg>
                 </div>
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white">Akses Dibatasi</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 max-w-md mx-auto">Halaman manajemen peran dan hak akses (roles & permissions) hanya dapat dikelola oleh **Developer Admin**.</p>
+                <Link :href="route('users.index')">
+                    <Button label="Kembali ke Manajemen Pengguna" class="mt-4 !bg-amber-500 hover:!bg-amber-600 !border-amber-500 hover:!border-amber-600 !text-gray-950 font-bold" />
+                </Link>
             </div>
+
+            <div v-else class="space-y-6">
+                <!-- Header -->
+                <div class="flex items-center gap-4">
+                    <Link :href="route('roles.index')">
+                        <Button icon="pi pi-arrow-left" severity="secondary" rounded outlined />
+                    </Link>
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white uppercase">Edit Hak Akses: {{ role.name }}</h2>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Aktifkan atau matikan hak akses menu secara spesifik untuk peran ini.</p>
+                    </div>
+                </div>
 
             <div v-if="Object.keys(form.errors).length > 0" class="mb-4">
                 <Message severity="error" v-for="(err, key) in form.errors" :key="key" size="small">
@@ -118,6 +136,7 @@ const isAllInModuleChecked = (permissionsList) => {
                     />
                 </div>
             </form>
+        </div>
         </div>
     </AdminLayout>
 </template>

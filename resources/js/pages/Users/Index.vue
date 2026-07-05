@@ -41,6 +41,14 @@ const roleOptions = computed(() => {
     ];
 });
 
+const filteredRoles = computed(() => {
+    const isDev = page.props.auth?.roles?.includes('dev-admin');
+    if (isDev) {
+        return props.roles;
+    }
+    return props.roles.filter(r => r.name !== 'dev-admin');
+});
+
 let filterTimeout = null;
 const applyFilters = () => {
     clearTimeout(filterTimeout);
@@ -135,7 +143,7 @@ const getRoleBadge = (roleName) => {
                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Kelola hak akses sistem, profil staff, dan akun partner/reseller.</p>
                 </div>
                 <div class="flex gap-2">
-                    <Link :href="route('roles.index')">
+                    <Link v-if="$page.props.auth.permissions.includes('manage-roles') || $page.props.auth.roles.includes('dev-admin')" :href="route('roles.index')">
                         <Button label="Kelola Peran / Hak Akses" icon="pi pi-shield" severity="secondary" outlined />
                     </Link>
                     <Button
@@ -259,7 +267,7 @@ const getRoleBadge = (roleName) => {
                         <label class="text-xs font-semibold">Peran / Role Akses <span class="text-red-500">*</span></label>
                         <Dropdown
                             v-model="form.role"
-                            :options="roles"
+                            :options="filteredRoles"
                             optionLabel="name"
                             optionValue="name"
                             placeholder="Pilih Peran..."

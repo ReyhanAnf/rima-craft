@@ -7,17 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 class Region extends Model
 {
     protected $fillable = [
+        'code',
         'parent_id',
         'type',
         'name',
-        'shipping_cost',
     ];
 
-    protected function casts(): array
+    public function shippingRate()
     {
-        return [
-            'shipping_cost' => 'decimal:2',
-        ];
+        return $this->hasOne(ShippingRate::class, 'region_id');
     }
 
     public function parent()

@@ -19,7 +19,7 @@ class StoreTransactionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'account_id' => ['required', 'exists:accounts,id'],
+            'payment_label' => ['required', 'string', 'max:50'],
             'date' => ['required', 'date'],
             'type' => ['required', 'in:in,out'],
             'amount' => ['required', 'numeric', 'min:1'],

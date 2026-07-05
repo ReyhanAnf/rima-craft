@@ -123,6 +123,7 @@ class RecordSaleAction
 
                     CashLedger::create([
                         'account_id'     => $account->id,
+                        'payment_label'  => 'Cash',
                         'date'           => $sale->date,
                         'type'           => 'in',
                         'category'       => CashLedger::CATEGORY_SALE_INCOME,

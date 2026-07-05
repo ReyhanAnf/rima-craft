@@ -218,6 +218,11 @@ window.route = function(name, params = {}) {
         'users.index': '/users',
         'roles.index': '/roles',
         'orders.index': '/orders',
+        'regions.index': '/regions',
+        'regions.store': '/regions',
+        'regions.update': '/regions/{id}',
+        'regions.destroy': '/regions/{id}',
+        'payment-methods.index': '/payment-methods',
         
         // Auth routes
         'customer.login': '/customer/login',
