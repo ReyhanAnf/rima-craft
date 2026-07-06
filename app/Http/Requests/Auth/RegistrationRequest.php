@@ -24,8 +24,10 @@ class RegistrationRequest extends FormRequest
      */
     public function rules(): array
     {
-        // Detect type from route parameter or path info (since explicit routes don't have {type} parameter)
-        $type = $this->route('type') ?? (str_contains($this->getPathInfo(), 'reseller') || str_contains($this->getPathInfo(), 'partner') ? 'reseller' : 'customer');
+        // Detect type from POST body (preferred), then route param, then URL path
+        $type = $this->input('register_type')
+            ?? $this->route('type')
+            ?? (str_contains($this->getPathInfo(), 'reseller') ? 'reseller' : 'customer');
 
         return [
             'name' => 'required|string|max:255',
@@ -33,6 +35,8 @@ class RegistrationRequest extends FormRequest
             'password' => 'required|string|min:8|confirmed',
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:1000',
+            'province_id' => Rule::requiredIf($type === 'reseller') . '|nullable|exists:regions,id',
+            'city_id' => Rule::requiredIf($type === 'reseller') . '|nullable|exists:regions,id',
             'company_name' => Rule::requiredIf($type === 'reseller') . '|nullable|string|max:255',
             'business_type' => 'nullable|string|max:100',
             'agree_terms' => 'required|accepted',
@@ -57,6 +61,10 @@ class RegistrationRequest extends FormRequest
             'password.confirmed' => 'Konfirmasi password tidak cocok',
             'phone.max' => 'Nomor telepon maksimal 20 karakter',
             'address.max' => 'Alamat maksimal 1000 karakter',
+            'province_id.required' => 'Provinsi wajib dipilih untuk reseller',
+            'province_id.exists' => 'Provinsi tidak valid',
+            'city_id.required' => 'Kota / Kabupaten wajib dipilih untuk reseller',
+            'city_id.exists' => 'Kota / Kabupaten tidak valid',
             'company_name.required' => 'Nama perusahaan wajib diisi untuk reseller',
             'agree_terms.required' => 'Anda harus menyetujui syarat dan ketentuan',
             'agree_terms.accepted' => 'Anda harus menyetujui syarat dan ketentuan',

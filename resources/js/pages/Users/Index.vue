@@ -119,6 +119,39 @@ const deleteUser = (user) => {
     }
 };
 
+const verifyReseller = (user) => {
+    if (confirm(`Verifikasi akun reseller ${user.name}?`)) {
+        router.patch(route('users.verify-reseller', user.id));
+    }
+};
+
+const rejectReseller = (user) => {
+    if (confirm(`Tolak pendaftaran reseller ${user.name}?`)) {
+        router.patch(route('users.reject-reseller', user.id));
+    }
+};
+
+const isReseller = (user) => user.roles?.some(r => r.name === 'reseller');
+const resellerStatus = (user) => user.reseller_status ?? null;
+
+const getResellerBadge = (status) => {
+    switch (status) {
+        case 'verified': return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400';
+        case 'pending':  return 'bg-yellow-50 text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400';
+        case 'rejected': return 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400';
+        default: return '';
+    }
+};
+
+const getResellerLabel = (status) => {
+    switch (status) {
+        case 'verified': return '✓ Verified';
+        case 'pending':  return '⏳ Pending';
+        case 'rejected': return '✗ Ditolak';
+        default: return '';
+    }
+};
+
 const getRoleBadge = (roleName) => {
     switch (roleName) {
         case 'super-admin': return 'bg-red-50 text-red-650 dark:bg-red-500/10 dark:text-red-400';
@@ -187,6 +220,7 @@ const getRoleBadge = (roleName) => {
                                 <th scope="col" class="px-6 py-4 font-bold">Nama Pengguna</th>
                                 <th scope="col" class="px-6 py-4 font-bold">Email</th>
                                 <th scope="col" class="px-6 py-4 font-bold">Peran / Role</th>
+                                <th scope="col" class="px-6 py-4 font-bold">Status Reseller</th>
                                 <th scope="col" class="px-6 py-4 font-bold">No. Telp</th>
                                 <th scope="col" class="px-6 py-4 font-bold text-right">Aksi</th>
                             </tr>
@@ -204,14 +238,41 @@ const getRoleBadge = (roleName) => {
                                         </span>
                                     </div>
                                 </td>
+                                <td class="px-6 py-4">
+                                    <template v-if="isReseller(user) && resellerStatus(user)">
+                                        <span :class="['text-xs px-2 py-0.5 rounded font-bold', getResellerBadge(resellerStatus(user))]">
+                                            {{ getResellerLabel(resellerStatus(user)) }}
+                                        </span>
+                                    </template>
+                                    <span v-else class="text-gray-300 dark:text-gray-700">—</span>
+                                </td>
                                 <td class="px-6 py-4">{{ user.contact?.phone || '-' }}</td>
                                 <td class="px-6 py-4 text-right">
+                                    <!-- Reseller verify/reject actions -->
+                                    <template v-if="isReseller(user) && resellerStatus(user) === 'pending'">
+                                        <Button
+                                            icon="pi pi-check"
+                                            severity="success"
+                                            text rounded
+                                            v-tooltip.top="'Verifikasi Reseller'"
+                                            @click="verifyReseller(user)"
+                                            class="mr-1"
+                                        />
+                                        <Button
+                                            icon="pi pi-times"
+                                            severity="danger"
+                                            text rounded
+                                            v-tooltip.top="'Tolak'"
+                                            @click="rejectReseller(user)"
+                                            class="mr-1"
+                                        />
+                                    </template>
                                     <Button icon="pi pi-pencil" severity="secondary" text rounded @click="openEditModal(user)" class="mr-2" />
                                     <Button icon="pi pi-trash" severity="danger" text rounded @click="deleteUser(user)" :disabled="user.id === page.props.auth.user.id" />
                                 </td>
                             </tr>
                             <tr v-if="users.data.length === 0">
-                                <td colspan="5" class="px-6 py-8 text-center text-gray-400">Tidak ada pengguna ditemukan.</td>
+                                <td colspan="6" class="px-6 py-8 text-center text-gray-400">Tidak ada pengguna ditemukan.</td>
                             </tr>
                         </tbody>
                     </table>

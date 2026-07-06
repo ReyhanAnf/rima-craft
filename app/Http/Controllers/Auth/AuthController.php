@@ -18,6 +18,40 @@ use Inertia\Response as InertiaResponse;
 
 class AuthController extends Controller
 {
+    // -------------------------------------------------------------------------
+    // Public unified login (customer + reseller)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Display the unified public login page (all non-admin roles).
+     */
+    public function createLogin()
+    {
+        if (Auth::check()) {
+            return $this->redirectByRole(Auth::user());
+        }
+
+        return Inertia::render('Auth/Login', [
+            'businessName' => config('settings.business_name', 'Rima Craft'),
+            'type'         => 'public',
+        ]);
+    }
+
+    /**
+     * Handle unified public login — auto-detects role and redirects.
+     */
+    public function storeLogin(LoginRequest $request)
+    {
+        $request->authenticate();
+        $request->session()->regenerate();
+
+        return $this->redirectByRole(auth()->user());
+    }
+
+    // -------------------------------------------------------------------------
+    // Admin login (separate page, /admin/login)
+    // -------------------------------------------------------------------------
+
     /**
      * Display the admin login view.
      */
@@ -25,158 +59,107 @@ class AuthController extends Controller
     {
         return Inertia::render('Auth/Login', [
             'businessName' => config('settings.business_name', 'Rima Craft'),
-            'type' => 'admin',
+            'type'         => 'admin',
         ]);
     }
 
     /**
-     * Handle an incoming admin authentication request.
+     * Handle admin login.
      */
     public function storeAdminLogin(LoginRequest $request)
     {
         $request->authenticate();
-
         $request->session()->regenerate();
 
-        // Check if user has admin access (super-admin, owner, operator)
-        $user = auth()->user();
-        $adminRoles = ['dev-admin', 'super-admin', 'owner', 'operator'];
-        $hasAdminRole = $user->roles()->whereIn('name', $adminRoles)->exists();
-
-        if (!$hasAdminRole) {
-            // Check if user is a customer or reseller
-            $isCustomer = $user->roles()->where('name', 'customer')->exists();
-            $isReseller = $user->roles()->where('name', 'reseller')->exists();
-
-            if ($isCustomer) {
-                return redirect()->route('customer.dashboard')
-                    ->with('success', 'Selamat datang kembali!');
-            }
-
-            if ($isReseller) {
-                return redirect()->route('reseller.dashboard')
-                    ->with('success', 'Selamat datang kembali!');
-            }
-
-            // User doesn't have access, logout and redirect
-            Auth::logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-            
-            return redirect()->back()
-                ->with('error', 'Anda tidak memiliki akses ke dashboard.');
-        }
-
-        return redirect()->intended(route('dashboard'));
+        return $this->redirectByRole(auth()->user());
     }
 
+    // -------------------------------------------------------------------------
+    // Register (single unified page)
+    // -------------------------------------------------------------------------
+
     /**
-     * Display the customer login view.
+     * Display the registration page.
+     * Accepts optional ?type=reseller query param to pre-switch to reseller form.
      */
-    public function createCustomerLogin()
+    public function showRegistration(string $type = 'customer'): InertiaResponse
     {
-        if (Auth::check()) {
-            $user = Auth::user();
-            if ($user->roles()->where('name', 'reseller')->exists()) {
-                return redirect()->route('reseller.dashboard');
-            }
-            if ($user->roles()->where('name', 'customer')->exists()) {
-                return redirect()->route('customer.dashboard');
-            }
-            return redirect()->route('dashboard');
+        // Allow override via query string (?type=reseller)
+        $type = request()->query('type', $type);
+
+        if (!in_array($type, ['customer', 'reseller'])) {
+            $type = 'customer';
         }
 
-        return Inertia::render('Auth/Login', [
+        return Inertia::render('Auth/Register', [
+            'type'         => $type,
             'businessName' => config('settings.business_name', 'Rima Craft'),
-            'type' => 'customer',
+            'provinces'    => \App\Models\Region::where('type', 'province')
+                ->orderBy('name')
+                ->get(['id', 'name'])
+                ->toArray(),
         ]);
     }
 
     /**
-     * Handle customer login.
+     * Handle registration (type comes from form field, not URL).
      */
-    public function storeCustomerLogin(LoginRequest $request)
+    public function register(RegistrationRequest $request, string $type = 'customer')
     {
-        return $this->storeAdminLogin($request);
-    }
+        // Prefer type from POST body if provided
+        $type = $request->input('register_type', $type);
 
-    /**
-     * Display the reseller login view.
-     */
-    public function createResellerLogin()
-    {
-        if (Auth::check()) {
-            $user = Auth::user();
-            if ($user->roles()->where('name', 'reseller')->exists()) {
-                return redirect()->route('reseller.dashboard');
-            }
-            if ($user->roles()->where('name', 'customer')->exists()) {
-                return redirect()->route('customer.dashboard');
-            }
-            return redirect()->route('dashboard');
+        if (!in_array($type, ['customer', 'reseller'])) {
+            $type = 'customer';
         }
 
-        return Inertia::render('Auth/Login', [
-            'businessName' => config('settings.business_name', 'Rima Craft'),
-            'type' => 'reseller',
+        $userData = [
+            'name'     => $request->name,
+            'email'    => $request->email,
+            'password' => Hash::make($request->password),
+        ];
+
+        if ($type === 'reseller') {
+            $userData['reseller_status'] = 'pending';
+        }
+
+        $user = User::create($userData);
+
+        $role = Role::where('name', $type)->first();
+        if ($role) {
+            $user->roles()->attach($role->id);
+        }
+
+        Contact::create([
+            'user_id'       => $user->id,
+            'type'          => $type,
+            'name'          => $request->name,
+            'email'         => $request->email,
+            'phone'         => $request->phone,
+            'address'       => $request->address,
+            'province_id'   => $request->province_id,
+            'city_id'       => $request->city_id,
+            'company_name'  => $request->company_name,
+            'business_type' => $request->business_type,
         ]);
+
+        $user->unsetRelation('roles');
+        Auth::login($user);
+        $request->session()->regenerate();
+
+        if ($type === 'reseller') {
+            // Pending reseller → go to customer dashboard with a notice
+            return redirect()->route('customer.dashboard')
+                ->with('info', 'Akun reseller Anda berhasil dibuat! Kami akan memverifikasi pendaftaran Anda dalam 1-2 hari kerja.');
+        }
+
+        return redirect()->route('customer.dashboard')
+            ->with('success', 'Selamat datang di Rima Craft! Akun Anda berhasil dibuat.');
     }
 
-    /**
-     * Handle reseller login.
-     */
-    public function storeResellerLogin(LoginRequest $request)
-    {
-        return $this->storeAdminLogin($request);
-    }
-
-    /**
-     * Display customer registration view.
-     */
-    public function showCustomerRegistration(): InertiaResponse
-    {
-        return $this->showRegistration('customer');
-    }
-
-    /**
-     * Handle customer registration.
-     */
-    public function registerCustomer(RegistrationRequest $request)
-    {
-        return $this->register($request, 'customer');
-    }
-
-    /**
-     * Display reseller registration view.
-     */
-    public function showResellerRegistration(): InertiaResponse
-    {
-        return $this->showRegistration('reseller');
-    }
-
-    /**
-     * Handle reseller registration.
-     */
-    public function registerReseller(RegistrationRequest $request)
-    {
-        return $this->register($request, 'reseller');
-    }
-
-    /**
-     * Display the customer/partner login view (backward compatibility).
-     */
-    public function create(): InertiaResponse
-    {
-        return $this->createCustomerLogin();
-    }
-
-    /**
-     * Handle an incoming authentication request (backward compatibility).
-     */
-    public function store(LoginRequest $request)
-    {
-        return $this->storeAdminLogin($request);
-    }
+    // -------------------------------------------------------------------------
+    // Logout
+    // -------------------------------------------------------------------------
 
     /**
      * Destroy an authenticated session.
@@ -191,71 +174,55 @@ class AuthController extends Controller
         return redirect(route('login'));
     }
 
-    /**
-     * Display the registration view.
-     */
-    public function showRegistration(string $type): InertiaResponse
-    {
-        if (!in_array($type, ['customer', 'reseller'])) {
-            abort(404);
-        }
-
-        return Inertia::render('Auth/Register', [
-            'type' => $type,
-            'businessName' => config('settings.business_name', 'Rima Craft'),
-        ]);
-    }
+    // -------------------------------------------------------------------------
+    // Helpers
+    // -------------------------------------------------------------------------
 
     /**
-     * Handle an incoming registration request.
+     * Redirect user to the correct portal based on their primary role.
+     * Resellers with pending status are treated like customers.
      */
-    public function register(RegistrationRequest $request, string $type)
+    private function redirectByRole(User $user)
     {
-        if (!in_array($type, ['customer', 'reseller'])) {
-            abort(404);
-        }
-
-        // Create User
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
-
-        // Assign role
-        $roleName = $type === 'reseller' ? 'reseller' : 'customer';
-        $role = Role::where('name', $roleName)->first();
-        
-        if ($role) {
-            $user->roles()->attach($role->id);
-        }
-
-        // Auto-create Contact
-        $contactType = $type === 'reseller' ? 'reseller' : 'customer';
-        Contact::create([
-            'user_id' => $user->id,
-            'type' => $contactType,
-            'name' => $request->name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'address' => $request->address,
-            'company_name' => $request->company_name,
-            'business_type' => $request->business_type,
-        ]);
-
-        // Unset roles relation cache before logging in to ensure the session contains the assigned role.
+        // Force fresh role data — prevent stale Eloquent cache
         $user->unsetRelation('roles');
+        $user->refresh();
 
-        // Login the user
-        Auth::login($user);
+        $adminRoles = ['dev-admin', 'super-admin', 'owner', 'operator'];
 
-        // Regenerate session
-        $request->session()->regenerate();
+        // Admin check has highest priority — direct redirect, ignore any stored intended URL
+        if ($user->roles()->whereIn('name', $adminRoles)->exists()) {
+            session()->forget('url.intended');
+            return redirect()->route('dashboard');
+        }
+        // Verified reseller → reseller dashboard
+        if ($user->isReseller() && $user->isVerifiedReseller()) {
+            return redirect()->route('reseller.dashboard')
+                ->with('success', 'Selamat datang kembali!');
+        }
 
-        // Redirect to appropriate portal
-        $redirectRoute = $type === 'reseller' ? 'reseller.dashboard' : 'customer.dashboard';
+        // Reseller pending or rejected → customer-mode with notice
+        if ($user->isReseller()) {
+            $message = $user->reseller_status === 'rejected'
+                ? 'Pendaftaran reseller Anda ditolak. Hubungi kami untuk informasi lebih lanjut.'
+                : 'Akun reseller Anda sedang dalam proses verifikasi.';
 
-        return redirect()->route($redirectRoute)
-            ->with('success', 'Selamat datang di Rima Craft! Akun Anda berhasil dibuat.');
+            return redirect()->route('customer.dashboard')
+                ->with('info', $message);
+        }
+
+        // Regular customer
+        if ($user->hasRole('customer')) {
+            return redirect()->route('customer.dashboard')
+                ->with('success', 'Selamat datang kembali!');
+        }
+
+        // No recognisable role — boot them out
+        Auth::logout();
+        request()->session()->invalidate();
+        request()->session()->regenerateToken();
+
+        return redirect()->route('login')
+            ->with('error', 'Akun Anda tidak memiliki akses.');
     }
 }

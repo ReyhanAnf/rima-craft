@@ -129,6 +129,8 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('permission:manage-users')->group(function () {
         Route::resource('users', UserController::class)->except(['show']);
+        Route::patch('users/{user}/verify-reseller', [UserController::class, 'verifyReseller'])->name('users.verify-reseller');
+        Route::patch('users/{user}/reject-reseller', [UserController::class, 'rejectReseller'])->name('users.reject-reseller');
     });
 
     Route::middleware('permission:manage-roles')

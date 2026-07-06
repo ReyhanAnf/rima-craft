@@ -8,15 +8,10 @@ import Checkbox from 'primevue/checkbox';
 import Message from 'primevue/message';
 
 const props = defineProps({
-    errors: Object,
-    businessName: {
-        type: String,
-        default: 'Rima Craft'
-    },
-    type: {
-        type: String, // 'customer' | 'partner' | 'admin'
-        default: 'customer'
-    }
+    errors: { type: Object, default: () => ({}) },
+    flash: { type: Object, default: () => ({}) },
+    businessName: { type: String, default: 'Rima Craft' },
+    type: { type: String, default: 'public' }, // 'public' | 'admin'
 });
 
 const form = useForm({
@@ -25,40 +20,31 @@ const form = useForm({
     remember: false,
 });
 
-const isDark = ref(localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches));
+const isDark = ref(
+    localStorage.getItem('theme') === 'dark' ||
+    (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)
+);
 
 const toggleTheme = () => {
     isDark.value = !isDark.value;
-    if (isDark.value) {
-        document.documentElement.classList.add('dark');
-        localStorage.setItem('theme', 'dark');
-    } else {
-        document.documentElement.classList.remove('dark');
-        localStorage.setItem('theme', 'light');
-    }
+    document.documentElement.classList.toggle('dark', isDark.value);
+    localStorage.setItem('theme', isDark.value ? 'dark' : 'light');
 };
 
-// Initialize theme on mount
-if (isDark.value) {
-    document.documentElement.classList.add('dark');
-} else {
-    document.documentElement.classList.remove('dark');
-}
+document.documentElement.classList.toggle('dark', isDark.value);
 
 const isAdmin = computed(() => props.type === 'admin');
-const isReseller = computed(() => props.type === 'reseller');
-const isCustomer = computed(() => props.type === 'customer');
+
+const visualImage = computed(() => isAdmin.value ? '/assets/admin-login-side.png' : '/assets/customer-login-side.png');
+const eyebrow = computed(() => isAdmin.value ? 'Ruang Kerja Rima Craft' : 'Rima Craft Atelier');
+const headline = computed(() => isAdmin.value ? 'Operasional rapi, keputusan lebih tenang.' : 'Kerajinan pilihan, pesanan tertata.');
+const description = computed(() => isAdmin.value
+    ? 'Pantau stok, produksi, penjualan, dan pelanggan dalam satu ruang kerja yang bersih.'
+    : 'Masuk untuk melihat katalog, melacak pesanan, dan mengelola kebutuhan reseller dengan lebih mudah.'
+);
 
 const submit = () => {
-    let postRoute;
-    if (isAdmin.value) {
-        postRoute = route('admin.login.store');
-    } else if (isReseller.value) {
-        postRoute = route('reseller.login.store');
-    } else {
-        postRoute = route('customer.login.store');
-    }
-
+    const postRoute = isAdmin.value ? route('admin.login.store') : route('login.store');
     form.post(postRoute, {
         onFinish: () => form.reset('password'),
     });
@@ -66,163 +52,238 @@ const submit = () => {
 </script>
 
 <template>
-    <Head :title="isAdmin ? 'Admin Login' : (isReseller ? 'Reseller Login' : 'Masuk Akun Customer')" />
+    <Head :title="isAdmin ? 'Admin Login' : 'Masuk Akun'" />
 
-    <div class="flex min-h-screen bg-gray-50 dark:bg-[#080808] transition-colors duration-300 font-sans">
-        <!-- Theme Toggle -->
-        <button @click="toggleTheme" class="fixed top-4 right-4 z-50 p-2 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all shadow-sm">
+    <main class="min-h-screen bg-[#f7f2ea] text-stone-950 transition-colors duration-300 dark:bg-[#12100d] dark:text-stone-50">
+        <button
+            type="button"
+            @click="toggleTheme"
+            class="fixed right-4 top-4 z-50 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/70 bg-white/85 text-stone-700 shadow-sm shadow-stone-900/10 backdrop-blur transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#9f6b36] focus:ring-offset-2 focus:ring-offset-[#f7f2ea] dark:border-white/10 dark:bg-stone-950/70 dark:text-stone-200 dark:hover:bg-stone-900 dark:focus:ring-offset-[#12100d]"
+            :aria-label="isDark ? 'Gunakan tema terang' : 'Gunakan tema gelap'"
+        >
             <i :class="isDark ? 'pi pi-sun' : 'pi pi-moon'"></i>
         </button>
 
-        <!-- Form Section -->
-        <div :class="[
-            'w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 md:p-16',
-            isAdmin ? 'order-1' : 'order-2 bg-gradient-to-br from-transparent via-amber-500/5 to-transparent'
-        ]">
-            <div class="w-full max-w-sm">
-                <!-- Logo & Header -->
-                <div class="text-center mb-8">
-                    <div class="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl mb-4 shadow-lg shadow-amber-500/20">
-                        <svg v-if="isAdmin" class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        </svg>
-                        <svg v-else-if="isReseller" class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                        </svg>
-                        <svg v-else class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-                        </svg>
+        <div class="grid min-h-screen lg:grid-cols-[1.05fr_0.95fr]">
+            <section class="relative flex min-h-[320px] overflow-hidden lg:min-h-screen">
+                <img
+                    :src="visualImage"
+                    :alt="isAdmin ? 'Ruang kerja operasional Rima Craft' : 'Produk kerajinan Rima Craft'"
+                    class="absolute inset-0 h-full w-full object-cover"
+                    loading="eager"
+                />
+                <div class="absolute inset-0 bg-[linear-gradient(180deg,rgba(36,24,14,0.18),rgba(36,24,14,0.74))] lg:bg-[linear-gradient(90deg,rgba(36,24,14,0.22),rgba(36,24,14,0.82))]"></div>
+                <div class="relative z-10 flex w-full flex-col justify-between p-6 text-white sm:p-8 lg:p-12">
+                    <Link href="/" class="inline-flex w-fit items-center gap-3 rounded-full border border-white/25 bg-white/15 px-4 py-2 backdrop-blur-md transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/70">
+                        <span class="grid h-9 w-9 place-items-center rounded-full bg-[#f5d7a1] text-sm font-bold text-stone-950 shadow-sm">
+                            RC
+                        </span>
+                        <span class="text-sm font-semibold tracking-wide">{{ businessName }}</span>
+                    </Link>
+
+                    <div class="max-w-xl pt-16 lg:pt-0">
+                        <p class="mb-4 text-xs font-semibold uppercase tracking-[0.28em] text-[#f5d7a1]">{{ eyebrow }}</p>
+                        <h1 class="max-w-lg font-serif text-4xl font-semibold leading-tight sm:text-5xl">
+                            {{ headline }}
+                        </h1>
+                        <p class="mt-5 max-w-md text-sm leading-7 text-white/82 sm:text-base">
+                            {{ description }}
+                        </p>
+
+                        <div class="mt-8 grid max-w-lg grid-cols-3 gap-3 text-left">
+                            <div class="rounded-2xl border border-white/18 bg-white/12 p-4 backdrop-blur-md">
+                                <p class="text-lg font-semibold">1</p>
+                                <p class="mt-1 text-[11px] leading-4 text-white/75">Satu akses untuk pelanggan dan reseller</p>
+                            </div>
+                            <div class="rounded-2xl border border-white/18 bg-white/12 p-4 backdrop-blur-md">
+                                <p class="text-lg font-semibold">24/7</p>
+                                <p class="mt-1 text-[11px] leading-4 text-white/75">Katalog dan riwayat pesanan siap dicek</p>
+                            </div>
+                            <div class="rounded-2xl border border-white/18 bg-white/12 p-4 backdrop-blur-md">
+                                <p class="text-lg font-semibold">ID</p>
+                                <p class="mt-1 text-[11px] leading-4 text-white/75">Dibuat untuk ritme bisnis lokal</p>
+                            </div>
+                        </div>
                     </div>
-                    <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                        {{ isAdmin ? 'Admin Panel' : (isReseller ? 'Portal Reseller' : 'Portal Pelanggan') }}
-                    </h1>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 max-w-xs mx-auto">
-                        {{ isAdmin ? `${businessName} Management Dashboard` : (isReseller ? `Masuk ke akun reseller & grosir ${businessName}` : `Masuk untuk berbelanja & melacak pesanan ${businessName}`) }}
-                    </p>
                 </div>
+            </section>
 
-                <!-- Login Card -->
-                <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 sm:p-8 shadow-sm">
-                    <!-- Errors -->
-                    <div v-if="Object.keys(errors).length > 0" class="mb-4">
-                        <Message severity="error" v-for="(error, key) in errors" :key="key" size="small" class="mb-1">
-                            {{ error }}
-                        </Message>
+            <section class="flex items-center justify-center px-5 py-10 sm:px-8 lg:px-12">
+                <div class="w-full max-w-[440px]">
+                    <div class="mb-7">
+                        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-[#9f6b36] dark:text-[#f0c98e]">
+                            {{ isAdmin ? 'Akses Tim Internal' : 'Selamat Datang Kembali' }}
+                        </p>
+                        <h2 class="mt-3 font-serif text-3xl font-semibold text-stone-950 dark:text-white">
+                            {{ isAdmin ? 'Masuk ke ruang kerja' : 'Masuk ke akun Anda' }}
+                        </h2>
+                        <p class="mt-3 text-sm leading-6 text-stone-600 dark:text-stone-300">
+                            {{ isAdmin
+                                ? 'Gunakan akun tim untuk melanjutkan pengelolaan Rima Craft.'
+                                : 'Nikmati pengalaman belanja dan pengelolaan pesanan yang lebih personal.' }}
+                        </p>
                     </div>
 
-                    <form @submit.prevent="submit" class="space-y-5">
-                        <!-- Email -->
-                        <div class="flex flex-col gap-1.5">
-                            <label for="email" class="text-xs font-semibold text-gray-700 dark:text-gray-300">Email</label>
-                            <InputText
-                                id="email"
-                                type="email"
-                                v-model="form.email"
-                                class="w-full"
-                                :placeholder="isAdmin ? 'admin@rimacraft.com' : (isReseller ? 'reseller@email.com' : 'customer@email.com')"
-                                required
-                                autofocus
+                    <div class="rounded-[1.75rem] border border-white/70 bg-white/82 p-6 shadow-[0_24px_70px_rgba(71,48,28,0.14)] backdrop-blur-xl dark:border-white/10 dark:bg-stone-950/72 dark:shadow-black/30 sm:p-8">
+                        <div v-if="flash?.error || flash?.success || Object.keys(errors).length > 0" class="mb-5">
+                            <Message v-if="flash?.error" severity="error" size="small" class="mb-2">
+                                {{ flash.error }}
+                            </Message>
+                            <Message v-if="flash?.success" severity="success" size="small" class="mb-2">
+                                {{ flash.success }}
+                            </Message>
+                            <Message severity="error" v-for="(error, key) in errors" :key="key" size="small" class="mb-2">
+                                {{ error }}
+                            </Message>
+                        </div>
+
+                        <form @submit.prevent="submit" class="space-y-5">
+                            <div class="space-y-2">
+                                <label for="email" class="text-sm font-semibold text-stone-800 dark:text-stone-100">Email</label>
+                                <InputText
+                                    id="email"
+                                    type="email"
+                                    v-model="form.email"
+                                    class="auth-input w-full"
+                                    placeholder="nama@email.com"
+                                    required
+                                    autofocus
+                                />
+                            </div>
+
+                            <div class="space-y-2">
+                                <label for="password" class="text-sm font-semibold text-stone-800 dark:text-stone-100">Password</label>
+                                <Password
+                                    id="password"
+                                    v-model="form.password"
+                                    class="auth-password w-full"
+                                    :feedback="false"
+                                    toggleMask
+                                    placeholder="Masukkan password"
+                                    required
+                                    inputClass="w-full"
+                                />
+                            </div>
+
+                            <div class="flex items-center justify-between gap-3">
+                                <div class="flex items-center gap-2">
+                                    <Checkbox id="remember" v-model="form.remember" binary />
+                                    <label for="remember" class="cursor-pointer text-xs font-medium text-stone-600 dark:text-stone-300">Ingat saya</label>
+                                </div>
+                                <span v-if="!isAdmin" class="text-xs font-medium text-stone-400 dark:text-stone-500">
+                                    Akses aman
+                                </span>
+                            </div>
+
+                            <Button
+                                type="submit"
+                                :label="isAdmin ? 'Masuk ke Dashboard' : 'Masuk Sekarang'"
+                                :loading="form.processing"
+                                class="auth-primary-button w-full"
                             />
-                        </div>
 
-                        <!-- Password -->
-                        <div class="flex flex-col gap-1.5">
-                            <label for="password" class="text-xs font-semibold text-gray-700 dark:text-gray-300">Password</label>
-                            <Password
-                                id="password"
-                                v-model="form.password"
-                                class="w-full"
-                                :feedback="false"
-                                toggleMask
-                                placeholder="••••••••"
-                                required
-                                :inputStyle="{ width: '100%' }"
-                            />
-                        </div>
+                            <template v-if="!isAdmin">
+                                <div class="flex items-center gap-3 py-1">
+                                    <div class="h-px flex-1 bg-stone-200 dark:bg-white/10"></div>
+                                    <span class="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-400">atau</span>
+                                    <div class="h-px flex-1 bg-stone-200 dark:bg-white/10"></div>
+                                </div>
 
-                        <!-- Remember Me -->
-                        <div class="flex items-center gap-2">
-                            <Checkbox id="remember" v-model="form.remember" binary />
-                            <label for="remember" class="text-xs text-gray-650 dark:text-gray-400 cursor-pointer">Ingat saya</label>
-                        </div>
+                                <a
+                                    :href="route('auth.google.redirect')"
+                                    class="flex h-12 w-full items-center justify-center gap-3 rounded-2xl border border-stone-200 bg-white px-4 text-sm font-semibold text-stone-800 shadow-sm transition hover:-translate-y-0.5 hover:border-stone-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#9f6b36] focus:ring-offset-2 dark:border-white/10 dark:bg-white/94 dark:text-stone-900"
+                                >
+                                    <svg class="h-5 w-5 flex-shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                                    </svg>
+                                    Lanjutkan dengan Google
+                                </a>
+                            </template>
+                        </form>
 
-                        <!-- Submit Button -->
-                        <Button
-                            type="submit"
-                            :label="isAdmin ? 'Masuk Admin' : 'Masuk'"
-                            :loading="form.processing"
-                            class="w-full !bg-amber-500 hover:!bg-amber-600 !border-amber-500 hover:!border-amber-600 !text-gray-950 font-bold py-2.5 transition"
-                        />
-                    </form>
-
-                    <!-- Bottom Links -->
-                    <div class="mt-6 pt-5 border-t border-gray-200 dark:border-gray-800 space-y-4">
-                        <!-- Customer portal specific links -->
-                        <div v-if="isCustomer" class="text-center">
-                            <p class="text-xs text-gray-400 dark:text-gray-500 mb-2.5">Belum memiliki akun?</p>
-                            <div class="flex justify-center gap-4 text-xs font-bold mb-3">
-                                <Link :href="route('customer.register')" class="text-amber-500 hover:underline">Daftar Akun Baru</Link>
-                            </div>
-                            <div class="text-[10px] text-gray-450 dark:text-gray-500">
-                                Ingin menjadi mitra grosir? 
-                                <a :href="route('reseller.login')" class="font-bold text-amber-500 hover:underline">Masuk Portal Reseller</a>
+                        <div v-if="!isAdmin" class="mt-7 rounded-2xl bg-[#f4eadc] p-4 text-center dark:bg-white/6">
+                            <p class="text-sm text-stone-600 dark:text-stone-300">Belum memiliki akun?</p>
+                            <div class="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                <Link
+                                    :href="route('register.show')"
+                                    class="rounded-xl bg-stone-950 px-4 py-3 text-xs font-semibold text-white transition hover:bg-stone-800 focus:outline-none focus:ring-2 focus:ring-stone-950 focus:ring-offset-2 dark:bg-white dark:text-stone-950"
+                                >
+                                    Daftar Pelanggan
+                                </Link>
+                                <Link
+                                    :href="route('register.show') + '?type=reseller'"
+                                    class="rounded-xl border border-[#caa56f] px-4 py-3 text-xs font-semibold text-[#744822] transition hover:bg-[#ead2ad] focus:outline-none focus:ring-2 focus:ring-[#9f6b36] focus:ring-offset-2 dark:border-[#f0c98e]/40 dark:text-[#f0c98e] dark:hover:bg-white/10"
+                                >
+                                    Daftar Reseller
+                                </Link>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Reseller portal specific links -->
-                        <div v-if="isReseller" class="text-center">
-                            <p class="text-xs text-gray-400 dark:text-gray-500 mb-2.5">Belum memiliki akun reseller?</p>
-                            <div class="flex justify-center gap-4 text-xs font-bold mb-3">
-                                <Link :href="route('reseller.register')" class="text-amber-500 hover:underline">Daftar Reseller Baru</Link>
-                            </div>
-                            <div class="text-[10px] text-gray-455 dark:text-gray-500">
-                                Pelanggan eceran? 
-                                <a :href="route('customer.login')" class="font-bold text-amber-500 hover:underline">Masuk Portal Pelanggan</a>
-                            </div>
-                        </div>
-
-                        <Link :href="route('catalog.index')" class="flex items-center justify-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                            </svg>
-                            Kembali ke Website
+                    <div class="mt-6 flex items-center justify-between gap-4 text-xs text-stone-500 dark:text-stone-400">
+                        <Link
+                            :href="route('catalog.index')"
+                            class="inline-flex items-center gap-2 font-semibold transition hover:text-[#9f6b36] dark:hover:text-[#f0c98e]"
+                        >
+                            <i class="pi pi-arrow-left text-[10px]"></i>
+                            Kembali ke katalog
                         </Link>
+                        <span>{{ businessName }}</span>
                     </div>
                 </div>
-
-                <!-- Footer -->
-                <p class="mt-6 text-center text-[10px] text-gray-400 dark:text-gray-500">
-                    &copy; {{ new Date().getFullYear() }} {{ businessName }}
-                </p>
-            </div>
+            </section>
         </div>
-
-        <!-- Image/Visual Section -->
-        <div :class="[
-            'hidden lg:block lg:w-1/2 relative bg-gray-950',
-            isAdmin ? 'order-2 border-l border-gray-200 dark:border-gray-800' : 'order-1 border-r border-gray-200 dark:border-gray-800'
-        ]">
-            <img
-                :src="isCustomer ? '/assets/customer-login-side.png' : '/assets/admin-login-side.png'"
-                alt="Login Visual"
-                class="absolute inset-0 w-full h-full object-cover opacity-75 dark:opacity-60 select-none"
-            />
-            <!-- Blur Glass Panel Gradient Overlay -->
-            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
-            
-            <!-- Graphic content inside image -->
-            <div class="absolute bottom-16 left-16 right-16 z-10 text-white font-sans">
-                <span class="inline-block text-[10px] uppercase font-bold tracking-widest text-amber-500 mb-2">
-                    {{ isAdmin ? 'Sistem Manajemen Internal' : (isReseller ? 'Portal Reseller' : 'Pilihan Terbaik UMKM') }}
-                </span>
-                <h2 class="text-3xl font-serif font-bold mb-3 tracking-wide leading-tight">
-                    {{ isAdmin ? 'Manajemen Efisien & Real-time' : (isReseller ? 'Kembangkan Bisnis Bersama Rima Craft' : 'Menyajikan Keindahan Seni Nusantara') }}
-                </h2>
-                <p class="text-gray-300 text-xs font-light leading-relaxed max-w-md">
-                    {{ isAdmin ? 'Kelola persediaan, transaksi, produksi, dan analitik Rima Craft dalam satu dasbor terpadu.' : (isReseller ? 'Nikmati harga khusus grosir, penawaran eksklusif, pencatatan limit piutang, dan manajemen tagihan kemitraan.' : 'Bergabunglah bersama kami untuk memantau status pesanan, mencatat riwayat transaksi, dan menikmati kemudahan layanan terbaik kami.') }}
-                </p>
-            </div>
-        </div>
-    </div>
+    </main>
 </template>
+
+<style scoped>
+:deep(.auth-input),
+:deep(.auth-password .p-password-input) {
+    min-height: 3rem;
+    border-radius: 1rem;
+    border-color: rgb(231 229 228);
+    background: rgba(255, 255, 255, 0.9);
+    padding-left: 1rem;
+    padding-right: 1rem;
+    color: rgb(28 25 23);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+:deep(.auth-input:enabled:focus),
+:deep(.auth-password .p-password-input:enabled:focus) {
+    border-color: #9f6b36;
+    box-shadow: 0 0 0 3px rgba(159, 107, 54, 0.18);
+}
+
+:deep(.auth-password .p-password) {
+    width: 100%;
+}
+
+:deep(.auth-primary-button) {
+    min-height: 3.1rem;
+    border-radius: 1rem;
+    border-color: #9f6b36;
+    background: #9f6b36;
+    color: white;
+    font-weight: 700;
+    box-shadow: 0 16px 36px rgba(116, 72, 34, 0.2);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+:deep(.auth-primary-button:hover) {
+    border-color: #744822;
+    background: #744822;
+    transform: translateY(-1px);
+    box-shadow: 0 18px 42px rgba(116, 72, 34, 0.26);
+}
+
+:global(.dark) :deep(.auth-input),
+:global(.dark) :deep(.auth-password .p-password-input) {
+    border-color: rgba(255, 255, 255, 0.12);
+    background: rgba(41, 37, 36, 0.82);
+    color: white;
+}
+</style>

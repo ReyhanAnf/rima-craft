@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password', 'role'])]
+#[Fillable(['name', 'email', 'password', 'role', 'reseller_status', 'google_id', 'avatar'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -20,53 +20,53 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
+     * The attributes that should be cast.
      */
     protected function casts(): array
     {
         return [
             'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            'password'          => 'hashed',
         ];
     }
 
-    /**
-     * The roles that belong to the user.
-     * 
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
-     */
+    // -------------------------------------------------------------------------
+    // Relations
+    // -------------------------------------------------------------------------
+
     public function roles()
     {
         return $this->belongsToMany(Role::class);
     }
 
-    /**
-     * Get the orders made by the user.
-     */
     public function orders()
     {
         return $this->hasMany(Order::class);
     }
 
-    /**
-     * Check if the user has a specific role.
-     * 
-     * @param string $roleName
-     * @return bool
-     */
+    public function contact()
+    {
+        return $this->hasOne(Contact::class);
+    }
+
+    // -------------------------------------------------------------------------
+    // Role helpers
+    // -------------------------------------------------------------------------
+
     public function hasRole(string $roleName): bool
     {
         return $this->roles()->where('name', $roleName)->exists();
     }
 
-    /**
-     * Check if the user has a specific permission.
-     * 
-     * @param string $permissionName
-     * @return bool
-     */
+    public function hasAnyRole(array $roleNames): bool
+    {
+        return $this->roles()->whereIn('name', $roleNames)->exists();
+    }
+
+    // -------------------------------------------------------------------------
+    // Permission helpers
+    // -------------------------------------------------------------------------
+
     public function hasPermission(string $permissionName): bool
     {
         if ($this->hasRole('dev-admin')) {
@@ -74,29 +74,10 @@ class User extends Authenticatable
         }
 
         return $this->roles()
-            ->whereHas('permissions', function ($query) use ($permissionName) {
-                $query->where('name', $permissionName);
-            })
+            ->whereHas('permissions', fn($q) => $q->where('name', $permissionName))
             ->exists();
     }
 
-    /**
-     * Check if the user has any of the specified roles.
-     * 
-     * @param array $roleNames
-     * @return bool
-     */
-    public function hasAnyRole(array $roleNames): bool
-    {
-        return $this->roles()->whereIn('name', $roleNames)->exists();
-    }
-
-    /**
-     * Check if the user has all of the specified permissions.
-     * 
-     * @param array $permissionNames
-     * @return bool
-     */
     public function hasAllPermissions(array $permissionNames): bool
     {
         foreach ($permissionNames as $permission) {
@@ -107,13 +88,31 @@ class User extends Authenticatable
         return true;
     }
 
+    // -------------------------------------------------------------------------
+    // Reseller status helpers
+    // -------------------------------------------------------------------------
+
     /**
-     * Get the contact information associated with the user.
-     * 
-     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     * Whether this user is a reseller (regardless of verification status).
      */
-    public function contact()
+    public function isReseller(): bool
     {
-        return $this->hasOne(Contact::class);
+        return $this->hasRole('reseller');
+    }
+
+    /**
+     * Whether the reseller account has been verified by admin.
+     */
+    public function isVerifiedReseller(): bool
+    {
+        return $this->reseller_status === 'verified';
+    }
+
+    /**
+     * Whether the reseller account is pending verification.
+     */
+    public function isPendingReseller(): bool
+    {
+        return $this->reseller_status === 'pending';
     }
 }

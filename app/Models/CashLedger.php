@@ -30,6 +30,7 @@ class CashLedger extends Model
         'amount',
         'balance_after',
         'description',
+        'payment_label',
         'reference_type',
         'reference_id',
     ];

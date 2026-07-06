@@ -14,8 +14,10 @@ return new class extends Migration
         // Step 1: Update existing 'partner' records to 'reseller'
         DB::statement("UPDATE contacts SET type = 'reseller' WHERE type = 'partner'");
 
-        // Step 2: Update enum to replace 'partner' with 'reseller'
-        DB::statement("ALTER TABLE contacts MODIFY COLUMN type ENUM('supplier', 'customer', 'crafter', 'reseller') NOT NULL");
+        // Step 2: Update enum to replace 'partner' with 'reseller' (MySQL only — SQLite uses TEXT)
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE contacts MODIFY COLUMN type ENUM('supplier', 'customer', 'crafter', 'reseller') NOT NULL");
+        }
     }
 
     /**
@@ -23,9 +25,13 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // Revert: rename 'reseller' back to 'partner'
-        DB::statement("ALTER TABLE contacts MODIFY COLUMN type ENUM('supplier', 'customer', 'crafter', 'partner', 'reseller') NOT NULL");
-        DB::statement("UPDATE contacts SET type = 'partner' WHERE type = 'reseller'");
-        DB::statement("ALTER TABLE contacts MODIFY COLUMN type ENUM('supplier', 'customer', 'crafter', 'partner') NOT NULL");
+        if (DB::getDriverName() !== 'sqlite') {
+            // Revert: rename 'reseller' back to 'partner'
+            DB::statement("ALTER TABLE contacts MODIFY COLUMN type ENUM('supplier', 'customer', 'crafter', 'partner', 'reseller') NOT NULL");
+            DB::statement("UPDATE contacts SET type = 'partner' WHERE type = 'reseller'");
+            DB::statement("ALTER TABLE contacts MODIFY COLUMN type ENUM('supplier', 'customer', 'crafter', 'partner') NOT NULL");
+        } else {
+            DB::statement("UPDATE contacts SET type = 'partner' WHERE type = 'reseller'");
+        }
     }
 };

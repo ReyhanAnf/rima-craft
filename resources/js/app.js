@@ -225,6 +225,11 @@ window.route = function(name, params = {}) {
         'payment-methods.index': '/payment-methods',
         
         // Auth routes
+        'auth.google.redirect': '/auth/google/redirect',
+        'auth.google.callback': '/auth/google/callback',
+        'login.store': '/login',
+        'register.show': '/register',
+        'register.submit': '/register',
         'customer.login': '/customer/login',
         'customer.login.store': '/customer/login',
         'customer.register': '/customer/register',
@@ -235,8 +240,6 @@ window.route = function(name, params = {}) {
         'reseller.register.submit': '/reseller/register',
 
         // Parameterized routes
-        'register.show': '/register/{type}',
-        'register.submit': '/register/{type}',
         'orders.show': '/orders/{id}',
         'orders.update-status': '/orders/{id}/status',
         'orders.destroy': '/orders/{id}',

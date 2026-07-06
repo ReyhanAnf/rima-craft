@@ -54,39 +54,45 @@ Route::prefix('api/regions')
         Route::get('/{province}/cities', 'getCities')->name('cities');
         Route::post('/calculate', 'calculateTotals')->name('calculate');
     });
+// Google OAuth
+Route::prefix('auth/google')
+    ->name('auth.google.')
+    ->controller(\App\Http\Controllers\Auth\GoogleAuthController::class)
+    ->group(function () {
+        Route::get('/redirect', 'redirect')->name('redirect');
+        Route::get('/callback', 'callback')->name('callback');
+    });
+
 // Login & Register pages accessible by anyone (even logged-in users switching portals)
 Route::controller(AuthController::class)->group(function () {
-    // Redirect default login to customer login
-    Route::get('login', function () {
-        return redirect()->route('customer.login');
-    })->name('login');
+    // Single unified login page for all public roles
+    Route::get('login', 'createLogin')->name('login');
 
-    // Customer login & register pages
-    Route::get('customer/login', 'createCustomerLogin')->name('customer.login');
-    Route::get('customer/register', 'showCustomerRegistration')->name('customer.register');
+    // Single unified register page (customer default, toggle to reseller)
+    Route::get('register', 'showRegistration')->name('register.show');
 
-    // Reseller login & register pages
-    Route::get('reseller/login', 'createResellerLogin')->name('reseller.login');
-    Route::get('reseller/register', 'showResellerRegistration')->name('reseller.register');
-
-    // Parameterized fallback register page
-    Route::get('register/{type}', 'showRegistration')->name('register.show');
+    // Backward compatibility redirects
+    Route::get('customer/login', fn() => redirect()->route('login'));
+    Route::get('customer/register', fn() => redirect()->route('register.show'));
+    Route::get('reseller/login', fn() => redirect()->route('login'));
+    Route::get('reseller/register', fn() => redirect()->route('register.show', ['type' => 'reseller']));
+    Route::get('register/{type}', fn(string $type) => redirect()->route('register.show', ['type' => $type]));
 });
 
-// POST submit actions — only for guests (prevent re-login if already authenticated)
+// POST submit actions — only for guests
 Route::middleware('guest')->controller(AuthController::class)->group(function () {
-    Route::post('login', 'store')->name('login.store'); // backward compatibility fallback
+    // Single unified login POST
+    Route::post('login', 'storeLogin')->name('login.store');
 
-    // Customer submit
-    Route::post('customer/login', 'storeCustomerLogin')->name('customer.login.store');
-    Route::post('customer/register', 'registerCustomer')->name('customer.register.submit');
+    // Single unified register POST
+    Route::post('register', 'register')->name('register.submit');
 
-    // Reseller submit
-    Route::post('reseller/login', 'storeResellerLogin')->name('reseller.login.store');
-    Route::post('reseller/register', 'registerReseller')->name('reseller.register.submit');
-
-    // Parameterized fallback register submit
-    Route::post('register/{type}', 'register')->name('register.submit');
+    // Backward compatibility POST redirects (keep old named routes working for any existing forms)
+    Route::post('customer/login', 'storeLogin')->name('customer.login.store');
+    Route::post('customer/register', 'register')->name('customer.register.submit');
+    Route::post('reseller/login', 'storeLogin')->name('reseller.login.store');
+    Route::post('reseller/register', 'register')->name('reseller.register.submit');
+    Route::post('register/{type}', 'register')->name('register.submit.typed');
 });
 
 Route::middleware('auth')->group(function () {

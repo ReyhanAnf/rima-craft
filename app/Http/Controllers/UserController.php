@@ -127,6 +127,36 @@ class UserController extends Controller
     }
 
     /**
+     * Verify (approve) a pending reseller account.
+     */
+    public function verifyReseller(User $user): RedirectResponse
+    {
+        if (!$user->isReseller()) {
+            return redirect()->back()->with('error', 'User ini bukan reseller.');
+        }
+
+        $user->update(['reseller_status' => 'verified']);
+
+        return redirect()->back()
+            ->with('success', "Akun reseller {$user->name} berhasil diverifikasi.");
+    }
+
+    /**
+     * Reject a pending reseller account.
+     */
+    public function rejectReseller(User $user): RedirectResponse
+    {
+        if (!$user->isReseller()) {
+            return redirect()->back()->with('error', 'User ini bukan reseller.');
+        }
+
+        $user->update(['reseller_status' => 'rejected']);
+
+        return redirect()->back()
+            ->with('success', "Pendaftaran reseller {$user->name} telah ditolak.");
+    }
+
+    /**
      * Remove the specified user from storage.
      */
     public function destroy(User $user): RedirectResponse

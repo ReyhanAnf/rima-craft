@@ -1,11 +1,19 @@
 # Current Status
 
-**Date Updated:** 2026-06-26 
-**Version:** v0.1.0 (Architecture Refactoring)
+**Date Updated:** 2026-07-06 
+**Version:** v0.2.0 (Financial Consolidation & Dynamic Pricing)
 **Current Sprint:** Architecture Refactoring & Code Quality Improvement
 
 ## Completed:
 
+*   **[CP-025] Konsolidasi Keuangan & Dinamisasi Harga Katalog Produk** ✅
+    - Penggabungan seluruh transaksi kas ke rekening tunggal (Kas Utama) dan penyimpanan label pembayaran (BCA, Cash, COD, dll.)
+    - Redesain dasbor analitis Keuangan premium berbasis grafik interaktif
+    - Integrasi DatePicker range terpadu di modul penjualan, pembelian, dan keuangan
+    - Menu navigasi diganti dari "Buku Kas" menjadi "Keuangan"
+    - Pemisahan form produk jadi ke halaman mandiri terpisah (`Create.vue` & `Edit.vue`)
+    - Fitur pencarian wilayah berhirarki (Provinsi -> Kota/Kabupaten) dengan fallback otomatis
+    - Fitur harga kustom eksklusif per reseller individu (`product_user_prices`)
 *   System Architecture Design (BHA Stack, Laravel 13)
 *   Database Design (Schema, Polymorphic Payments)
 *   UI/UX Guidelines (Modern Earth Tones)

@@ -49,6 +49,12 @@ class RoleMiddleware
             abort(403, 'Unauthorized action. You do not have the required role.');
         }
 
+        // Special case: reseller role requires verified status to access reseller routes
+        if (in_array('reseller', $roles) && $user->hasRole('reseller') && !$user->isVerifiedReseller()) {
+            return redirect()->route('customer.dashboard')
+                ->with('info', 'Akun reseller Anda belum diverifikasi. Anda akan diarahkan ke portal pelanggan.');
+        }
+
         return $next($request);
     }
 }

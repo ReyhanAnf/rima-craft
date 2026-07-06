@@ -202,8 +202,8 @@ class PermissionSeeder extends Seeder
             );
         }
         
-        // Partner: B2B/Reseller permissions
-        $partnerRole = Role::where('name', 'partner')->first();
+        // Reseller: B2B/Reseller permissions
+        $partnerRole = Role::where('name', 'reseller')->first();
         if ($partnerRole) {
             $partnerPermissions = [
                 'view-catalog',
