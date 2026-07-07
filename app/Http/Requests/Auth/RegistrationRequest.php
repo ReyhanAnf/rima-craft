@@ -35,9 +35,9 @@ class RegistrationRequest extends FormRequest
             'password' => 'required|string|min:8|confirmed',
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:1000',
-            'province_id' => Rule::requiredIf($type === 'reseller') . '|nullable|exists:regions,id',
-            'city_id' => Rule::requiredIf($type === 'reseller') . '|nullable|exists:regions,id',
-            'company_name' => Rule::requiredIf($type === 'reseller') . '|nullable|string|max:255',
+            'province_id' => [Rule::requiredIf($type === 'reseller'), 'nullable', 'exists:regions,id'],
+            'city_id' => [Rule::requiredIf($type === 'reseller'), 'nullable', 'exists:regions,id'],
+            'company_name' => [Rule::requiredIf($type === 'reseller'), 'nullable', 'string', 'max:255'],
             'business_type' => 'nullable|string|max:100',
             'agree_terms' => 'required|accepted',
         ];

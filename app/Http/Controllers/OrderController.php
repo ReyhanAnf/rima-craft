@@ -86,14 +86,17 @@ class OrderController extends Controller
             $validated = $request->validate([
                 'customer_name' => 'required|string|max:255',
                 'customer_phone' => 'required|string|max:20',
-                'customer_email' => [
+                'customer_email' => array_filter([
                     'required',
                     'email',
                     'max:255',
-                    $request->input('create_account')
+                    // Only enforce uniqueness when explicitly creating a new account
+                    $request->boolean('create_account')
                         ? \Illuminate\Validation\Rule::unique('users', 'email')
-                        : (auth()->check() ? \Illuminate\Validation\Rule::unique('users', 'email')->ignore(auth()->id()) : ''),
-                ],
+                        : (auth()->check()
+                            ? \Illuminate\Validation\Rule::unique('users', 'email')->ignore(auth()->id())
+                            : null),
+                ]),
                 'customer_address' => 'required|string|max:1000',
                 'province_id' => 'required|exists:regions,id',
                 'city_id' => 'required|exists:regions,id',
@@ -105,6 +108,8 @@ class OrderController extends Controller
                 'password' => 'required_if:create_account,1|nullable|min:8|confirmed',
                 'payment_mode'        => 'nullable|in:full,dp',
                 'down_payment_amount' => 'nullable|numeric|min:0',
+            ], [
+                'customer_email.unique' => 'Email ini sudah terdaftar sebagai akun. Silakan login terlebih dahulu atau gunakan email lain.',
             ]);
 
             // Server-side Recalculation to prevent Price Manipulation

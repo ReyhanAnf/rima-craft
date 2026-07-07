@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
@@ -7,9 +7,23 @@ import { useThemeStore } from '@/stores/theme';
 import { useAdminStore } from '@/stores/admin';
 
 const page = usePage();
+const toast = useToast();
 const user = page.props.auth?.user || {};
 const siteConfig = page.props.siteConfig || {};
 const menuCategories = page.props.menus || [];
+
+// Show flash messages via PrimeVue Toast
+watch(
+    () => page.props.flash,
+    (flash) => {
+        if (!flash) return;
+        if (flash.success) toast.add({ severity: 'success', summary: 'Berhasil', detail: flash.success, life: 5000 });
+        if (flash.error)   toast.add({ severity: 'error',   summary: 'Error',    detail: flash.error,   life: 7000 });
+        if (flash.info)    toast.add({ severity: 'info',    summary: 'Info',     detail: flash.info,    life: 7000 });
+        if (flash.warning) toast.add({ severity: 'warn',    summary: 'Perhatian',detail: flash.warning, life: 6000 });
+    },
+    { immediate: true, deep: true }
+);
 
 const dashboardRouteName = computed(() => {
     if (!page.props.auth?.roles) return null;
@@ -90,6 +104,7 @@ const categorizedNavigation = computed(() => {
                 title: 'Portal Pelanggan',
                 items: [
                     { name: 'Portal Dashboard', route: 'customer.dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3M9 21h6' },
+                    { name: 'Belanja Sekarang', route: 'catalog.index', icon: 'M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z' },
                     { name: 'Pesanan Saya', route: 'customer.orders', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2' },
                     { name: 'Profil Saya', route: 'customer.profile', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' }
                 ]
@@ -104,6 +119,7 @@ const categorizedNavigation = computed(() => {
                 title: 'Portal Reseller',
                 items: [
                     { name: 'Portal Reseller', route: 'reseller.dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3M9 21h6' },
+                    { name: 'Belanja Sekarang', route: 'catalog.index', icon: 'M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z' },
                     { name: 'Riwayat Order', route: 'reseller.orders', icon: 'M9 5H7a2 2 0 00-2-2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2' },
                     { name: 'Tagihan / Billing', route: 'reseller.billing', icon: 'M9 8h6m-6 2h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
                     { name: 'Profil Reseller', route: 'reseller.profile', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' }
@@ -145,6 +161,7 @@ const mobileBottomItems = computed(() => {
     if (isCustomer) {
         return [
             { name: 'Dashboard', route: 'customer.dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3M9 21h6' },
+            { name: 'Belanja', route: 'catalog.index', icon: 'M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z' },
             { name: 'Pesanan', route: 'customer.orders', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2' },
             { name: 'Profil', route: 'customer.profile', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' }
         ];
@@ -153,6 +170,7 @@ const mobileBottomItems = computed(() => {
     if (isReseller) {
         return [
             { name: 'Dashboard', route: 'reseller.dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3M9 21h6' },
+            { name: 'Belanja', route: 'catalog.index', icon: 'M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z' },
             { name: 'Pesanan', route: 'reseller.orders', icon: 'M9 5H7a2 2 0 00-2-2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2' },
             { name: 'Profil', route: 'reseller.profile', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' }
         ];

@@ -202,6 +202,43 @@ onMounted(async () => {
                     <p class="text-gray-600 dark:text-gray-400 text-sm md:text-base max-w-xl mx-auto">Selesaikan pesanan Anda dengan mengisi detail pengiriman dan metode pembayaran di bawah ini.</p>
                 </div>
 
+                <!-- Auth Banner — shown to guests, sticky below navbar -->
+                <div v-if="isGuest" class="sticky top-[70px] z-50 mb-6">
+                    <div class="bg-amber-50 dark:bg-amber-950/80 border border-amber-300 dark:border-amber-700 rounded-2xl shadow-lg shadow-amber-500/10 backdrop-blur-sm overflow-hidden">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 md:p-5">
+                            <!-- Icon + Text -->
+                            <div class="flex items-start gap-3 flex-1">
+                                <div class="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-900/60 border border-amber-200 dark:border-amber-700 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                    <svg class="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-black text-amber-900 dark:text-amber-100">Login atau Daftar untuk Melanjutkan</p>
+                                    <p class="text-xs text-amber-700 dark:text-amber-300 mt-0.5">Form di bawah terkunci. Silakan login atau buat akun terlebih dahulu.</p>
+                                </div>
+                            </div>
+                            <!-- CTA buttons -->
+                            <div class="flex items-center gap-2 w-full sm:w-auto flex-shrink-0">
+                                <a
+                                    :href="(config.login_url ?? '/login') + '?redirect=' + encodeURIComponent(config.checkout_url ?? '/order/checkout')"
+                                    class="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold text-sm transition-all shadow-sm"
+                                >
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
+                                    Login
+                                </a>
+                                <a
+                                    :href="'/register?redirect=' + encodeURIComponent(config.checkout_url ?? '/order/checkout')"
+                                    class="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2.5 bg-white dark:bg-gray-800 border border-amber-300 dark:border-amber-700 hover:border-amber-500 text-amber-700 dark:text-amber-300 rounded-xl font-bold text-sm transition-all"
+                                >
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+                                    Daftar
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Mobile Sticky/Collapsible Summary Drawer (visible on mobile only) -->
                 <div class="lg:hidden mb-6 sticky top-[64px] z-40 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-md">
                     <button 
@@ -283,7 +320,34 @@ onMounted(async () => {
 
                     <!-- Left: Order Form -->
                     <div class="lg:col-span-7 xl:col-span-8 space-y-6">
-                        <div class="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-6 md:p-10 shadow-sm relative overflow-hidden">
+                        <div
+                            class="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-6 md:p-10 shadow-sm relative overflow-hidden"
+                            :class="{ 'select-none': isGuest }"
+                        >
+                            <!-- Locked overlay for guests -->
+                            <div v-if="isGuest" class="absolute inset-0 z-10 bg-white/60 dark:bg-gray-900/70 backdrop-blur-[2px] rounded-3xl flex items-center justify-center">
+                                <div class="flex flex-col items-center gap-3 text-center px-6">
+                                    <div class="w-14 h-14 rounded-2xl bg-amber-50 dark:bg-amber-950/50 border-2 border-amber-200 dark:border-amber-700 flex items-center justify-center shadow">
+                                        <svg class="w-7 h-7 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="font-black text-gray-900 dark:text-white text-base">Form Terkunci</p>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Login atau daftar terlebih dahulu<br>untuk mengisi form pesanan.</p>
+                                    </div>
+                                    <div class="flex gap-2 mt-1">
+                                        <a
+                                            :href="(config.login_url ?? '/login') + '?redirect=' + encodeURIComponent(config.checkout_url ?? '/order/checkout')"
+                                            class="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold text-sm transition-all shadow-sm"
+                                        >Login</a>
+                                        <a
+                                            :href="'/register?redirect=' + encodeURIComponent(config.checkout_url ?? '/order/checkout')"
+                                            class="px-5 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:border-amber-400 text-gray-700 dark:text-gray-200 rounded-xl font-bold text-sm transition-all"
+                                        >Daftar</a>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-amber-400 to-amber-600"></div>
 
                             <!-- Server-side errors -->
@@ -355,14 +419,10 @@ onMounted(async () => {
                                             />
                                             <svg class="w-5 h-5 text-gray-400 absolute right-3.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                                         </div>
-                                        <p v-if="!isGuest" class="mt-1.5 text-[10px] text-amber-600 dark:text-amber-400 font-semibold">
+                                        <p class="mt-1.5 text-[10px] text-amber-600 dark:text-amber-400 font-semibold">
                                             Email terkunci karena Anda sedang login. Silakan logout jika ingin menggunakan email lain.
                                         </p>
-                                        <p v-else class="mt-1.5 text-[11px] text-gray-500 dark:text-gray-400">
-                                            Email ini akan digunakan untuk konfirmasi struk belanja dan info pengiriman.
-                                        </p>
-                                        <p v-if="form.errors.customer_email" class="mt-1.5 text-xs text-red-500">{{ form.errors.customer_email }}</p>
-                                    </div>
+                                        <p v-if="form.errors.customer_email" class="mt-1.5 text-xs text-red-500">{{ form.errors.customer_email }}</p>                                    </div>
 
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div>
@@ -420,55 +480,6 @@ onMounted(async () => {
                                         />
                                         <p v-if="form.errors.customer_address" class="mt-1.5 text-xs text-red-500">{{ form.errors.customer_address }}</p>
                                     </div>
-                                </div>
-
-                                <!-- Create Account Option -->
-                                <div v-if="isGuest" class="bg-gradient-to-br from-amber-50/50 to-amber-100/30 dark:from-amber-950/20 dark:to-amber-900/10 border border-amber-200/50 dark:border-amber-900/30 rounded-2xl p-5 md:p-6 shadow-sm">
-                                    <label class="flex items-start gap-4 cursor-pointer">
-                                        <input
-                                            v-model="form.create_account"
-                                            type="checkbox"
-                                            class="mt-1 w-5 h-5 text-amber-600 border-gray-300 rounded focus:ring-amber-500 focus:ring-offset-2"
-                                        />
-                                        <div class="flex-1">
-                                            <span class="text-base font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
-                                                Buat Akun Rima Craft
-                                                <span class="text-[10px] font-semibold text-amber-700 bg-amber-100 dark:bg-amber-900 dark:text-amber-300 px-1.5 py-0.5 rounded">Praktis</span>
-                                            </span>
-                                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Dapatkan kemudahan melacak status pesanan secara real-time dan melihat riwayat belanja.</p>
-                                        </div>
-                                    </label>
-
-                                    <Transition name="expand">
-                                        <div v-if="form.create_account" class="mt-5 space-y-4 pt-5 border-t border-amber-200/50 dark:border-amber-800/40">
-                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div>
-                                                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-2">Password <span class="text-red-500">*</span></label>
-                                                    <input
-                                                        v-model="form.password"
-                                                        type="password"
-                                                        :required="form.create_account"
-                                                        minlength="8"
-                                                        class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 outline-none transition-all"
-                                                        placeholder="Minimal 8 karakter"
-                                                    />
-                                                    <p v-if="form.errors.password" class="mt-1 text-xs text-red-500">{{ form.errors.password }}</p>
-                                                </div>
-                                                <div>
-                                                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-2">Konfirmasi Password <span class="text-red-500">*</span></label>
-                                                    <input
-                                                        v-model="form.password_confirmation"
-                                                        type="password"
-                                                        :required="form.create_account"
-                                                        minlength="8"
-                                                        class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 outline-none transition-all"
-                                                        placeholder="Ulangi password"
-                                                    />
-                                                    <p v-if="form.errors.password_confirmation" class="mt-1 text-xs text-red-500">{{ form.errors.password_confirmation }}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </Transition>
                                 </div>
 
                                 <!-- Step 2: Payment Methods -->

@@ -45,6 +45,12 @@ class AuthController extends Controller
         $request->authenticate();
         $request->session()->regenerate();
 
+        // Honor explicit ?redirect= param (only internal URLs allowed)
+        $redirect = $request->input('redirect');
+        if ($redirect && str_starts_with($redirect, '/') && !str_starts_with($redirect, '//')) {
+            return redirect($redirect);
+        }
+
         return $this->redirectByRole(auth()->user());
     }
 
