@@ -61,7 +61,21 @@ Route::prefix('auth/google')
     ->group(function () {
         Route::get('/redirect', 'redirect')->name('redirect');
         Route::get('/callback', 'callback')->name('callback');
+        Route::get('/complete', 'showComplete')->name('complete');
+        Route::post('/complete', 'storeComplete')->name('complete.store');
     });
+
+// Password Reset
+Route::middleware('guest')->group(function () {
+    Route::get('forgot-password', [\App\Http\Controllers\Auth\ForgotPasswordController::class, 'show'])
+        ->name('password.request');
+    Route::post('forgot-password', [\App\Http\Controllers\Auth\ForgotPasswordController::class, 'sendResetLink'])
+        ->name('password.email');
+    Route::get('reset-password/{token}', [\App\Http\Controllers\Auth\ResetPasswordController::class, 'show'])
+        ->name('password.reset');
+    Route::post('reset-password', [\App\Http\Controllers\Auth\ResetPasswordController::class, 'reset'])
+        ->name('password.update');
+});
 
 // Login & Register pages accessible by anyone (even logged-in users switching portals)
 Route::controller(AuthController::class)->group(function () {
@@ -112,7 +126,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('my-orders/{orderNumber}/complete', [MyOrderController::class, 'complete'])->name('my-orders.complete');
 
 
-    Route::middleware(['role:customer', 'permission:view-my-profile'])
+    Route::middleware(['role:customer,reseller', 'permission:view-my-profile'])
         ->prefix('customer')
         ->name('customer.')
         ->controller(CustomerPortalController::class)

@@ -39,6 +39,14 @@ class DashboardController extends Controller
         $chartData = $this->dashboardRepo->getChartData($startDate, $endDate);
         $recentSales = $this->dashboardRepo->getRecentSales($startDate, $endDate);
 
+        // Pending reseller approvals
+        $pendingResellers = \App\Models\User::whereHas('roles', fn($q) => $q->where('name', 'reseller'))
+            ->where('reseller_status', 'pending')
+            ->with('contact')
+            ->orderByDesc('created_at')
+            ->take(10)
+            ->get(['id', 'name', 'email', 'created_at', 'reseller_status']);
+
         // Flatten arrays for view compatibility
         extract($financials);
         extract($outstanding);
@@ -72,6 +80,7 @@ class DashboardController extends Controller
             'topProducts' => $topProducts,
             'chartData' => $chartData,
             'recentSales' => $recentSales,
+            'pendingResellers' => $pendingResellers,
         ]);
     }
 }

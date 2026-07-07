@@ -1,5 +1,5 @@
 <script setup>
-import { Head, useForm, Link } from '@inertiajs/vue3';
+import { Head, useForm, Link, usePage } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import InputText from 'primevue/inputtext';
 import Password from 'primevue/password';
@@ -13,6 +13,10 @@ const props = defineProps({
     businessName: { type: String, default: 'Rima Craft' },
     type: { type: String, default: 'public' }, // 'public' | 'admin'
 });
+
+const page = usePage();
+const siteConfig = computed(() => page.props.siteConfig || {});
+const logoUrl = computed(() => siteConfig.value.logo_url ? `/storage/${siteConfig.value.logo_url}` : null);
 
 const form = useForm({
     email: '',
@@ -75,7 +79,13 @@ const submit = () => {
                 <div class="absolute inset-0 bg-[linear-gradient(180deg,rgba(36,24,14,0.18),rgba(36,24,14,0.74))] lg:bg-[linear-gradient(90deg,rgba(36,24,14,0.22),rgba(36,24,14,0.82))]"></div>
                 <div class="relative z-10 flex w-full flex-col justify-between p-6 text-white sm:p-8 lg:p-12">
                     <Link href="/" class="inline-flex w-fit items-center gap-3 rounded-full border border-white/25 bg-white/15 px-4 py-2 backdrop-blur-md transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/70">
-                        <span class="grid h-9 w-9 place-items-center rounded-full bg-[#f5d7a1] text-sm font-bold text-stone-950 shadow-sm">
+                        <img
+                            v-if="logoUrl"
+                            :src="logoUrl"
+                            :alt="businessName"
+                            class="h-9 w-9 rounded-full object-contain bg-white/90 p-1 shadow-sm"
+                        />
+                        <span v-else class="grid h-9 w-9 place-items-center rounded-full bg-[#f5d7a1] text-sm font-bold text-stone-950 shadow-sm">
                             RC
                         </span>
                         <span class="text-sm font-semibold tracking-wide">{{ businessName }}</span>
@@ -170,9 +180,14 @@ const submit = () => {
                                     <Checkbox id="remember" v-model="form.remember" binary />
                                     <label for="remember" class="cursor-pointer text-xs font-medium text-stone-600 dark:text-stone-300">Ingat saya</label>
                                 </div>
-                                <span v-if="!isAdmin" class="text-xs font-medium text-stone-400 dark:text-stone-500">
-                                    Akses aman
-                                </span>
+                                <Link
+                                    v-if="!isAdmin"
+                                    :href="route('password.request')"
+                                    class="text-xs font-semibold text-[#9f6b36] hover:text-[#744822] dark:text-[#f0c98e] transition-colors"
+                                >
+                                    Lupa kata sandi?
+                                </Link>
+                                <span v-else class="text-xs font-medium text-stone-400 dark:text-stone-500">Akses aman</span>
                             </div>
 
                             <Button

@@ -216,16 +216,32 @@ class CheckoutOrderTest extends TestCase
     }
 
     // -------------------------------------------------------------------------
-    // Requirement 14.5 — Reseller with DP < 30% → validation error on down_payment_amount
+    // Requirement 14.5 — Reseller with negative DP → validation error on down_payment_amount
     // -------------------------------------------------------------------------
 
     #[Test]
-    public function it_reseller_with_dp_less_than_30_percent_gets_validation_error(): void
+    public function it_reseller_with_negative_dp_gets_validation_error(): void
     {
         $reseller = $this->createUserWithRole('reseller');
 
-        // total will be 80_000 (reseller price); 29% of 80_000 = 23_200 < 30%
-        $dp = 23_200;
+        $dp = -100;
+
+        $response = $this->actingAs($reseller)
+            ->post('/order/store', $this->validOrderPayload([
+                'customer_email'      => $reseller->email,
+                'payment_mode'        => 'dp',
+                'down_payment_amount' => (string) $dp,
+            ]));
+
+        $response->assertSessionHasErrors('down_payment_amount');
+    }
+
+    #[Test]
+    public function it_reseller_can_pay_zero_dp(): void
+    {
+        $reseller = $this->createUserWithRole('reseller');
+
+        $dp = 0;
 
         $response = $this->actingAs($reseller)
             ->post('/order/store', $this->validOrderPayload([
@@ -235,7 +251,12 @@ class CheckoutOrderTest extends TestCase
             ]));
 
         $response->assertRedirect();
-        $response->assertSessionHasErrors('down_payment_amount');
+        $location = $response->headers->get('Location', '');
+        $this->assertStringContainsString('success', $location);
+
+        $order = Order::where('customer_email', $reseller->email)->latest()->first();
+        $this->assertNotNull($order);
+        $this->assertEquals(0, (float) $order->down_payment_amount);
     }
 
     // -------------------------------------------------------------------------

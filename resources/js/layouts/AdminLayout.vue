@@ -21,35 +21,29 @@ const dashboardRouteName = computed(() => {
 });
 
 // PWA Install Prompt State
-const installPromptEvent = ref(null);
-const isInstallable = ref(false);
+const isInstallable = ref(typeof window !== 'undefined' ? !!window.isAppInstallable : false);
 
 if (typeof window !== 'undefined') {
-    window.addEventListener('beforeinstallprompt', (e) => {
-        // Prevent Chrome 67 and earlier from automatically showing the prompt
-        e.preventDefault();
-        // Stash the event so it can be triggered later.
-        installPromptEvent.value = e;
-        isInstallable.value = true;
-    });
-
-    window.addEventListener('appinstalled', () => {
-        isInstallable.value = false;
-        installPromptEvent.value = null;
+    window.addEventListener('pwa-installable-status', (e) => {
+        isInstallable.value = e.detail;
     });
 }
 
 const installPWA = async () => {
-    if (!installPromptEvent.value) return;
+    const promptEvent = typeof window !== 'undefined' ? window.deferredInstallPrompt : null;
+    if (!promptEvent) return;
     
     // Show the install prompt
-    installPromptEvent.value.prompt();
+    promptEvent.prompt();
     
     // Wait for the user to respond to the prompt
-    const { outcome } = await installPromptEvent.value.userChoice;
+    const { outcome } = await promptEvent.userChoice;
     if (outcome === 'accepted') {
+        if (typeof window !== 'undefined') {
+            window.deferredInstallPrompt = null;
+            window.isAppInstallable = false;
+        }
         isInstallable.value = false;
-        installPromptEvent.value = null;
     }
 };
 
@@ -199,9 +193,6 @@ const mobileBottomItems = computed(() => {
                         <span class="font-bold text-sm text-gray-900 dark:text-white leading-tight truncate">
                             {{ siteConfig.business_name || 'Rima Craft' }}
                         </span>
-                        <span v-if="siteConfig.business_subtitle" class="text-[9px] text-gray-500 dark:text-gray-400 font-medium leading-none truncate mt-0.5">
-                            {{ siteConfig.business_subtitle }}
-                        </span>
                     </div>
                 </Link>
             </div>
@@ -279,14 +270,19 @@ const mobileBottomItems = computed(() => {
         <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
             <!-- Header/Navbar -->
             <header class="h-16 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-6 z-10 sticky top-0">
-                <button
-                    @click="adminStore.toggleSidebar"
-                    class="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors hidden lg:block"
-                >
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                    </svg>
-                </button>
+                <div class="hidden lg:flex items-center gap-3 min-w-0">
+                    <button
+                        @click="adminStore.toggleSidebar"
+                        class="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                    <span v-if="siteConfig.business_subtitle" class="text-xs text-gray-500 dark:text-gray-400 font-medium leading-none truncate">
+                        {{ siteConfig.business_subtitle }}
+                    </span>
+                </div>
                 <div class="lg:hidden flex items-center gap-2 min-w-0">
                     <img v-if="siteConfig.logo_url" :src="`/storage/${siteConfig.logo_url}`" class="w-8 h-8 object-contain rounded-lg flex-shrink-0 bg-white p-0.5 border border-gray-250" alt="Logo" />
                     <div v-else class="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -295,9 +291,6 @@ const mobileBottomItems = computed(() => {
                     <div class="flex flex-col min-w-0">
                         <span class="font-bold text-sm text-gray-900 dark:text-white leading-tight truncate">
                             {{ siteConfig.business_name || 'Rima Craft' }}
-                        </span>
-                        <span v-if="siteConfig.business_subtitle" class="text-[8px] text-gray-500 dark:text-gray-400 font-medium leading-none truncate">
-                            {{ siteConfig.business_subtitle }}
                         </span>
                     </div>
                 </div>
@@ -399,6 +392,19 @@ const mobileBottomItems = computed(() => {
                 </button>
             </div>
         </div>
+
+        <button
+            v-if="isInstallable"
+            type="button"
+            @click="installPWA"
+            class="lg:hidden fixed bottom-20 right-4 z-[60] inline-flex items-center gap-2 rounded-full bg-amber-500 px-4 py-3 text-sm font-bold text-gray-950 shadow-lg shadow-amber-500/20 transition hover:bg-amber-600"
+            title="Download App"
+        >
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Download App
+        </button>
 
         <!-- Mobile Menu Slider Overlay Drawer -->
         <div v-show="isMobileMenuOpen" class="lg:hidden fixed inset-0 z-[100] flex">

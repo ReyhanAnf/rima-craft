@@ -13,6 +13,7 @@ const props = defineProps({
 });
 
 const config = usePage().props.siteConfig ?? {};
+const isInstallable = ref(typeof window !== 'undefined' ? !!window.isAppInstallable : false);
 const cart   = useCartStore();
 const toast  = useToastStore();
 
@@ -198,10 +199,44 @@ const waPhone = computed(() => {
     const raw = (props.settings.business_phone ?? '').replace(/\D/g, '');
     return raw.startsWith('0') ? '62' + raw.substring(1) : raw;
 });
+
+if (typeof window !== 'undefined') {
+    window.addEventListener('pwa-installable-status', (e) => {
+        isInstallable.value = e.detail;
+    });
+}
+
+const installPWA = async () => {
+    const promptEvent = typeof window !== 'undefined' ? window.deferredInstallPrompt : null;
+    if (!promptEvent) return;
+
+    promptEvent.prompt();
+
+    const { outcome } = await promptEvent.userChoice;
+    if (outcome === 'accepted') {
+        if (typeof window !== 'undefined') {
+            window.deferredInstallPrompt = null;
+            window.isAppInstallable = false;
+        }
+        isInstallable.value = false;
+    }
+};
 </script>
 
 <template>
     <PublicLayout>
+        <button
+            v-if="isInstallable"
+            type="button"
+            @click="installPWA"
+            class="fixed bottom-20 right-4 z-50 inline-flex items-center gap-2 rounded-full bg-amber-500 px-4 py-3 text-sm font-bold text-gray-950 shadow-lg shadow-amber-500/20 transition hover:bg-amber-600 lg:hidden"
+            title="Download App"
+        >
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Download App
+        </button>
 
         <!-- Hero Section -->
         <div class="relative w-full h-[85vh] min-h-[600px] flex items-center justify-center overflow-hidden -mt-20 pt-20">
@@ -311,121 +346,99 @@ const waPhone = computed(() => {
         <!-- ═══════════════════════════════════════════════════════
              Product Catalog
         ════════════════════════════════════════════════════════ -->
-        <section id="katalog" class="py-24 lg:py-32 bg-gray-50 dark:bg-[#0a0a0a] border-t border-gray-200 dark:border-[#1a1a1a]">
+        <section id="katalog" class="py-24 lg:py-32 bg-[#faf8f5] dark:bg-[#080808]">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
-                    <div class="text-left">
-                        <span class="text-amber-600 dark:text-amber-500 font-medium tracking-[0.3em] uppercase text-[10px] md:text-xs mb-2 block">Masterpiece</span>
-                        <h2 class="text-4xl md:text-5xl font-serif font-bold text-gray-900 dark:text-white tracking-wide">Koleksi Eksklusif</h2>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 font-light mt-2">Pilih dan miliki karya seni fungsional favorit Anda.</p>
+
+                <!-- Section Header -->
+                <div class="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+                    <div>
+                        <div class="flex items-center gap-2 mb-3">
+                            <div class="h-px w-8 bg-amber-500"></div>
+                            <span class="text-amber-600 dark:text-amber-500 font-semibold tracking-[0.28em] uppercase text-[10px]">Koleksi</span>
+                        </div>
+                        <h2 class="text-4xl md:text-5xl font-serif font-bold text-gray-900 dark:text-white leading-tight">Produk Pilihan</h2>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-2 max-w-sm">Karya seni fungsional yang dibuat dengan tangan, untuk Anda miliki.</p>
                     </div>
-                    <Link 
-                        :href="route('catalog.shop')" 
-                        class="text-amber-600 dark:text-amber-400 font-semibold text-sm flex items-center gap-1.5 hover:gap-2.5 transition-all self-start md:self-auto group"
-                    >
-                        Lihat Semua Produk
-                        <svg class="w-4 h-4 transform group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                    <Link :href="route('catalog.shop')" class="group inline-flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors self-start md:self-auto">
+                        Lihat semua produk
+                        <span class="inline-flex items-center justify-center w-7 h-7 rounded-full border border-gray-300 dark:border-gray-700 group-hover:border-amber-500 group-hover:bg-amber-500 group-hover:text-white transition-all">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                        </span>
                     </Link>
                 </div>
 
                 <!-- Filter Bar -->
-                <div id="katalog-filter" class="bg-white dark:bg-[#111] p-5 rounded-2xl border border-gray-200 dark:border-[#1a1a1a] shadow-sm max-w-4xl mx-auto mb-16 flex flex-col md:flex-row gap-4 items-center justify-between">
-                    <div class="relative w-full md:w-80">
-                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <div id="katalog-filter" class="mb-10 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+                    <div class="relative flex-1 max-w-sm">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400 pointer-events-none">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                         </span>
-                        <input
-                            v-model="search"
-                            @input="onSearchInput"
-                            type="search"
-                            placeholder="Cari nama produk..."
-                            class="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/10 outline-none transition-all"
-                        />
+                        <input v-model="search" @input="onSearchInput" type="search" placeholder="Cari produk..." class="w-full pl-9 pr-4 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#111] text-gray-900 dark:text-white placeholder-gray-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/10 outline-none transition-all" />
                     </div>
-                    <div class="flex flex-wrap w-full md:w-auto gap-3 items-center">
-                        <div class="flex items-center gap-2">
-                            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider hidden sm:inline">Stok</span>
-                            <select v-model="stockFilter" @change="onStockChange" class="px-4 py-2.5 text-sm rounded-xl border border-gray-250 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:border-amber-500 outline-none transition-all cursor-pointer">
-                                <option value="semua">Semua Stok</option>
-                                <option value="tersedia">Tersedia</option>
-                                <option value="habis">Habis</option>
-                            </select>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider hidden sm:inline">Urutkan</span>
-                            <select v-model="sortBy" class="px-4 py-2.5 text-sm rounded-xl border border-gray-250 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:border-amber-500 outline-none transition-all cursor-pointer">
-                                <option value="default">Default</option>
-                                <option value="price-asc">Harga: Terendah</option>
-                                <option value="price-desc">Harga: Tertinggi</option>
-                                <option value="discount">Diskon Terbesar</option>
-                            </select>
-                        </div>
+                    <div class="flex gap-2 items-center flex-wrap">
+                        <select v-model="stockFilter" @change="onStockChange" class="px-3 py-2.5 text-xs font-semibold rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#111] text-gray-700 dark:text-gray-300 focus:border-amber-500 outline-none transition-all cursor-pointer">
+                            <option value="semua">Semua Stok</option>
+                            <option value="tersedia">Tersedia</option>
+                            <option value="habis">Stok Habis</option>
+                        </select>
+                        <select v-model="sortBy" class="px-3 py-2.5 text-xs font-semibold rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#111] text-gray-700 dark:text-gray-300 focus:border-amber-500 outline-none transition-all cursor-pointer">
+                            <option value="default">Urutkan: Default</option>
+                            <option value="price-asc">Harga Terendah</option>
+                            <option value="price-desc">Harga Tertinggi</option>
+                            <option value="discount">Diskon Terbesar</option>
+                        </select>
                     </div>
                 </div>
 
                 <!-- Products Grid -->
-                <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 md:gap-7 transition-opacity duration-300" :class="{ 'opacity-50 pointer-events-none': loading }">
-
-                    <div v-if="displayedProducts.length === 0 && !loading" class="col-span-full text-center py-20 text-gray-400 dark:text-gray-600">
-                        <svg class="w-16 h-16 mx-auto mb-4 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        <p class="font-medium">Tidak ada produk ditemukan</p>
+                <div
+                    class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 transition-opacity duration-300"
+                    :class="{ 'opacity-40 pointer-events-none': loading }"
+                >
+                    <!-- Empty state -->
+                    <div v-if="displayedProducts.length === 0 && !loading" class="col-span-full flex flex-col items-center justify-center py-24 text-gray-400 dark:text-gray-600">
+                        <svg class="w-14 h-14 mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <p class="text-sm font-medium">Tidak ada produk ditemukan</p>
                     </div>
 
                     <!-- ═══ PRODUCT CARD ═══ -->
                     <div
                         v-for="product in displayedProducts"
                         :key="product.id"
-                        class="group relative flex flex-col bg-white dark:bg-[#111] rounded-2xl overflow-hidden border border-gray-100 dark:border-[#1e1e1e] shadow-sm hover:shadow-xl hover:shadow-amber-500/5 dark:hover:shadow-amber-400/5 transition-all duration-400"
+                        class="group relative flex flex-col bg-white dark:bg-[#111] rounded-3xl overflow-hidden ring-1 ring-black/5 dark:ring-white/5 hover:ring-amber-400/40 dark:hover:ring-amber-500/30 hover:shadow-2xl hover:shadow-amber-500/8 transition-all duration-500"
                     >
                         <!-- Image -->
-                        <div
-                            class="relative aspect-[3/4] overflow-hidden bg-gray-50 dark:bg-gray-900 cursor-pointer"
-                            @click="openDrawer(product)"
-                        >
-                            <img
-                                v-if="product.image_path"
-                                :src="`/storage/${product.image_path}`"
-                                :alt="product.name"
-                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                            />
+                        <div class="relative aspect-[3/4] overflow-hidden bg-gray-100 dark:bg-[#1a1a1a] cursor-pointer" @click="openDrawer(product)">
+                            <img v-if="product.image_path" :src="`/storage/${product.image_path}`" :alt="product.name" class="w-full h-full object-cover group-hover:scale-[1.06] transition-transform duration-700 ease-out" />
                             <div v-else class="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
-                                <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                             </div>
-
                             <!-- Badges -->
                             <div class="absolute top-3 left-3 flex flex-col gap-1.5">
-                                <span v-if="product.current_stock <= 0" class="px-2.5 py-0.5 bg-gray-900/90 text-white text-[9px] font-bold uppercase tracking-wider rounded-md backdrop-blur-sm">Habis</span>
-                                <span v-else-if="product.discount_percentage > 0" class="px-2.5 py-0.5 bg-red-500 text-white text-[9px] font-bold uppercase tracking-wider rounded-md">-{{ product.discount_percentage }}%</span>
-                                <span v-if="(product.variants ?? []).length > 0" class="px-2.5 py-0.5 bg-amber-500/90 text-white text-[9px] font-bold uppercase tracking-wider rounded-md backdrop-blur-sm">Variasi</span>
+                                <span v-if="product.current_stock <= 0" class="px-2 py-0.5 bg-black/75 text-white text-[9px] font-bold uppercase tracking-widest rounded-full backdrop-blur-sm">Habis</span>
+                                <span v-else-if="product.discount_percentage > 0" class="px-2 py-0.5 bg-rose-500 text-white text-[9px] font-bold rounded-full">−{{ product.discount_percentage }}%</span>
+                                <span v-if="(product.variants ?? []).length > 0" class="px-2 py-0.5 bg-amber-500 text-white text-[9px] font-bold rounded-full">Variasi</span>
                             </div>
-
-                            <!-- Gallery count badge -->
-                            <div v-if="(product.media_assets ?? []).filter(m => m.type === 'image').length > 0" class="absolute bottom-3 right-3 flex items-center gap-1 px-2 py-0.5 bg-black/60 text-white text-[9px] font-semibold rounded-full backdrop-blur-sm">
+                            <!-- Gallery count -->
+                            <div v-if="(product.media_assets ?? []).filter(m => m.type === 'image').length > 0" class="absolute bottom-3 right-3 flex items-center gap-1 px-2 py-0.5 bg-black/55 text-white text-[9px] font-semibold rounded-full backdrop-blur-sm">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                                 {{ (product.media_assets ?? []).filter(m => m.type === 'image').length + 1 }}
                             </div>
-
-                            <!-- Hover overlay — Detail CTA -->
-                            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end items-center pb-4 gap-2">
-                                <span class="px-4 py-2 bg-white/95 dark:bg-gray-950/95 text-gray-900 dark:text-white text-[10px] font-bold rounded-full shadow-lg transform translate-y-3 group-hover:translate-y-0 transition-transform duration-300 uppercase tracking-wider">
-                                    Lihat Detail &amp; Gambar
+                            <!-- Hover CTA -->
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-400 flex items-end justify-center pb-5">
+                                <span class="px-4 py-2 bg-white text-gray-900 text-[10px] font-bold rounded-full shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300 uppercase tracking-widest">
+                                    Detail &amp; Gambar
                                 </span>
                             </div>
                         </div>
 
-                        <!-- Info -->
-                        <div class="p-3.5 flex-1 flex flex-col">
-                            <span class="text-[8px] font-bold text-amber-600/70 dark:text-amber-500/60 uppercase tracking-[0.2em] block mb-0.5">Rima Craft</span>
-                            <h3
-                                class="font-serif font-semibold text-sm text-gray-900 dark:text-white mb-1.5 line-clamp-2 cursor-pointer hover:text-amber-600 dark:hover:text-amber-400 transition-colors leading-snug"
-                                @click="openDrawer(product)"
-                            >
+                        <!-- Card Body -->
+                        <div class="p-4 flex-1 flex flex-col gap-2">
+                            <h3 class="font-serif font-semibold text-sm leading-snug text-gray-900 dark:text-white line-clamp-2 cursor-pointer hover:text-amber-600 dark:hover:text-amber-400 transition-colors" @click="openDrawer(product)">
                                 {{ product.name }}
                             </h3>
-
-                            <!-- Price -->
-                            <div class="flex items-baseline gap-1.5 mb-3">
-                                <span class="text-sm font-extrabold text-amber-600 dark:text-amber-400 font-serif">
+                            <div class="flex items-baseline gap-2 mt-auto">
+                                <span class="text-base font-black text-amber-600 dark:text-amber-400 font-serif tracking-tight">
                                     {{ formatPrice(product.pricing?.price ?? product.base_price) }}
                                 </span>
                                 <span v-if="product.pricing?.has_discount" class="text-[10px] text-gray-400 line-through">
@@ -433,52 +446,17 @@ const waPhone = computed(() => {
                                 </span>
                             </div>
 
-                            <!-- Add to Cart Button / Qty Picker -->
-                            <div class="relative mt-auto">
-                                <!-- Normal button -->
+                            <!-- Cart button -->
+                            <div class="relative">
                                 <button
-                                    v-if="activeQtyPicker !== product.id"
-                                    @click="openQtyPicker(product, $event)"
+                                    @click="openDrawer(product)"
                                     :disabled="product.current_stock <= 0"
-                                    class="w-full py-2 px-3 border border-amber-500/50 hover:border-amber-500 text-amber-600 dark:text-amber-400 disabled:border-gray-200 disabled:text-gray-400 dark:disabled:border-gray-800 dark:disabled:text-gray-600 disabled:cursor-not-allowed hover:bg-amber-500 hover:text-white dark:hover:text-gray-950 font-bold rounded-xl text-[10px] uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-1.5"
+                                    class="w-full py-2.5 rounded-2xl text-[11px] font-bold uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-1.5"
+                                    :class="product.current_stock <= 0 ? 'border border-gray-200 dark:border-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed' : 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 hover:bg-amber-500 hover:text-white dark:hover:bg-amber-500 dark:hover:text-gray-950 border border-amber-200 dark:border-amber-500/30 hover:border-amber-500'"
                                 >
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                                    {{ product.current_stock <= 0 ? 'Stok Habis' : 'Tambah' }}
+                                    <svg v-if="product.current_stock > 0" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                                    {{ product.current_stock <= 0 ? 'Stok Habis' : 'Detail & Beli' }}
                                 </button>
-
-                                <!-- Quantity picker inline overlay -->
-                                <div
-                                    v-else
-                                    class="absolute bottom-0 left-0 right-0 bg-white dark:bg-[#1a1a1a] border border-amber-400 dark:border-amber-500 rounded-xl shadow-xl shadow-amber-500/10 p-2.5 z-20 animate-fade-in"
-                                >
-                                    <!-- Close row -->
-                                    <div class="flex justify-between items-center mb-2">
-                                        <span class="text-[9px] font-bold text-gray-500 uppercase tracking-wider">Jumlah</span>
-                                        <button @click="closeQtyPicker" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
-                                        </button>
-                                    </div>
-                                    <!-- Qty controls -->
-                                    <div class="flex items-center gap-2 mb-2.5">
-                                        <button
-                                            @click="pickerQty = Math.max(1, pickerQty - 1)"
-                                            class="w-7 h-7 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 hover:border-amber-400 text-gray-600 dark:text-gray-300 hover:text-amber-600 transition-colors font-bold text-sm"
-                                        >−</button>
-                                        <span class="flex-1 text-center font-extrabold text-gray-900 dark:text-white text-sm">{{ pickerQty }}</span>
-                                        <button
-                                            @click="pickerQty = Math.min(product.current_stock, pickerQty + 1)"
-                                            class="w-7 h-7 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 hover:border-amber-400 text-gray-600 dark:text-gray-300 hover:text-amber-600 transition-colors font-bold text-sm"
-                                        >+</button>
-                                    </div>
-                                    <div class="text-[9px] text-gray-400 text-center mb-2">Stok: {{ product.current_stock }} tersedia</div>
-                                    <!-- Confirm -->
-                                    <button
-                                        @click="confirmAddToCart(product)"
-                                        class="w-full py-1.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-lg text-[10px] uppercase tracking-wider transition-colors"
-                                    >
-                                        Masukkan ke Keranjang
-                                    </button>
-                                </div>
                             </div>
                         </div>
                     </div>

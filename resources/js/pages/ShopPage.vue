@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import PublicLayout from '@/layouts/PublicLayout.vue';
 import { useCartStore } from '@/stores/cart';
@@ -22,6 +22,20 @@ const maxPrice = ref(null);
 const loading = ref(false);
 const filteredProducts = ref([...props.products]);
 const selectedProduct = ref(null);
+const selectedVariant = ref(null);
+
+watch(selectedProduct, () => {
+    selectedVariant.value = null;
+});
+
+const modalPrice = computed(() => {
+    if (!selectedProduct.value) return 0;
+    let base = selectedProduct.value.pricing?.price ?? Number(selectedProduct.value.base_price);
+    if (selectedVariant.value && selectedVariant.value.price_adj) {
+        return base + Number(selectedVariant.value.price_adj);
+    }
+    return base;
+});
 
 async function applyFilter() {
     loading.value = true;
@@ -82,14 +96,30 @@ const displayedProducts = computed(() => {
 });
 
 function addToCart(product) {
+    const hasVariants = (product.variants ?? []).length > 0;
+    if (hasVariants && !selectedVariant.value) {
+        toast.error('Silakan pilih varian terlebih dahulu.');
+        return;
+    }
+
+    let price = product.pricing?.price ?? Number(product.base_price);
+    if (selectedVariant.value && selectedVariant.value.price_adj) {
+        price += Number(selectedVariant.value.price_adj);
+    }
+
     const result = cart.add({
-        id: product.id,
-        name: product.name,
-        price: product.pricing?.price ?? Number(product.base_price),
-        stock: product.current_stock,
-        image: product.image_path ? `/storage/${product.image_path}` : null,
+        id:           product.id,
+        name:         product.name,
+        price:        price,
+        stock:        product.current_stock,
+        image:        product.image_path ? `/storage/${product.image_path}` : null,
+        variantLabel: selectedVariant.value?.label ?? null,
     });
-    if (result?.success) toast.success(result.success);
+    if (result?.success) {
+        toast.success(result.success);
+        selectedProduct.value = null;
+        selectedVariant.value = null;
+    }
     else if (result?.error) toast.error(result.error);
 }
 
@@ -230,11 +260,11 @@ function formatPrice(val) {
                         
                         <!-- Outline Premium Button -->
                         <button
-                            @click="addToCart(product)"
+                            @click="selectedProduct = product"
                             :disabled="product.current_stock <= 0"
                             class="w-full py-2.5 px-4 border border-amber-500/60 hover:border-amber-500 text-amber-600 dark:text-amber-400 disabled:border-gray-200 disabled:text-gray-400 dark:disabled:border-gray-800 disabled:cursor-not-allowed hover:bg-amber-500 hover:text-white dark:hover:text-gray-950 font-bold rounded-xl text-xs uppercase tracking-wider transition-all duration-300"
                         >
-                            {{ product.current_stock <= 0 ? 'Stok Habis' : 'Tambah Ke Keranjang' }}
+                            {{ product.current_stock <= 0 ? 'Stok Habis' : 'Detail & Beli' }}
                         </button>
                     </div>
                 </div>
@@ -277,9 +307,33 @@ function formatPrice(val) {
                         <div class="mb-6 bg-gray-50 dark:bg-gray-900 p-4 rounded-2xl border border-gray-100 dark:border-gray-800">
                             <div class="text-xs text-gray-400 dark:text-gray-500 mb-1">Harga Terbaik</div>
                             <div class="flex items-baseline gap-2.5">
-                                <span class="text-2xl font-black text-amber-650 dark:text-amber-400">{{ formatPrice(selectedProduct.pricing?.price ?? selectedProduct.base_price) }}</span>
-                                <span v-if="selectedProduct.pricing?.has_discount" class="text-sm text-gray-400 line-through">{{ formatPrice(selectedProduct.pricing.base_price) }}</span>
+                                <span class="text-2xl font-black text-amber-655 dark:text-amber-400">{{ formatPrice(modalPrice) }}</span>
+                                <span v-if="selectedProduct.pricing?.has_discount && !selectedVariant" class="text-sm text-gray-400 line-through">{{ formatPrice(selectedProduct.pricing.base_price) }}</span>
                             </div>
+                            <div v-if="selectedVariant?.price_adj > 0" class="text-[10px] text-amber-600/70 dark:text-amber-400/60 mt-1">
+                                Harga dasar + Rp {{ Number(selectedVariant.price_adj).toLocaleString('id-ID') }} (varian {{ selectedVariant.label }})
+                            </div>
+                        </div>
+
+                        <!-- Variant Selector -->
+                        <div v-if="(selectedProduct.variants ?? []).length > 0" class="mb-6">
+                            <h4 class="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">Pilih Varian</h4>
+                            <div class="flex flex-wrap gap-2">
+                                <button
+                                    v-for="(variant, idx) in selectedProduct.variants"
+                                    :key="idx"
+                                    type="button"
+                                    @click="selectedVariant = (selectedVariant?.label === variant.label ? null : variant)"
+                                    class="px-3.5 py-2 text-xs font-bold rounded-xl border transition-all cursor-pointer"
+                                    :class="selectedVariant?.label === variant.label
+                                        ? 'bg-amber-500 border-amber-500 text-gray-950 shadow-sm'
+                                        : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:border-amber-400'"
+                                >
+                                    {{ variant.label }}
+                                    <span v-if="variant.price_adj > 0" class="opacity-70 ml-1">+{{ formatPrice(variant.price_adj) }}</span>
+                                </button>
+                            </div>
+                            <p v-if="!selectedVariant" class="text-[10px] text-amber-600 dark:text-amber-400 mt-2">* Silakan pilih salah satu varian</p>
                         </div>
 
                         <!-- Description -->
@@ -293,7 +347,7 @@ function formatPrice(val) {
 
                     <!-- Action Button -->
                     <button
-                        @click="addToCart(selectedProduct); selectedProduct = null"
+                        @click="addToCart(selectedProduct)"
                         :disabled="selectedProduct.current_stock <= 0"
                         class="w-full py-3.5 px-4 bg-amber-500 hover:bg-amber-600 disabled:bg-gray-200 dark:disabled:bg-gray-800 disabled:text-gray-400 disabled:cursor-not-allowed text-white dark:text-gray-950 font-bold rounded-xl text-sm transition-all shadow-md shadow-amber-500/10 hover:shadow-lg hover:shadow-amber-500/20"
                     >

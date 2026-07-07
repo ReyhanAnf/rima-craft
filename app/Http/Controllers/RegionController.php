@@ -43,6 +43,7 @@ class RegionController extends Controller
             'items' => 'required|array',
             'items.*.id' => 'required|exists:products,id',
             'items.*.qty' => 'required|integer|min:1',
+            'items.*.variantLabel' => 'nullable|string|max:255',
         ]);
 
         $city = Region::with('shippingRate')->find($validated['city_id']);
@@ -56,16 +57,28 @@ class RegionController extends Controller
             $product = Product::find($item['id']);
             $priceData = $priceService->getProductPrice($product, $user, $city);
             
-            $itemSubtotal = $priceData['price'] * $item['qty'];
+            $variantLabel = $item['variantLabel'] ?? null;
+            $price = (float) $priceData['price'];
+            if ($variantLabel && is_array($product->variants)) {
+                foreach ($product->variants as $variant) {
+                    if (($variant['label'] ?? '') === $variantLabel) {
+                        $price += (float) ($variant['price_adj'] ?? 0);
+                        break;
+                    }
+                }
+            }
+
+            $itemSubtotal = $price * $item['qty'];
             $subtotal += $itemSubtotal;
             
             $updatedItems[] = [
                 'id' => $product->id,
                 'name' => $product->name,
                 'qty' => $item['qty'],
-                'price' => $priceData['price'],
+                'price' => $price,
                 'subtotal' => $itemSubtotal,
-                'image' => $product->image_path ?? null,
+                'image' => $product->image_path ? (str_starts_with($product->image_path, 'http') || str_starts_with($product->image_path, '/') ? $product->image_path : '/storage/' . $product->image_path) : null,
+                'variantLabel' => $variantLabel,
             ];
         }
 

@@ -13,8 +13,10 @@ const props = defineProps({
 
 const page       = usePage();
 const siteConfig = computed(() => props.config ?? page.props.siteConfig ?? {});
+const isCatalogPage = computed(() => String(page.component || '').includes('CatalogPage'));
 
 const cartDrawer = ref(null);
+const isInstallable = ref(typeof window !== 'undefined' ? !!window.isAppInstallable : false);
 
 function openCart() {
     cartDrawer.value?.open();
@@ -40,11 +42,46 @@ const termsUrl        = computed(() => siteConfig.value.terms_url        ?? '/sy
 const privacyUrl      = computed(() => siteConfig.value.privacy_url      ?? '/kebijakan-privasi');
 const shippingUrl     = computed(() => siteConfig.value.shipping_url     ?? '/pengiriman-retur');
 const year            = new Date().getFullYear();
+
+if (typeof window !== 'undefined') {
+    window.addEventListener('pwa-installable-status', (e) => {
+        isInstallable.value = e.detail;
+    });
+}
+
+const installPWA = async () => {
+    const promptEvent = typeof window !== 'undefined' ? window.deferredInstallPrompt : null;
+    if (!promptEvent) return;
+
+    promptEvent.prompt();
+
+    const { outcome } = await promptEvent.userChoice;
+    if (outcome === 'accepted') {
+        if (typeof window !== 'undefined') {
+            window.deferredInstallPrompt = null;
+            window.isAppInstallable = false;
+        }
+        isInstallable.value = false;
+    }
+};
 </script>
 
 <template>
-    <div>
-        <Navbar :business-name="businessName" @open-cart="openCart" />
+        <div>
+            <Navbar :business-name="businessName" @open-cart="openCart" />
+
+            <button
+                v-if="isInstallable && !isCatalogPage"
+                type="button"
+                @click="installPWA"
+                class="fixed bottom-20 right-4 z-50 inline-flex items-center gap-2 rounded-full bg-amber-500 px-4 py-3 text-sm font-bold text-gray-950 shadow-lg shadow-amber-500/20 transition hover:bg-amber-600 lg:hidden"
+                title="Download App"
+            >
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Download App
+            </button>
 
         <main class="min-h-screen pb-24">
             <slot />

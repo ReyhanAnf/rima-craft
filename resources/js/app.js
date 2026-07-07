@@ -12,6 +12,21 @@ import 'primeicons/primeicons.css';
 window.Alpine = Alpine;
 window.htmx = htmx;
 
+if (typeof window !== 'undefined') {
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        window.deferredInstallPrompt = e;
+        window.isAppInstallable = true;
+        window.dispatchEvent(new CustomEvent('pwa-installable-status', { detail: true }));
+    });
+
+    window.addEventListener('appinstalled', () => {
+        window.deferredInstallPrompt = null;
+        window.isAppInstallable = false;
+        window.dispatchEvent(new CustomEvent('pwa-installable-status', { detail: false }));
+    });
+}
+
 Alpine.store('cart', {
     items: JSON.parse(localStorage.getItem('rimacraft_cart') || '[]'),
     notes: localStorage.getItem('rimacraft_cart_notes') || '',
@@ -216,6 +231,11 @@ window.route = function(name, params = {}) {
         'productions.index': '/productions',
         'galleries.index': '/galleries',
         'users.index': '/users',
+        'users.store': '/users',
+        'users.update': '/users/{id}',
+        'users.destroy': '/users/{id}',
+        'users.verify-reseller': '/users/{id}/verify-reseller',
+        'users.reject-reseller': '/users/{id}/reject-reseller',
         'roles.index': '/roles',
         'orders.index': '/orders',
         'regions.index': '/regions',
@@ -227,6 +247,8 @@ window.route = function(name, params = {}) {
         // Auth routes
         'auth.google.redirect': '/auth/google/redirect',
         'auth.google.callback': '/auth/google/callback',
+        'auth.google.complete': '/auth/google/complete',
+        'auth.google.complete.store': '/auth/google/complete',
         'login.store': '/login',
         'register.show': '/register',
         'register.submit': '/register',
@@ -238,6 +260,17 @@ window.route = function(name, params = {}) {
         'reseller.login.store': '/reseller/login',
         'reseller.register': '/reseller/register',
         'reseller.register.submit': '/reseller/register',
+
+        // Password reset
+        'password.request': '/forgot-password',
+        'password.email': '/forgot-password',
+        'password.reset': '/reset-password/{token}',
+        'password.update': '/reset-password',
+
+        // Static pages
+        'page.terms': '/syarat-ketentuan',
+        'page.privacy': '/kebijakan-privasi',
+        'page.shipping': '/pengiriman-retur',
 
         // Parameterized routes
         'orders.show': '/orders/{id}',

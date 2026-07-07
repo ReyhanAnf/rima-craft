@@ -96,76 +96,34 @@ const submitForm = () => {
 
         <div class="space-y-6">
             <!-- Header section -->
-            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                <div>
+            <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div class="flex-1 min-w-0">
                     <h2 class="text-xl font-bold text-gray-900 dark:text-white">Pengaturan Web</h2>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Atur konten informasi bisnis dan Landing Page.</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Atur konten informasi bisnis, landing page, dan konfigurasi sistem.</p>
                 </div>
-                
-                <div class="inline-flex bg-gray-100 dark:bg-gray-900 p-1 rounded-xl border border-gray-200 dark:border-gray-800">
-                    <button
-                        @click="activeTab = 'umum'"
-                        type="button"
-                        :class="[
-                            'px-4 py-2 text-xs font-bold rounded-lg transition-all',
-                            activeTab === 'umum'
-                                ? 'bg-white dark:bg-gray-800 text-amber-600 dark:text-amber-400 shadow border border-gray-200/50 dark:border-gray-700'
-                                : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                        ]"
-                    >
-                        Data Umum
-                    </button>
-                    <button
-                        @click="activeTab = 'landing'"
-                        type="button"
-                        :class="[
-                            'px-4 py-2 text-xs font-bold rounded-lg transition-all',
-                            activeTab === 'landing'
-                                ? 'bg-white dark:bg-gray-800 text-amber-600 dark:text-amber-400 shadow border border-gray-200/50 dark:border-gray-700'
-                                : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                        ]"
-                    >
-                        Landing Page
-                    </button>
-                    <button
-                        @click="activeTab = 'seo'"
-                        type="button"
-                        :class="[
-                            'px-4 py-2 text-xs font-bold rounded-lg transition-all',
-                            activeTab === 'seo'
-                                ? 'bg-white dark:bg-gray-800 text-amber-600 dark:text-amber-400 shadow border border-gray-200/50 dark:border-gray-700'
-                                : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                        ]"
-                    >
-                        SEO & Meta
-                    </button>
-                    <button
-                        @click="activeTab = 'info'"
-                        type="button"
-                        :class="[
-                            'px-4 py-2 text-xs font-bold rounded-lg transition-all',
-                            activeTab === 'info'
-                                ? 'bg-white dark:bg-gray-800 text-amber-600 dark:text-amber-400 shadow border border-gray-200/50 dark:border-gray-700'
-                                : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                        ]"
-                    >
-                        Halaman Info
-                    </button>
-                    <button
-                        @click="activeTab = 'dev'"
-                        type="button"
-                        :class="[
-                            'px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1',
-                            activeTab === 'dev'
-                                ? 'bg-white dark:bg-gray-800 text-amber-600 dark:text-amber-400 shadow border border-gray-200/50 dark:border-gray-700'
-                                : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                        ]"
-                    >
-                        <svg class="w-3.5 h-3.5" :class="isDevAdmin ? 'text-amber-500' : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                        </svg>
-                        Sistem & Sponsor
-                    </button>
+
+                <!-- Tab chooser: scrollable pills, aligned right on desktop -->
+                <div class="overflow-x-auto pb-1 -mb-1 md:flex-shrink-0">
+                    <div class="inline-flex min-w-max bg-gray-100 dark:bg-gray-900 p-1 rounded-xl border border-gray-200 dark:border-gray-800">
+                        <button @click="activeTab = 'umum'" type="button" :class="['px-4 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap', activeTab === 'umum' ? 'bg-white dark:bg-gray-800 text-amber-600 dark:text-amber-400 shadow border border-gray-200/50 dark:border-gray-700' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300']">
+                            Data Umum
+                        </button>
+                        <button @click="activeTab = 'landing'" type="button" :class="['px-4 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap', activeTab === 'landing' ? 'bg-white dark:bg-gray-800 text-amber-600 dark:text-amber-400 shadow border border-gray-200/50 dark:border-gray-700' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300']">
+                            Landing Page
+                        </button>
+                        <button @click="activeTab = 'seo'" type="button" :class="['px-4 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap', activeTab === 'seo' ? 'bg-white dark:bg-gray-800 text-amber-600 dark:text-amber-400 shadow border border-gray-200/50 dark:border-gray-700' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300']">
+                            SEO & Meta
+                        </button>
+                        <button @click="activeTab = 'info'" type="button" :class="['px-4 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap', activeTab === 'info' ? 'bg-white dark:bg-gray-800 text-amber-600 dark:text-amber-400 shadow border border-gray-200/50 dark:border-gray-700' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300']">
+                            Halaman Info
+                        </button>
+                        <button @click="activeTab = 'dev'" type="button" :class="['px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1 whitespace-nowrap', activeTab === 'dev' ? 'bg-white dark:bg-gray-800 text-amber-600 dark:text-amber-400 shadow border border-gray-200/50 dark:border-gray-700' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300']">
+                            <svg class="w-3.5 h-3.5 flex-shrink-0" :class="isDevAdmin ? 'text-amber-500' : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                            </svg>
+                            Sistem & Sponsor
+                        </button>
+                    </div>
                 </div>
             </div>
 

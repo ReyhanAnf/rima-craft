@@ -239,7 +239,7 @@ const deleteMedia = (index) => {
                         <div class="flex justify-between items-center pb-1.5 border-b border-gray-100 dark:border-gray-800">
                             <div>
                                 <h3 class="text-sm font-bold text-gray-800 dark:text-gray-200 uppercase tracking-wider">3. Varian Produk</h3>
-                                <p class="text-[10px] text-gray-400 mt-0.5">Opsional — Misalnya: Ukuran S, Warna Merah, dll.</p>
+                                <p class="text-[10px] text-gray-400 mt-0.5">Opsional — Misalnya: Ukuran S, Warna Merah, dll. (Harga di bawah merupakan <strong>harga penambahan</strong> dari harga dasar, bukan harga final).</p>
                             </div>
                             <Button label="Tambah Varian" icon="pi pi-plus" size="small" text @click="addVariant" />
                         </div>
@@ -248,7 +248,7 @@ const deleteMedia = (index) => {
                         </div>
                         <div v-for="(variant, idx) in form.variants" :key="idx" class="flex gap-3 items-center">
                             <InputText v-model="form.variants[idx].label" placeholder="Nama varian (mis: Ukuran S)" class="flex-1" required />
-                            <InputNumber v-model="form.variants[idx].price_adj" placeholder="+ Harga (Rp)" mode="decimal" :min="0" class="w-40" inputClass="w-full text-sm font-bold text-gray-800" />
+                            <InputNumber v-model="form.variants[idx].price_adj" placeholder="+ Harga Penambahan (Rp)" mode="decimal" :min="0" class="w-48" inputClass="w-full text-sm font-bold text-gray-800" />
                             <Button icon="pi pi-trash" severity="danger" text @click="removeVariant(idx)" />
                         </div>
                     </div>

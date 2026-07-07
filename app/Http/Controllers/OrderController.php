@@ -122,9 +122,19 @@ class OrderController extends Controller
                 $priceData = $priceService->getProductPrice($product, $user, $city);
                 $unitPrice = (float) $priceData['price'];
                 $qty = (int) $item['qty'];
+                $variantLabel = $item['variantLabel'] ?? null;
 
                 if ($qty <= 0) {
                     return back()->withErrors(['items' => "Jumlah kuantitas tidak valid."])->withInput();
+                }
+
+                if ($variantLabel && is_array($product->variants)) {
+                    foreach ($product->variants as $variant) {
+                        if (($variant['label'] ?? '') === $variantLabel) {
+                            $unitPrice += (float) ($variant['price_adj'] ?? 0);
+                            break;
+                        }
+                    }
                 }
 
                 $itemSubtotal = $unitPrice * $qty;
@@ -138,6 +148,7 @@ class OrderController extends Controller
                     'subtotal' => $itemSubtotal,
                     'has_discount' => $priceData['has_discount'],
                     'image' => $product->image_path ? (str_starts_with($product->image_path, 'http') || str_starts_with($product->image_path, '/') ? $product->image_path : '/storage/' . $product->image_path) : null,
+                    'variantLabel' => $variantLabel,
                 ];
             }
 
@@ -158,8 +169,8 @@ class OrderController extends Controller
             if ($paymentMode === 'dp' && auth()->user()?->hasRole('reseller')) {
                 $total = (float) $calculatedTotal;
                 $dp    = (float) ($validated['down_payment_amount'] ?? 0);
-                if ($dp < $total * 0.3) {
-                    return back()->withErrors(['down_payment_amount' => 'DP minimal 30% dari total order.'])->withInput();
+                if ($dp < 0) {
+                    return back()->withErrors(['down_payment_amount' => 'DP minimal Rp 0.'])->withInput();
                 }
                 $downPayment   = min($dp, $total);
                 $remaining     = max(0.0, $total - $downPayment);

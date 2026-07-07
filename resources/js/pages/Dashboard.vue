@@ -32,6 +32,7 @@ const props = defineProps({
     topProducts: Array,
     chartData: Object,
     recentSales: Array,
+    pendingResellers: { type: Array, default: () => [] },
 });
 
 const currentTab = ref('general');
@@ -683,6 +684,47 @@ const maxProductQty = computed(() => {
                     </div>
                 </div>
             </div>
+
+                <!-- Pending Reseller Approvals Widget -->
+                <div v-if="pendingResellers.length > 0" class="bg-white dark:bg-gray-900 rounded-xl border border-amber-200 dark:border-amber-900/40 shadow-sm overflow-hidden">
+                    <div class="flex items-center justify-between px-5 py-4 border-b border-amber-100 dark:border-amber-900/30 bg-amber-50/50 dark:bg-amber-950/20">
+                        <div class="flex items-center gap-2.5">
+                            <span class="flex h-2 w-2 rounded-full bg-amber-500 animate-pulse"></span>
+                            <h3 class="text-sm font-bold text-gray-900 dark:text-white">Persetujuan Reseller Tertunda</h3>
+                            <span class="text-xs font-bold text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 rounded-full">{{ pendingResellers.length }} menunggu</span>
+                        </div>
+                        <Link href="/users?role=reseller" class="text-xs text-amber-600 dark:text-amber-400 hover:underline font-semibold">Kelola Semua</Link>
+                    </div>
+                    <div class="divide-y divide-gray-100 dark:divide-gray-800">
+                        <div v-for="user in pendingResellers" :key="user.id" class="flex items-center justify-between px-5 py-3.5 hover:bg-gray-50 dark:hover:bg-gray-800/40 transition">
+                            <div class="flex items-center gap-3 min-w-0">
+                                <div class="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400 font-bold text-xs flex-shrink-0">
+                                    {{ user.name.charAt(0).toUpperCase() }}
+                                </div>
+                                <div class="min-w-0">
+                                    <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ user.name }}</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ user.email }}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 flex-shrink-0 ml-4">
+                                <span class="text-[10px] text-gray-400">{{ new Date(user.created_at).toLocaleDateString('id-ID') }}</span>
+                                <button
+                                    @click="() => { if(confirm('Verifikasi akun reseller ' + user.name + '?')) router.patch(route('users.verify-reseller', user.id)) }"
+                                    class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-colors"
+                                >
+                                    ✓ Approve
+                                </button>
+                                <button
+                                    @click="() => { if(confirm('Tolak pendaftaran reseller ' + user.name + '?')) router.patch(route('users.reject-reseller', user.id)) }"
+                                    class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-rose-400 hover:text-rose-600 rounded-lg transition-colors"
+                                >
+                                    ✕ Tolak
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
         </div>
     </AdminLayout>
 </template>

@@ -11,7 +11,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="{{ config('settings.business_name', 'Rima Craft') }}">
     <link rel="manifest" href="/manifest.json">
-    <link rel="apple-touch-icon" href="/assets/icon-192.png">
+    <link rel="apple-touch-icon" href="/assets/icon.png">
 
     <title inertia>{{ config('settings.seo_title') ?: config('settings.business_name', 'Rima Craft') }}</title>
     <meta name="description" content="{{ config('settings.seo_description', 'Katalog eksklusif kerajinan tangan dari Rima Craft.') }}">

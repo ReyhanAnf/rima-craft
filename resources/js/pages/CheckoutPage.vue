@@ -77,10 +77,8 @@ const remainingBalance = computed(() =>
 )
 
 function validateDp() {
-    const min = finalTotal.value * 0.3
-    dpError.value = dpAmount.value < min
-        ? `DP minimal ${formatPrice(min)} (30% dari total)`
-        : ''
+    // Reseller boleh DP 0% — seluruh tagihan dicatat sebagai piutang
+    dpError.value = ''
 }
 
 const submitting = ref(false);
@@ -91,7 +89,7 @@ const canSubmit = computed(() =>
     form.payment_method !== '' &&
     form.province_id !== '' &&
     form.city_id !== '' &&
-    (paymentMode.value !== 'dp' || (dpAmount.value >= finalTotal.value * 0.3 && !dpError.value))
+    (paymentMode.value !== 'dp' || !dpError.value)
 );
 
 async function onProvinceChange() {
@@ -224,7 +222,7 @@ onMounted(async () => {
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                             </svg>
                         </div>
-                        <span class="text-base font-black text-amber-600 dark:text-amber-400">{{ formatPrice(finalTotal) }}</span>
+                        <span class="text-base font-black text-amber-600 dark:text-amber-400">{{ formatPrice(paymentMode === 'dp' ? dpAmount : finalTotal) }}</span>
                     </button>
 
                     <!-- Mobile Drawer Dropdown -->
@@ -239,13 +237,14 @@ onMounted(async () => {
                                     </span>
                                 </div>
                                 <div class="flex-1 min-w-0">
-                                    <p class="text-sm font-bold text-gray-900 dark:text-white truncate">{{ item.name }}</p>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">
-                                        {{ formatPrice(item.price) }}
+                                    <p class="text-sm font-bold text-gray-900 dark:text-white line-clamp-2 break-words">{{ item.name }}</p>
+                                    <p v-if="item.variantLabel" class="text-xs text-amber-600 dark:text-amber-400 font-semibold mt-0.5">Varian: {{ item.variantLabel }}</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                        {{ item.qty }} x {{ formatPrice(item.price) }}
                                         <span v-if="item.has_discount" class="ml-1 text-[9px] bg-red-100 text-red-600 px-1 py-0.5 rounded font-semibold">Reseller</span>
                                     </p>
                                 </div>
-                                <p class="text-sm font-bold text-gray-900 dark:text-white">{{ formatPrice(item.subtotal || (item.price * item.qty)) }}</p>
+                                <p class="text-sm font-bold text-gray-900 dark:text-white flex-shrink-0">{{ formatPrice(item.subtotal || (item.price * item.qty)) }}</p>
                             </div>
                         </div>
 
@@ -258,6 +257,22 @@ onMounted(async () => {
                                 <span class="text-gray-600 dark:text-gray-400">Ongkos Kirim</span>
                                 <span class="font-semibold text-gray-900 dark:text-white">
                                     {{ form.city_id ? (shippingCost > 0 ? formatPrice(shippingCost) : 'Gratis') : 'Pilih Kota/Kab' }}
+                                </span>
+                            </div>
+                            <div v-if="paymentMode === 'dp'" class="flex justify-between">
+                                <span class="text-gray-600 dark:text-gray-400">Pembayaran DP</span>
+                                <span class="font-semibold text-emerald-600 dark:text-emerald-400">{{ formatPrice(dpAmount) }}</span>
+                            </div>
+                            <div v-if="paymentMode === 'dp'" class="flex justify-between">
+                                <span class="text-gray-600 dark:text-gray-400">Sisa Piutang</span>
+                                <span class="font-semibold text-amber-600 dark:text-amber-400">{{ formatPrice(remainingBalance) }}</span>
+                            </div>
+                            <div class="flex justify-between border-t border-gray-200 dark:border-gray-800 pt-2 font-bold">
+                                <span class="text-gray-900 dark:text-white">
+                                    {{ paymentMode === 'dp' ? 'Total Harus Dibayar' : 'Total Akhir' }}
+                                </span>
+                                <span class="text-amber-600 dark:text-amber-400">
+                                    {{ formatPrice(paymentMode === 'dp' ? dpAmount : finalTotal) }}
                                 </span>
                             </div>
                         </div>
@@ -546,7 +561,7 @@ onMounted(async () => {
                                             <input type="radio" v-model="paymentMode" value="dp" class="mt-0.5 w-4 h-4 text-amber-600 focus:ring-amber-500" />
                                             <div>
                                                 <p class="text-sm font-bold text-gray-900 dark:text-white">Bayar DP (Uang Muka)</p>
-                                                <p class="text-xs text-gray-500 mt-1">Minimum 30% di muka, sisanya dicatat sebagai piutang</p>
+                                                <p class="text-xs text-gray-500 mt-1">Minimum 0% di muka, sisanya dicatat sebagai piutang</p>
                                             </div>
                                         </label>
                                     </div>
@@ -555,7 +570,7 @@ onMounted(async () => {
                                         <div v-if="paymentMode === 'dp'" class="space-y-4 pt-4 border-t border-blue-200/50 dark:border-blue-900/30">
                                             <div>
                                                 <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-2">
-                                                    Nominal Pembayaran DP (Min 30%) <span class="text-red-500">*</span>
+                                                    Nominal Pembayaran DP (Min 0%) <span class="text-red-500">*</span>
                                                 </label>
                                                 <div class="relative">
                                                     <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-gray-400 text-sm">Rp</span>
@@ -658,9 +673,10 @@ onMounted(async () => {
                                         </span>
                                     </div>
                                     <div class="flex-1 min-w-0">
-                                        <p class="text-sm font-bold text-gray-900 dark:text-white truncate" :title="item.name">{{ item.name }}</p>
+                                        <p class="text-sm font-bold text-gray-900 dark:text-white line-clamp-2 break-words" :title="item.name">{{ item.name }}</p>
+                                        <p v-if="item.variantLabel" class="text-xs text-amber-600 dark:text-amber-400 font-semibold mt-0.5">Varian: {{ item.variantLabel }}</p>
                                         <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                            {{ formatPrice(item.price) }}
+                                            {{ item.qty }} x {{ formatPrice(item.price) }}
                                             <span v-if="item.has_discount" class="ml-1 text-[9px] bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400 px-1 py-0.5 rounded font-black">Reseller</span>
                                         </p>
                                     </div>
@@ -683,10 +699,27 @@ onMounted(async () => {
                                     </span>
                                 </div>
                                 
+                                <Transition name="expand">
+                                    <div v-if="paymentMode === 'dp'" class="space-y-3.5 pt-3.5 border-t border-dashed border-gray-150 dark:border-gray-800">
+                                        <div class="flex justify-between text-sm">
+                                            <span class="text-gray-500 dark:text-gray-400 font-medium">Pembayaran Uang Muka (DP)</span>
+                                            <span class="font-bold text-emerald-600 dark:text-emerald-400">{{ formatPrice(dpAmount) }}</span>
+                                        </div>
+                                        <div class="flex justify-between text-sm">
+                                            <span class="text-gray-500 dark:text-gray-400 font-medium">Sisa Piutang Pelunasan</span>
+                                            <span class="font-bold text-amber-600 dark:text-amber-400">{{ formatPrice(remainingBalance) }}</span>
+                                        </div>
+                                    </div>
+                                </Transition>
+                                
                                 <div class="border-t border-gray-150 dark:border-gray-800 pt-4">
                                     <div class="flex justify-between text-base items-baseline">
-                                        <span class="text-gray-900 dark:text-white font-black">Total Akhir</span>
-                                        <span class="text-2xl font-black text-amber-600 dark:text-amber-400 tracking-tight">{{ formatPrice(finalTotal) }}</span>
+                                        <span class="text-gray-900 dark:text-white font-black">
+                                            {{ paymentMode === 'dp' ? 'Total Harus Dibayar Sekarang' : 'Total Akhir' }}
+                                        </span>
+                                        <span class="text-2xl font-black text-amber-600 dark:text-amber-400 tracking-tight">
+                                            {{ formatPrice(paymentMode === 'dp' ? dpAmount : finalTotal) }}
+                                        </span>
                                     </div>
                                 </div>
 

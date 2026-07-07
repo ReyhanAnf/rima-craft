@@ -122,6 +122,7 @@ defineExpose({ open });
                                     </svg>
                                 </button>
                             </div>
+                            <p v-if="item.variantLabel" class="text-xs text-amber-600 dark:text-amber-400 font-semibold mt-0.5">Varian: {{ item.variantLabel }}</p>
                             <div class="text-amber-600 dark:text-amber-400 font-bold text-xs mt-1">
                                 Rp {{ item.price.toLocaleString('id-ID') }}
                             </div>
