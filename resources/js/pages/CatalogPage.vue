@@ -295,52 +295,54 @@ const installPWA = async () => {
         <section class="py-16 md:py-24 bg-white dark:bg-gray-900">
             <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="mb-10 md:mb-14 md:flex md:items-end md:justify-between md:gap-12">
-                    <div class="max-w-md">
+                    <div class="max-w-xl">
                         <p class="text-sm text-amber-700 dark:text-amber-400 mb-5 flex items-center gap-3">
                             <span class="block h-px w-10 bg-amber-400"></span>
-                            <span>Galeri</span>
+                            <span class="font-medium">Galeri workshop</span>
                         </p>
-                        <h2 class="max-w-sm">
-                            <span class="block font-serif italic text-2xl md:text-3xl text-gray-800 dark:text-gray-100 leading-snug mb-1">Foto workshop</span>
-                            <span class="block text-xl md:text-2xl font-semibold text-gray-900 dark:text-white tracking-tight leading-snug">dan produk jadi.</span>
+                        <h2 class="max-w-lg">
+                            <span class="block font-serif italic text-3xl md:text-4xl text-gray-800 dark:text-gray-100 leading-snug mb-1">Cerita dari workshop</span>
+                            <span class="block text-2xl md:text-3xl font-semibold text-gray-900 dark:text-white tracking-tight leading-snug">hingga produk siap digunakan.</span>
                         </h2>
                     </div>
-                    <p class="mt-6 md:mt-0 text-[15px] text-gray-500 dark:text-gray-400 leading-relaxed max-w-xs md:text-right">
+                    <p class="mt-6 md:mt-0 text-[15px] text-gray-500 dark:text-gray-400 leading-relaxed max-w-sm md:text-right">
                         Dokumentasi proses anyaman dan hasil karya dari workshop kami.
                     </p>
                 </div>
 
-                <div v-if="galleries.length" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-x-5 md:gap-y-10">
+                <div v-if="galleries.length" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 auto-rows-[220px] sm:auto-rows-[260px] gap-3 sm:gap-4">
                     <figure
                         v-for="(gallery, i) in galleries"
                         :key="gallery.id"
                         :class="[
-                            i === 0 ? 'sm:col-span-2 lg:col-span-2' : '',
-                            i % 4 === 3 ? 'lg:col-span-2' : '',
+                            i === 0 ? 'sm:col-span-2 lg:col-span-7 lg:row-span-2' : '',
+                            i === 1 ? 'lg:col-span-5' : '',
+                            i === 2 ? 'lg:col-span-5' : '',
+                            i > 2 ? 'lg:col-span-4' : '',
                         ]"
-                        class="group"
+                        class="group relative overflow-hidden rounded-2xl border border-stone-200/80 dark:border-white/10 bg-stone-100 dark:bg-gray-800 shadow-sm"
                     >
-                        <div
-                            :class="[
-                                i === 0 ? 'aspect-[16/10] sm:aspect-[21/9]' : i % 3 === 1 ? 'aspect-[3/4]' : 'aspect-[4/3]',
-                            ]"
-                            class="overflow-hidden bg-stone-100 dark:bg-gray-800"
-                        >
-                            <img
-                                :src="`/storage/${gallery.image_url}`"
-                                :alt="gallery.title || 'Galeri Rima Craft'"
-                                class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-                                loading="lazy"
-                            />
+                        <img
+                            :src="`/storage/${gallery.image_url}`"
+                            :alt="gallery.title || 'Galeri Rima Craft'"
+                            class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+                            loading="lazy"
+                        />
+                        <div class="absolute inset-0 bg-gradient-to-t from-gray-950/70 via-gray-950/10 to-transparent opacity-90"></div>
+                        <div class="absolute inset-x-0 bottom-0 p-4 sm:p-5">
+                            <div v-if="gallery.label" class="mb-2 inline-flex rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-700 backdrop-blur dark:bg-gray-950/75 dark:text-amber-300">
+                                {{ gallery.label }}
+                            </div>
+                            <figcaption v-if="gallery.title || gallery.label">
+                                <p v-if="gallery.title" class="text-base sm:text-lg font-semibold text-white leading-snug drop-shadow">
+                                    {{ gallery.title }}
+                                </p>
+                            </figcaption>
                         </div>
-                        <figcaption v-if="gallery.label || gallery.title" class="pt-3 flex items-baseline justify-between gap-3 px-0.5">
-                            <p v-if="gallery.title" class="text-sm font-medium text-gray-900 dark:text-white leading-snug">{{ gallery.title }}</p>
-                            <span v-if="gallery.label" class="text-[11px] text-stone-400 dark:text-stone-500 shrink-0">{{ gallery.label }}</span>
-                        </figcaption>
                     </figure>
                 </div>
 
-                <div v-else class="py-16 md:py-20 border border-dashed border-stone-200 dark:border-stone-700 text-center">
+                <div v-else class="rounded-2xl py-16 md:py-20 border border-dashed border-stone-200 dark:border-stone-700 bg-stone-50/80 dark:bg-gray-950/40 text-center">
                     <p class="text-sm text-gray-500 dark:text-gray-400">Belum ada foto galeri.</p>
                 </div>
             </div>
