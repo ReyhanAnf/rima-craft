@@ -265,21 +265,22 @@ const mobileBottomItems = computed(() => {
             </div>
 
             <!-- Sidebar Sponsors Footer -->
-            <div v-show="adminStore.isSidebarOpen && (siteConfig.sponsor_1_name || siteConfig.sponsor_2_name || siteConfig.sponsor_3_name || siteConfig.sponsor_4_name)" class="p-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/20 dark:bg-gray-900/10">
+            <div v-show="adminStore.isSidebarOpen && siteConfig.sponsors?.length" class="p-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/20 dark:bg-gray-900/10">
                 <p class="text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-2">Sponsor:</p>
                 <div class="flex flex-wrap items-center gap-3">
-                    <div v-if="siteConfig.sponsor_1_name" class="flex items-center gap-1.5" :title="siteConfig.sponsor_1_name">
-                        <img v-if="siteConfig.sponsor_1_logo_url" :src="`/storage/${siteConfig.sponsor_1_logo_url}`" class="h-5 w-auto object-contain rounded bg-white p-0.5 border border-gray-200" />
-                    </div>
-                    <div v-if="siteConfig.sponsor_2_name" class="flex items-center gap-1.5" :title="siteConfig.sponsor_2_name">
-                        <img v-if="siteConfig.sponsor_2_logo_url" :src="`/storage/${siteConfig.sponsor_2_logo_url}`" class="h-5 w-auto object-contain rounded bg-white p-0.5 border border-gray-200" />
-                    </div>
-                    <div v-if="siteConfig.sponsor_3_name" class="flex items-center gap-1.5" :title="siteConfig.sponsor_3_name">
-                        <img v-if="siteConfig.sponsor_3_logo_url" :src="`/storage/${siteConfig.sponsor_3_logo_url}`" class="h-5 w-auto object-contain rounded bg-white p-0.5 border border-gray-200" />
-                    </div>
-                    <div v-if="siteConfig.sponsor_4_name" class="flex items-center gap-1.5" :title="siteConfig.sponsor_4_name">
-                        <img v-if="siteConfig.sponsor_4_logo_url" :src="`/storage/${siteConfig.sponsor_4_logo_url}`" class="h-5 w-auto object-contain rounded bg-white p-0.5 border border-gray-200" />
-                    </div>
+                    <template v-for="(sp, i) in siteConfig.sponsors" :key="i">
+                        <component
+                            :is="sp.link ? 'a' : 'div'"
+                            v-bind="sp.link ? { href: sp.link, target: '_blank', rel: 'noopener noreferrer' } : {}"
+                            class="flex items-center gap-1.5 group"
+                            :title="sp.description || sp.name"
+                        >
+                            <img v-if="sp.logo_url" :src="sp.logo_url.startsWith('http') || sp.logo_url.startsWith('/') ? sp.logo_url : `/storage/${sp.logo_url}`"
+                                class="h-5 w-auto object-contain rounded bg-white p-0.5 border border-gray-200 group-hover:border-amber-300 transition-colors"
+                                :alt="sp.name" />
+                            <span v-else class="text-[9px] font-bold text-gray-500 dark:text-gray-400 group-hover:text-amber-500 transition-colors">{{ sp.name }}</span>
+                        </component>
+                    </template>
                 </div>
             </div>
         </aside>
@@ -354,25 +355,25 @@ const mobileBottomItems = computed(() => {
                 </div>
 
                 <!-- Admin Footer (Sponsors) -->
-                <div v-if="siteConfig.sponsor_1_name || siteConfig.sponsor_2_name || siteConfig.sponsor_3_name || siteConfig.sponsor_4_name" class="mt-12 pt-6 border-t border-gray-200 dark:border-gray-800 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div v-if="siteConfig.sponsors?.length" class="mt-12 pt-6 border-t border-gray-200 dark:border-gray-800 flex flex-col sm:flex-row justify-between items-center gap-4">
                     <span class="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Didukung & Disponsori Oleh:</span>
                     <div class="flex flex-wrap items-center gap-6">
-                        <div v-if="siteConfig.sponsor_1_name" class="flex items-center gap-2">
-                            <img v-if="siteConfig.sponsor_1_logo_url" :src="`/storage/${siteConfig.sponsor_1_logo_url}`" class="h-5 w-auto object-contain rounded bg-white p-0.5 border border-gray-200" :alt="siteConfig.sponsor_1_name" />
-                            <span class="text-[10px] font-semibold text-gray-500 dark:text-gray-400">{{ siteConfig.sponsor_1_name }}</span>
-                        </div>
-                        <div v-if="siteConfig.sponsor_2_name" class="flex items-center gap-2">
-                            <img v-if="siteConfig.sponsor_2_logo_url" :src="`/storage/${siteConfig.sponsor_2_logo_url}`" class="h-5 w-auto object-contain rounded bg-white p-0.5 border border-gray-200" :alt="siteConfig.sponsor_2_name" />
-                            <span class="text-[10px] font-semibold text-gray-500 dark:text-gray-400">{{ siteConfig.sponsor_2_name }}</span>
-                        </div>
-                        <div v-if="siteConfig.sponsor_3_name" class="flex items-center gap-2">
-                            <img v-if="siteConfig.sponsor_3_logo_url" :src="`/storage/${siteConfig.sponsor_3_logo_url}`" class="h-5 w-auto object-contain rounded bg-white p-0.5 border border-gray-200" :alt="siteConfig.sponsor_3_name" />
-                            <span class="text-[10px] font-semibold text-gray-500 dark:text-gray-400">{{ siteConfig.sponsor_3_name }}</span>
-                        </div>
-                        <div v-if="siteConfig.sponsor_4_name" class="flex items-center gap-2">
-                            <img v-if="siteConfig.sponsor_4_logo_url" :src="`/storage/${siteConfig.sponsor_4_logo_url}`" class="h-5 w-auto object-contain rounded bg-white p-0.5 border border-gray-200" :alt="siteConfig.sponsor_4_name" />
-                            <span class="text-[10px] font-semibold text-gray-500 dark:text-gray-400">{{ siteConfig.sponsor_4_name }}</span>
-                        </div>
+                        <component
+                            v-for="(sp, i) in siteConfig.sponsors"
+                            :key="i"
+                            :is="sp.link ? 'a' : 'div'"
+                            v-bind="sp.link ? { href: sp.link, target: '_blank', rel: 'noopener noreferrer' } : {}"
+                            class="flex items-center gap-2 group"
+                            :title="sp.description || sp.name"
+                        >
+                            <img v-if="sp.logo_url"
+                                :src="sp.logo_url.startsWith('http') || sp.logo_url.startsWith('/') ? sp.logo_url : `/storage/${sp.logo_url}`"
+                                class="h-5 w-auto object-contain rounded bg-white p-0.5 border border-gray-200 dark:border-gray-700 group-hover:border-amber-300 transition-colors"
+                                :alt="sp.name" />
+                            <span class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+                                {{ sp.name }}
+                            </span>
+                        </component>
                     </div>
                 </div>
             </main>

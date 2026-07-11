@@ -67,14 +67,8 @@ const form = useForm({
     // Dev Admin
     logo: null,
     business_subtitle: props.settings.business_subtitle || '',
-    sponsor_1_name: props.settings.sponsor_1_name || '',
-    sponsor_1_logo: null,
-    sponsor_2_name: props.settings.sponsor_2_name || '',
-    sponsor_2_logo: null,
-    sponsor_3_name: props.settings.sponsor_3_name || '',
-    sponsor_3_logo: null,
-    sponsor_4_name: props.settings.sponsor_4_name || '',
-    sponsor_4_logo: null,
+    sponsors_json: props.settings.sponsors_json || '[]',
+    sponsor_logos: {},
 });
 
 const isDevAdmin = computed(() => page.props.auth?.roles?.includes('dev-admin'));

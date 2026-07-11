@@ -27,15 +27,12 @@ class SettingController extends Controller
         $data = $request->except([
             '_token', '_method', 
             'looping_video', 'hero_image', 'gallery_1_image', 'gallery_2_image',
-            'logo', 'sponsor_1_logo', 'sponsor_2_logo', 'sponsor_3_logo', 'sponsor_4_logo'
+            'logo', 'sponsor_logos',
         ]);
 
         $devKeys = [
             'business_subtitle',
-            'sponsor_1_name', 'sponsor_1_logo_url',
-            'sponsor_2_name', 'sponsor_2_logo_url',
-            'sponsor_3_name', 'sponsor_3_logo_url',
-            'sponsor_4_name', 'sponsor_4_logo_url',
+            'sponsors_json',
         ];
 
         if (!$isDevAdmin) {
@@ -46,25 +43,34 @@ class SettingController extends Controller
 
         $filesToUpload = [
             'looping_video' => 'looping_video_url',
-            'hero_image' => 'hero_image_url',
+            'hero_image'    => 'hero_image_url',
             'gallery_1_image' => 'gallery_1_url',
             'gallery_2_image' => 'gallery_2_url',
-            'logo' => 'logo_url',
+            'logo'          => 'logo_url',
         ];
-
-        if ($isDevAdmin) {
-            $filesToUpload['sponsor_1_logo'] = 'sponsor_1_logo_url';
-            $filesToUpload['sponsor_2_logo'] = 'sponsor_2_logo_url';
-            $filesToUpload['sponsor_3_logo'] = 'sponsor_3_logo_url';
-            $filesToUpload['sponsor_4_logo'] = 'sponsor_4_logo_url';
-        }
 
         foreach ($filesToUpload as $input => $key) {
             if ($request->hasFile($input)) {
-                $file = $request->file($input);
-                $path = $file->store('landing', 'public');
+                $path = $request->file($input)->store('landing', 'public');
                 $data[$key] = $path;
             }
+        }
+
+        // Handle dynamic sponsors JSON + per-sponsor logo uploads
+        if ($isDevAdmin && $request->has('sponsors_json')) {
+            $sponsors = json_decode($request->input('sponsors_json'), true) ?? [];
+            
+            // Process uploaded sponsor logos
+            if ($request->hasFile('sponsor_logos')) {
+                foreach ($request->file('sponsor_logos') as $idx => $file) {
+                    $path = $file->store('sponsors', 'public');
+                    if (isset($sponsors[$idx])) {
+                        $sponsors[$idx]['logo_url'] = $path;
+                    }
+                }
+            }
+            
+            $data['sponsors_json'] = json_encode($sponsors);
         }
 
         foreach ($data as $key => $value) {

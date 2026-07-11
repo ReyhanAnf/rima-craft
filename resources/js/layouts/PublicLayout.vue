@@ -114,25 +114,23 @@ const installPWA = async () => {
                 </div>
 
                 <!-- Sponsors Row -->
-                <div v-if="siteConfig.sponsor_1_name || siteConfig.sponsor_2_name || siteConfig.sponsor_3_name || siteConfig.sponsor_4_name" class="pt-8 border-t border-gray-200 dark:border-[#1a1a1a] mb-8">
+                <div v-if="siteConfig.sponsors?.length" class="pt-8 border-t border-gray-200 dark:border-[#1a1a1a] mb-8">
                     <p class="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">Didukung & Disponsori Oleh</p>
                     <div class="flex flex-wrap items-center gap-8">
-                        <div v-if="siteConfig.sponsor_1_name" class="flex items-center gap-2">
-                            <img v-if="siteConfig.sponsor_1_logo_url" :src="`/storage/${siteConfig.sponsor_1_logo_url}`" class="h-7 w-auto object-contain rounded bg-white p-0.5 border border-gray-200" :alt="siteConfig.sponsor_1_name" />
-                            <span class="text-xs font-semibold text-gray-500 dark:text-gray-400">{{ siteConfig.sponsor_1_name }}</span>
-                        </div>
-                        <div v-if="siteConfig.sponsor_2_name" class="flex items-center gap-2">
-                            <img v-if="siteConfig.sponsor_2_logo_url" :src="`/storage/${siteConfig.sponsor_2_logo_url}`" class="h-7 w-auto object-contain rounded bg-white p-0.5 border border-gray-200" :alt="siteConfig.sponsor_2_name" />
-                            <span class="text-xs font-semibold text-gray-500 dark:text-gray-400">{{ siteConfig.sponsor_2_name }}</span>
-                        </div>
-                        <div v-if="siteConfig.sponsor_3_name" class="flex items-center gap-2">
-                            <img v-if="siteConfig.sponsor_3_logo_url" :src="`/storage/${siteConfig.sponsor_3_logo_url}`" class="h-7 w-auto object-contain rounded bg-white p-0.5 border border-gray-200" :alt="siteConfig.sponsor_3_name" />
-                            <span class="text-xs font-semibold text-gray-500 dark:text-gray-400">{{ siteConfig.sponsor_3_name }}</span>
-                        </div>
-                        <div v-if="siteConfig.sponsor_4_name" class="flex items-center gap-2">
-                            <img v-if="siteConfig.sponsor_4_logo_url" :src="`/storage/${siteConfig.sponsor_4_logo_url}`" class="h-7 w-auto object-contain rounded bg-white p-0.5 border border-gray-200" :alt="siteConfig.sponsor_4_name" />
-                            <span class="text-xs font-semibold text-gray-500 dark:text-gray-400">{{ siteConfig.sponsor_4_name }}</span>
-                        </div>
+                        <component
+                            v-for="(sp, i) in siteConfig.sponsors"
+                            :key="i"
+                            :is="sp.link ? 'a' : 'div'"
+                            v-bind="sp.link ? { href: sp.link, target: '_blank', rel: 'noopener noreferrer' } : {}"
+                            class="flex items-center gap-2 group"
+                            :title="sp.description || sp.name"
+                        >
+                            <img v-if="sp.logo_url"
+                                :src="sp.logo_url.startsWith('http') || sp.logo_url.startsWith('/') ? sp.logo_url : `/storage/${sp.logo_url}`"
+                                class="h-7 w-auto object-contain rounded bg-white p-0.5 border border-gray-200 group-hover:border-amber-300 transition-colors"
+                                :alt="sp.name" />
+                            <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">{{ sp.name }}</span>
+                        </component>
                     </div>
                 </div>
 

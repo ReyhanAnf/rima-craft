@@ -59,14 +59,28 @@ class HandleInertiaRequests extends Middleware
                 'hero_description' => config('settings.hero_description', ''),
                 'logo_url'         => config('settings.logo_url'),
                 'business_subtitle'=> config('settings.business_subtitle'),
-                'sponsor_1_name'   => config('settings.sponsor_1_name'),
-                'sponsor_1_logo_url'=> config('settings.sponsor_1_logo_url'),
-                'sponsor_2_name'   => config('settings.sponsor_2_name'),
-                'sponsor_2_logo_url'=> config('settings.sponsor_2_logo_url'),
-                'sponsor_3_name'   => config('settings.sponsor_3_name'),
-                'sponsor_3_logo_url'=> config('settings.sponsor_3_logo_url'),
-                'sponsor_4_name'   => config('settings.sponsor_4_name'),
-                'sponsor_4_logo_url'=> config('settings.sponsor_4_logo_url'),
+                // New dynamic sponsors array — parsed from JSON, fallback to legacy 4-slot format
+                'sponsors'         => (function () {
+                    $json = config('settings.sponsors_json');
+                    if ($json) {
+                        $decoded = json_decode($json, true);
+                        if (is_array($decoded)) return $decoded;
+                    }
+                    // Legacy fallback: read sponsor_1..4 keys
+                    $legacy = [];
+                    for ($i = 1; $i <= 4; $i++) {
+                        $name = config("settings.sponsor_{$i}_name");
+                        if ($name) {
+                            $legacy[] = [
+                                'name'        => $name,
+                                'description' => '',
+                                'link'        => '',
+                                'logo_url'    => config("settings.sponsor_{$i}_logo_url", ''),
+                            ];
+                        }
+                    }
+                    return $legacy;
+                })(),
                 'checkout_url'     => route('order.checkout'),
                 'order_store_url'  => route('order.store'),
                 'catalog_url'      => route('catalog.index'),

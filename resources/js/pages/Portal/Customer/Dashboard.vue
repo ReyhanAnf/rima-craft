@@ -70,11 +70,10 @@ function getPaymentStatusBadge(status) {
                 <p class="text-xs text-gray-500 mt-0.5">Pantau status pesanan dan transaksi belanja Anda.</p>
             </div>
 
-            <!-- Reseller Status Banner -->
-            <div v-if="resellerStage" class="rounded-2xl border overflow-hidden"
+            <!-- Reseller Status Banner — only for pending/rejected -->
+            <div v-if="resellerStage === 'pending' || resellerStage === 'rejected'" class="rounded-2xl border overflow-hidden"
                 :class="{
                     'border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30': resellerStage === 'pending',
-                    'border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/30': resellerStage === 'verified',
                     'border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-950/30': resellerStage === 'rejected',
                 }"
             >
@@ -198,7 +197,37 @@ function getPaymentStatusBadge(status) {
                     </div>
                 </template>
                 <template #content>
-                    <div class="overflow-x-auto">
+                    <!-- Mobile: card list -->
+                    <div class="md:hidden space-y-3">
+                        <div v-if="recentOrders.length === 0" class="py-8 text-center text-gray-400 text-sm font-medium">Belum ada riwayat pesanan.</div>
+                        <div
+                            v-for="order in recentOrders"
+                            :key="order.id"
+                            class="rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/40 p-3.5 space-y-2.5"
+                        >
+                            <div class="flex items-start justify-between gap-2">
+                                <span class="text-xs font-black text-gray-900 dark:text-white">{{ order.order_number }}</span>
+                                <span :class="['text-[10px] px-2 py-0.5 rounded font-black uppercase tracking-wider shrink-0', getOrderStatusBadge(order.status).classes]">
+                                    {{ getOrderStatusBadge(order.status).label }}
+                                </span>
+                            </div>
+                            <div class="flex items-center justify-between gap-2">
+                                <span :class="['text-[10px] px-2 py-0.5 rounded font-black uppercase tracking-wider', getPaymentStatusBadge(order.payment_status).classes]">
+                                    {{ getPaymentStatusBadge(order.payment_status).label }}
+                                </span>
+                                <span class="text-sm font-black text-amber-600 dark:text-amber-400">{{ formatCurrency(order.total) }}</span>
+                            </div>
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-[11px] text-gray-400">{{ formatDate(order.created_at) }}</span>
+                                <Link :href="route('my-orders.show', order.order_number)" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 dark:bg-amber-950/20 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50 hover:bg-amber-100 transition active:scale-[0.97]">
+                                    Detail
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Desktop: table -->
+                    <div class="hidden md:block overflow-x-auto">
                         <table class="w-full text-sm text-left text-gray-600 dark:text-gray-400">
                             <thead class="text-xs text-gray-500 uppercase bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-800">
                                 <tr>
@@ -206,15 +235,13 @@ function getPaymentStatusBadge(status) {
                                     <th class="px-4 py-3">Tanggal</th>
                                     <th class="px-4 py-3">Status Bayar</th>
                                     <th class="px-4 py-3">Status Pesanan</th>
-                                    <th class="px-4 py-3 text-right">Total Transaksi</th>
+                                    <th class="px-4 py-3 text-right">Total</th>
                                     <th class="px-4 py-3 text-center">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                                 <tr v-for="order in recentOrders" :key="order.id" class="hover:bg-gray-50 dark:hover:bg-gray-800/40">
-                                    <td class="px-4 py-3 font-black text-gray-900 dark:text-white">
-                                        {{ order.order_number }}
-                                    </td>
+                                    <td class="px-4 py-3 font-black text-gray-900 dark:text-white">{{ order.order_number }}</td>
                                     <td class="px-4 py-3 text-xs font-semibold text-gray-500">{{ formatDate(order.created_at) }}</td>
                                     <td class="px-4 py-3">
                                         <span :class="['text-[10px] px-2 py-0.5 rounded font-black uppercase tracking-wider', getPaymentStatusBadge(order.payment_status).classes]">

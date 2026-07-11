@@ -269,7 +269,16 @@ const submitForm = () => {
                                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                     <div class="space-y-2">
                                         <label for="phone" class="text-sm font-semibold text-stone-800 dark:text-stone-100">Nomor WhatsApp / Telepon</label>
-                                        <InputText id="phone" v-model="form.phone" class="auth-input w-full" placeholder="0812..." />
+                                        <InputText
+                                            id="phone"
+                                            v-model="form.phone"
+                                            type="tel"
+                                            inputmode="numeric"
+                                            @keydown="(e) => { if (!/[\d+\b]/.test(e.key) && !['Backspace','Delete','ArrowLeft','ArrowRight','Tab'].includes(e.key)) e.preventDefault() }"
+                                            @input="form.phone = form.phone.replace(/[^0-9+]/g, '')"
+                                            class="auth-input w-full"
+                                            placeholder="0812..."
+                                        />
                                     </div>
 
                                     <div class="space-y-2">
@@ -490,6 +499,53 @@ const submitForm = () => {
 :global(.dark) :deep(.auth-select) {
     border-color: rgba(255, 255, 255, 0.12);
     background: rgba(41, 37, 36, 0.82);
+    color: white;
+}
+
+/* Fix PrimeVue Select selected text visibility in dark mode */
+:global(.dark) :deep(.auth-select .p-select-label) {
+    color: white;
+}
+
+:global(.dark) :deep(.auth-select .p-select-label.p-placeholder) {
+    color: rgba(255, 255, 255, 0.45);
+}
+
+/* Light mode placeholder */
+:deep(.auth-select .p-select-label.p-placeholder) {
+    color: rgba(28, 25, 23, 0.45);
+}
+
+/* Selected label in light mode */
+:deep(.auth-select .p-select-label) {
+    color: rgb(28, 25, 23);
+}
+
+/* Dropdown panel in dark mode */
+:global(.dark) :deep(.p-select-overlay) {
+    background: rgb(41, 37, 36);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: white;
+}
+
+:global(.dark) :deep(.p-select-option) {
+    color: rgb(231, 229, 228);
+}
+
+:global(.dark) :deep(.p-select-option:hover),
+:global(.dark) :deep(.p-select-option.p-focus) {
+    background: rgba(159, 107, 54, 0.25);
+    color: white;
+}
+
+:global(.dark) :deep(.p-select-option.p-selected) {
+    background: rgba(159, 107, 54, 0.4);
+    color: white;
+}
+
+:global(.dark) :deep(.p-select-filter) {
+    background: rgba(28, 25, 23, 0.8);
+    border-color: rgba(255, 255, 255, 0.15);
     color: white;
 }
 </style>

@@ -80,7 +80,14 @@ export default {
 
                                 <div class="flex flex-col gap-1.5">
                                     <label class="text-xs font-semibold">Nomor WhatsApp PIC</label>
-                                    <InputText v-model="form.phone" placeholder="Contoh: 0812..." />
+                                    <InputText
+                                        v-model="form.phone"
+                                        type="tel"
+                                        inputmode="numeric"
+                                        @keydown="(e) => { if (!/[\d+\b]/.test(e.key) && !['Backspace','Delete','ArrowLeft','ArrowRight','Tab'].includes(e.key)) e.preventDefault() }"
+                                        @input="form.phone = form.phone.replace(/[^0-9+]/g, '')"
+                                        placeholder="Contoh: 0812..."
+                                    />
                                 </div>
 
                                 <div class="flex flex-col gap-1.5">

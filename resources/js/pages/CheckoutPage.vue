@@ -243,23 +243,23 @@ onMounted(async () => {
                 <div class="lg:hidden mb-6 sticky top-[64px] z-40 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-md">
                     <button 
                         @click="showMobileSummary = !showMobileSummary" 
-                        class="w-full flex items-center justify-between p-4 focus:outline-none"
+                        class="w-full flex items-center justify-between gap-3 p-4 focus:outline-none"
                     >
-                        <div class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-                            <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="flex items-center gap-2 text-gray-700 dark:text-gray-300 min-w-0">
+                            <svg class="w-5 h-5 text-amber-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                             </svg>
-                            <span class="text-sm font-bold text-left">
-                                {{ showMobileSummary ? 'Sembunyikan Ringkasan' : 'Tampilkan Ringkasan' }}
-                                <span class="ml-1 px-2 py-0.5 rounded-full text-xs bg-amber-100 dark:bg-amber-900 text-amber-600 dark:text-amber-400">
-                                    {{ cart.items.length }} produk
-                                </span>
+                            <span class="text-sm font-bold truncate">
+                                {{ showMobileSummary ? 'Sembunyikan' : 'Ringkasan Pesanan' }}
                             </span>
-                            <svg class="w-4 h-4 transition-transform duration-200" :class="{ 'rotate-180': showMobileSummary }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <span class="shrink-0 px-1.5 py-0.5 rounded-full text-xs bg-amber-100 dark:bg-amber-900 text-amber-600 dark:text-amber-400 font-bold">
+                                {{ cart.items.length }}
+                            </span>
+                            <svg class="w-4 h-4 shrink-0 transition-transform duration-200" :class="{ 'rotate-180': showMobileSummary }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                             </svg>
                         </div>
-                        <span class="text-base font-black text-amber-600 dark:text-amber-400">{{ formatPrice(paymentMode === 'dp' ? dpAmount : finalTotal) }}</span>
+                        <span class="text-sm font-black text-amber-600 dark:text-amber-400 shrink-0">{{ formatPrice(paymentMode === 'dp' ? dpAmount : finalTotal) }}</span>
                     </button>
 
                     <!-- Mobile Drawer Dropdown -->
@@ -395,7 +395,11 @@ onMounted(async () => {
                                             <div class="relative">
                                                 <input
                                                     v-model="form.customer_phone"
-                                                    type="tel" required
+                                                    type="tel"
+                                                    inputmode="numeric"
+                                                    required
+                                                    @keydown="(e) => { if (!/[\d+\b]/.test(e.key) && !['Backspace','Delete','ArrowLeft','ArrowRight','Tab'].includes(e.key)) e.preventDefault() }"
+                                                    @input="form.customer_phone = form.customer_phone.replace(/[^0-9+]/g, '')"
                                                     class="w-full pl-4 pr-10 py-3.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all outline-none"
                                                     placeholder="Contoh: 081234567890"
                                                 />
