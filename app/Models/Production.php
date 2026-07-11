@@ -44,6 +44,11 @@ class Production extends Model
         return $this->hasMany(ProductionResult::class);
     }
 
+    public function artisanWages(): HasMany
+    {
+        return $this->hasMany(ProductionArtisanWage::class);
+    }
+
     public function payments(): MorphMany
     {
         return $this->morphMany(Payment::class, 'payable');

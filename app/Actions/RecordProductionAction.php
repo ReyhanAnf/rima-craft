@@ -9,6 +9,7 @@ use App\Models\CashLedger;
 use App\Models\Material;
 use App\Models\Product;
 use App\Models\Production;
+use App\Models\ProductionArtisanWage;
 use App\Models\ProductionMaterial;
 use App\Models\ProductionResult;
 use Illuminate\Support\Facades\DB;
@@ -69,7 +70,12 @@ class RecordProductionAction
                 $material->save();
             }
 
-            $laborCost    = (float) ($data['labor_cost'] ?? 0);
+            $artisanWageRows = collect($data['artisan_wages'] ?? [])
+                ->filter(fn (array $row): bool => !empty($row['artisan_id']) && (float) ($row['amount'] ?? 0) > 0)
+                ->values();
+            $artisanWageTotal = (float) $artisanWageRows->sum(fn (array $row): float => (float) $row['amount']);
+
+            $laborCost    = (float) ($data['labor_cost'] ?? 0) + $artisanWageTotal;
             $overheadCost = (float) ($data['overhead_cost'] ?? 0);
             $additionalCost = (float) ($data['additional_cost'] ?? 0);
             $grandTotalCost = $totalMaterialCost + $laborCost + $overheadCost + $additionalCost;
@@ -89,6 +95,16 @@ class RecordProductionAction
             // Insert materials
             foreach ($materialsData as $matData) {
                 ProductionMaterial::create(array_merge($matData, ['production_id' => $production->id]));
+            }
+
+            foreach ($artisanWageRows as $row) {
+                ProductionArtisanWage::create([
+                    'production_id' => $production->id,
+                    'artisan_id' => $row['artisan_id'],
+                    'amount' => (float) $row['amount'],
+                    'work_description' => $row['work_description'] ?? null,
+                    'notes' => $row['notes'] ?? null,
+                ]);
             }
 
             // 4. Calculate allocated cost per unit for products

@@ -49,6 +49,16 @@ class User extends Authenticatable
         return $this->hasOne(Contact::class);
     }
 
+    public function productionWages()
+    {
+        return $this->hasMany(ProductionArtisanWage::class, 'artisan_id');
+    }
+
+    public function artisanJobAssignments()
+    {
+        return $this->hasMany(ArtisanJobAssignment::class, 'artisan_id');
+    }
+
     // -------------------------------------------------------------------------
     // Role helpers
     // -------------------------------------------------------------------------

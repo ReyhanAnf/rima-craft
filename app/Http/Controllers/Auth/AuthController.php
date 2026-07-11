@@ -217,6 +217,11 @@ class AuthController extends Controller
                 ->with('info', $message);
         }
 
+        if ($user->hasRole('pengrajin')) {
+            return redirect()->route('artisan.dashboard')
+                ->with('success', 'Selamat datang kembali!');
+        }
+
         // Regular customer
         if ($user->hasRole('customer')) {
             return redirect()->route('customer.dashboard')

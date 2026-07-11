@@ -9,6 +9,7 @@ use App\Http\Requests\Production\StoreProductionRequest;
 use App\Models\Material;
 use App\Models\Product;
 use App\Models\Production;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
@@ -17,7 +18,7 @@ class ProductionController extends Controller
 {
     public function index(Request $request): InertiaResponse
     {
-        $query = Production::with(['materials.material', 'results.product']);
+        $query = Production::with(['materials.material', 'results.product', 'artisanWages.artisan']);
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -39,10 +40,14 @@ class ProductionController extends Controller
     {
         $materials = Material::orderBy('name')->get();
         $products = Product::orderBy('name')->get();
+        $artisans = User::whereHas('roles', fn ($query) => $query->where('name', 'pengrajin'))
+            ->orderBy('name')
+            ->get(['id', 'name', 'email']);
 
         return Inertia::render('Productions/Form', [
             'materials' => $materials,
             'products' => $products,
+            'artisans' => $artisans,
         ]);
     }
 
@@ -60,7 +65,7 @@ class ProductionController extends Controller
 
     public function show(Production $production): InertiaResponse
     {
-        $production->load(['materials.material', 'results.product']);
+        $production->load(['materials.material', 'results.product', 'artisanWages.artisan']);
         return Inertia::render('Productions/Show', [
             'production' => $production,
         ]);

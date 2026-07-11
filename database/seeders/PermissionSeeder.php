@@ -55,6 +55,7 @@ class PermissionSeeder extends Seeder
             // Productions
             'view-productions',
             'create-productions',
+            'manage-artisan-jobs',
             
             // Stock
             'view-stock',
@@ -94,6 +95,9 @@ class PermissionSeeder extends Seeder
             'view-my-billing',
             'quick-order',
             'view-partner-dashboard',
+
+            // Artisan Portal
+            'view-artisan-portal',
         ];
 
         // Create permissions
@@ -119,6 +123,7 @@ class PermissionSeeder extends Seeder
                 'print-sales',
                 'view-productions',
                 'create-productions',
+                'manage-artisan-jobs',
                 'view-stock',
                 'adjust-stock',
                 'record-payments',
@@ -157,6 +162,7 @@ class PermissionSeeder extends Seeder
                 'print-sales',
                 'view-productions',
                 'create-productions',
+                'manage-artisan-jobs',
                 'view-stock',
                 'adjust-stock',
                 'view-finance',
@@ -221,5 +227,15 @@ class PermissionSeeder extends Seeder
                 Permission::whereIn('name', $partnerPermissions)->pluck('id')
             );
         }
+
+        // Artisan: workshop worker portal permissions
+        $artisanRole = Role::firstOrCreate(['name' => 'pengrajin']);
+        $artisanPermissions = [
+            'view-artisan-portal',
+        ];
+
+        $artisanRole->permissions()->sync(
+            Permission::whereIn('name', $artisanPermissions)->pluck('id')
+        );
     }
 }

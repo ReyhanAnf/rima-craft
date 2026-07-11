@@ -18,6 +18,7 @@ const dashboardRouteName = computed(() => {
     const roles = page.props.auth.roles;
     if (roles.includes('customer')) return 'customer.dashboard';
     if (roles.includes('reseller')) return 'reseller.dashboard';
+    if (roles.includes('pengrajin')) return 'artisan.dashboard';
     if (roles.some(r => ['super-admin', 'owner', 'operator'].includes(r))) return 'dashboard';
     return null;
 });

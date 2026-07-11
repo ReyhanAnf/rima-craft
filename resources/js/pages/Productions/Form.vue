@@ -14,6 +14,7 @@ import { useToast } from "primevue/usetoast";
 const props = defineProps({
     materials: Array,
     products: Array,
+    artisans: Array,
 });
 
 const toast = useToast();
@@ -24,6 +25,7 @@ const form = useForm({
     overhead_cost: 0,
     additional_cost: 0,
     notes: "",
+    artisan_wages: [],
     materials: [{ material_id: null, qty: 1 }],
     products: [{ product_id: null, qty: 1 }],
 });
@@ -48,6 +50,19 @@ const removeProduct = (idx) => {
     }
 };
 
+const addArtisanWage = () => {
+    form.artisan_wages.push({
+        artisan_id: null,
+        amount: 0,
+        work_description: "",
+        notes: "",
+    });
+};
+
+const removeArtisanWage = (idx) => {
+    form.artisan_wages.splice(idx, 1);
+};
+
 const getMaterialUnit = (materialId) => {
     const mat = props.materials.find((m) => m.id === materialId);
     return mat ? mat.unit : "";
@@ -68,9 +83,14 @@ const totalMaterialCost = computed(() => {
     return cost;
 });
 
+const totalArtisanWages = computed(() => {
+    return form.artisan_wages.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+});
+
 const grandTotalCost = computed(() => {
     return totalMaterialCost.value +
         Number(form.labor_cost || 0) +
+        totalArtisanWages.value +
         Number(form.overhead_cost || 0) +
         Number(form.additional_cost || 0);
 });
@@ -151,7 +171,7 @@ const formatCurrency = (val) => {
 
                         <div class="flex flex-col gap-1.5">
                             <label class="text-xs font-semibold"
-                                >Upah Tukang / Tenaga Kerja (Rp)</label
+                                >Upah Umum Non-Pengrajin (Rp)</label
                             >
                             <InputNumber
                                 v-model="form.labor_cost"
@@ -192,6 +212,69 @@ const formatCurrency = (val) => {
                                 class="w-full"
                             />
                         </div>
+                    </div>
+                </div>
+
+                <!-- Upah Pengrajin -->
+                <div class="border border-amber-200 dark:border-amber-500/20 bg-amber-50/40 dark:bg-amber-500/5 p-6 rounded-xl shadow-sm">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-amber-100 dark:border-amber-500/10 pb-4 mb-4">
+                        <div>
+                            <h3 class="text-sm font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">Tambahkan Upah Pengrajin</h3>
+                            <p class="text-xs text-amber-700/70 dark:text-amber-300/70 mt-1">Opsional. Rincian ini dipakai untuk melihat total upah per pengrajin.</p>
+                        </div>
+                        <Button
+                            label="Tambah Pengrajin"
+                            icon="pi pi-plus"
+                            size="small"
+                            outlined
+                            class="!border-amber-500 !text-amber-700 dark:!text-amber-300"
+                            @click="addArtisanWage"
+                        />
+                    </div>
+
+                    <div v-if="form.artisan_wages.length" class="space-y-3">
+                        <div
+                            v-for="(item, idx) in form.artisan_wages"
+                            :key="idx"
+                            class="bg-white dark:bg-gray-900 border border-amber-100 dark:border-amber-500/10 rounded-xl p-4 space-y-3"
+                        >
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Upah #{{ idx + 1 }}</span>
+                                <Button icon="pi pi-trash" severity="danger" text rounded size="small" @click="removeArtisanWage(idx)" />
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <div class="flex flex-col gap-1.5">
+                                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Pengrajin</label>
+                                    <Dropdown
+                                        v-model="item.artisan_id"
+                                        :options="artisans"
+                                        optionLabel="name"
+                                        optionValue="id"
+                                        placeholder="Pilih pengrajin..."
+                                        filter
+                                        class="w-full"
+                                    />
+                                </div>
+                                <div class="flex flex-col gap-1.5">
+                                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Upah (Rp)</label>
+                                    <InputNumber v-model="item.amount" :min="0" class="w-full" inputClass="w-full" />
+                                </div>
+                                <div class="flex flex-col gap-1.5">
+                                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Pekerjaan</label>
+                                    <InputText v-model="item.work_description" placeholder="Misal: Anyam badan tas" class="w-full" />
+                                </div>
+                            </div>
+                            <InputText v-model="item.notes" placeholder="Catatan opsional untuk upah ini" class="w-full" />
+                        </div>
+                    </div>
+
+                    <div v-else class="rounded-xl border border-dashed border-amber-200 dark:border-amber-500/20 p-5 text-center text-xs text-amber-700/70 dark:text-amber-300/70">
+                        Belum ada upah pengrajin. Klik tombol tambah jika produksi ini melibatkan pengrajin tertentu.
+                    </div>
+
+                    <div class="mt-4 flex justify-between items-center text-sm font-bold">
+                        <span class="text-gray-700 dark:text-gray-300">Total Upah Pengrajin:</span>
+                        <span class="text-amber-600 dark:text-amber-300">{{ formatCurrency(totalArtisanWages) }}</span>
                     </div>
                 </div>
 
@@ -270,6 +353,12 @@ const formatCurrency = (val) => {
                                     <span>Estimasi HPP Bahan:</span>
                                     <span class="font-semibold text-gray-900 dark:text-white">
                                         {{ formatCurrency(totalMaterialCost) }}
+                                    </span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span>Upah Pengrajin:</span>
+                                    <span class="font-semibold text-gray-900 dark:text-white">
+                                        {{ formatCurrency(totalArtisanWages) }}
                                     </span>
                                 </div>
                                 <div class="flex justify-between items-center border-t border-gray-100 dark:border-gray-800 pt-2 font-bold text-sm">

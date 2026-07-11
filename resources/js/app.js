@@ -229,6 +229,10 @@ window.route = function(name, params = {}) {
         'contacts.index': '/contacts',
         'stock-adjustments.index': '/stock-adjustments',
         'productions.index': '/productions',
+        'artisan-jobs.index': '/artisan-jobs',
+        'artisan-jobs.store': '/artisan-jobs',
+        'artisan-jobs.update': '/artisan-jobs/{id}',
+        'artisan-jobs.destroy': '/artisan-jobs/{id}',
         'galleries.index': '/galleries',
         'users.index': '/users',
         'users.store': '/users',
@@ -294,6 +298,8 @@ window.route = function(name, params = {}) {
         'reseller.billing': '/reseller/billing',
         'reseller.profile': '/reseller/profile',
         'reseller.profile.update': '/reseller/profile/update',
+        'artisan.dashboard': '/pengrajin/dashboard',
+        'artisan.jobs.join': '/pengrajin/jobs/{id}/join',
     };
 
     let path = routes[name];

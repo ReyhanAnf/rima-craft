@@ -158,6 +158,7 @@ const getRoleBadge = (roleName) => {
         case 'owner': return 'bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400';
         case 'operator': return 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400';
         case 'partner': return 'bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400';
+        case 'pengrajin': return 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300';
         default: return 'bg-gray-50 text-gray-600 dark:bg-gray-500/10 dark:text-gray-400';
     }
 };

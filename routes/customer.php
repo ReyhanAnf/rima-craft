@@ -5,6 +5,7 @@ use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\MyOrderController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\Portal\CustomerPortalController;
+use App\Http\Controllers\Portal\ArtisanPortalController;
 use App\Http\Controllers\Portal\PartnerPortalController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -147,5 +148,14 @@ Route::middleware('auth')->group(function () {
             Route::get('/billing', 'billing')->name('billing');
             Route::get('/profile', 'profile')->name('profile');
             Route::post('/profile/update', 'updateProfile')->name('profile.update');
+        });
+
+    Route::middleware(['role:pengrajin', 'permission:view-artisan-portal'])
+        ->prefix('pengrajin')
+        ->name('artisan.')
+        ->controller(ArtisanPortalController::class)
+        ->group(function () {
+            Route::get('/dashboard', 'dashboard')->name('dashboard');
+            Route::post('/jobs/{artisanJob}/join', 'join')->name('jobs.join');
         });
 });

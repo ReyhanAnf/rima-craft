@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AdminOrderController;
+use App\Http\Controllers\ArtisanJobController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DashboardController;
@@ -84,6 +85,10 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('permission:view-productions')->group(function () {
         Route::resource('productions', ProductionController::class)->except(['edit', 'update', 'destroy']);
+    });
+
+    Route::middleware('permission:manage-artisan-jobs')->group(function () {
+        Route::resource('artisan-jobs', ArtisanJobController::class)->except(['create', 'show', 'edit']);
     });
 
     Route::middleware('permission:view-finance')
