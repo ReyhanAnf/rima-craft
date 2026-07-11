@@ -142,7 +142,7 @@ const formatDate = (dateStr) => {
                 <Button
                     label="Sesuaikan Stok"
                     icon="pi pi-plus"
-                    class="!bg-amber-500 hover:!bg-amber-600 !border-amber-500 hover:!border-amber-600 !text-gray-950 font-bold self-start md:self-auto"
+                    class="w-full sm:w-auto justify-center !bg-amber-500 hover:!bg-amber-600 !border-amber-500 hover:!border-amber-600 !text-gray-950 font-bold self-stretch sm:self-start md:self-auto"
                     @click="isFormOpen = true"
                 />
             </div>
@@ -170,7 +170,8 @@ const formatDate = (dateStr) => {
 
             <!-- Table -->
             <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden shadow-sm">
-                <div class="overflow-x-auto">
+                <!-- Desktop Table -->
+                <div class="hidden md:block overflow-x-auto">
                     <table class="w-full text-sm text-left text-gray-600 dark:text-gray-400">
                         <thead class="text-xs text-gray-500 uppercase bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-800">
                             <tr>
@@ -206,6 +207,44 @@ const formatDate = (dateStr) => {
                             </tr>
                         </tbody>
                     </table>
+                </div>
+
+                <!-- Mobile Cards -->
+                <div class="md:hidden divide-y divide-gray-150 dark:divide-gray-800">
+                    <div
+                        v-for="adj in adjustments.data"
+                        :key="adj.id"
+                        class="p-4 space-y-3"
+                    >
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <h4 class="text-sm font-bold text-gray-900 dark:text-white truncate">
+                                    {{ adj.adjustable?.name || 'Item Dihapus' }}
+                                </h4>
+                                <p class="text-[11px] text-gray-400 mt-0.5">{{ formatDate(adj.created_at) }}</p>
+                            </div>
+                            <span :class="['shrink-0 px-2 py-0.5 rounded font-semibold text-[10px] uppercase tracking-wider', adj.adjustable_type.includes('Product') ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400']">
+                                {{ adj.adjustable_type.includes('Product') ? 'Produk Jadi' : 'Bahan Baku' }}
+                            </span>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-3">
+                            <span :class="['text-xs px-2 py-1 rounded font-bold uppercase inline-flex items-center gap-1', adj.type === 'in' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-650' : 'bg-red-50 dark:bg-red-500/10 text-red-600']">
+                                {{ adj.type === 'in' ? '+' : '-' }}{{ adj.quantity }}
+                            </span>
+                            <span class="text-[11px] text-gray-500 dark:text-gray-400 truncate">
+                                Oleh: {{ adj.user?.name || '-' }}
+                            </span>
+                        </div>
+
+                        <div>
+                            <p class="text-[10px] font-bold uppercase text-gray-400 tracking-wide">Alasan</p>
+                            <p class="text-xs text-gray-600 dark:text-gray-300 mt-1 line-clamp-2">
+                                {{ adj.reason || '-' }}
+                            </p>
+                        </div>
+                    </div>
+                    <div v-if="adjustments.data.length === 0" class="p-6 text-center text-gray-400">Tidak ada log penyesuaian stok.</div>
                 </div>
             </div>
 

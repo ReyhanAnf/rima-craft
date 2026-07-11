@@ -690,8 +690,10 @@ const maxProductQty = computed(() => {
                     <div class="flex items-center justify-between px-5 py-4 border-b border-amber-100 dark:border-amber-900/30 bg-amber-50/50 dark:bg-amber-950/20">
                         <div class="flex items-center gap-2.5">
                             <span class="flex h-2 w-2 rounded-full bg-amber-500 animate-pulse"></span>
-                            <h3 class="text-sm font-bold text-gray-900 dark:text-white">Persetujuan Reseller Tertunda</h3>
-                            <span class="text-xs font-bold text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 rounded-full">{{ pendingResellers.length }} menunggu</span>
+                            <div class="flex flex-col">
+                                <h3 class="text-sm font-bold text-gray-900 dark:text-white">Persetujuan Reseller Tertunda</h3>
+                                <span class="text-xs font-bold text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 rounded-full">{{ pendingResellers.length }} menunggu</span>
+                            </div>
                         </div>
                         <Link href="/users?role=reseller" class="text-xs text-amber-600 dark:text-amber-400 hover:underline font-semibold">Kelola Semua</Link>
                     </div>

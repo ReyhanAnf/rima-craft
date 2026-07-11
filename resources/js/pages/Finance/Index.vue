@@ -405,7 +405,8 @@ const getLabelColor = (label) => {
 
             <!-- Ledger Table -->
             <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden shadow-sm">
-                <div class="overflow-x-auto">
+                <!-- Desktop Table -->
+                <div class="hidden md:block overflow-x-auto">
                     <table class="w-full text-sm text-left text-gray-600 dark:text-gray-400">
                         <thead class="text-xs text-gray-500 uppercase bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-800">
                             <tr>
@@ -445,6 +446,42 @@ const getLabelColor = (label) => {
                             </tr>
                         </tbody>
                     </table>
+                </div>
+
+                <!-- Mobile Cards -->
+                <div class="md:hidden divide-y divide-gray-150 dark:divide-gray-800">
+                    <div
+                        v-for="ledger in ledgers.data"
+                        :key="ledger.id"
+                        class="p-4 space-y-3"
+                    >
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <p class="text-[11px] text-gray-400">{{ formatDate(ledger.date) }}</p>
+                                <h4 class="text-sm font-bold text-gray-900 dark:text-white mt-1 line-clamp-2">
+                                    {{ ledger.description }}
+                                </h4>
+                            </div>
+                            <span
+                                :class="[
+                                    'shrink-0 text-xs font-black',
+                                    ledger.type === 'in' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'
+                                ]"
+                            >
+                                {{ ledger.type === 'in' ? '+' : '-' }} {{ formatCurrency(ledger.amount) }}
+                            </span>
+                        </div>
+
+                        <div class="flex flex-wrap gap-1.5">
+                            <span :class="['px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider', getLabelColor(ledger.payment_label)]">
+                                {{ ledger.payment_label || 'Cash' }}
+                            </span>
+                            <span :class="['px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider', categoryClasses[ledger.category] || categoryClasses.other]">
+                                {{ categoryLabels[ledger.category] || ledger.category || 'Lainnya' }}
+                            </span>
+                        </div>
+                    </div>
+                    <div v-if="ledgers.data.length === 0" class="p-6 text-center text-gray-400">Tidak ada log transaksi kas.</div>
                 </div>
 
                 <!-- Pagination Footer -->

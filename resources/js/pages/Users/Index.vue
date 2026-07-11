@@ -175,14 +175,18 @@ const getRoleBadge = (roleName) => {
                     <h2 class="text-xl font-bold text-gray-900 dark:text-white">Manajemen Pengguna</h2>
                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Kelola hak akses sistem, profil staff, dan akun partner/reseller.</p>
                 </div>
-                <div class="flex gap-2">
-                    <Link v-if="$page.props.auth.permissions.includes('manage-roles') || $page.props.auth.roles.includes('dev-admin')" :href="route('roles.index')">
-                        <Button label="Kelola Peran / Hak Akses" icon="pi pi-shield" severity="secondary" outlined />
+                <div class="flex flex-col sm:flex-row w-full md:w-auto gap-2">
+                    <Link
+                        v-if="$page.props.auth.permissions.includes('manage-roles') || $page.props.auth.roles.includes('dev-admin')"
+                        :href="route('roles.index')"
+                        class="w-full sm:w-auto"
+                    >
+                        <Button label="Kelola Peran / Hak Akses" icon="pi pi-shield" severity="secondary" outlined class="w-full sm:w-auto justify-center" />
                     </Link>
                     <Button
                         label="Tambah Pengguna"
                         icon="pi pi-plus"
-                        class="!bg-amber-500 hover:!bg-amber-600 !border-amber-500 hover:!border-amber-600 !text-gray-950 font-bold"
+                        class="w-full sm:w-auto justify-center !bg-amber-500 hover:!bg-amber-600 !border-amber-500 hover:!border-amber-600 !text-gray-950 font-bold"
                         @click="openCreateModal"
                     />
                 </div>
@@ -213,7 +217,8 @@ const getRoleBadge = (roleName) => {
 
             <!-- Users list table -->
             <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden shadow-sm">
-                <div class="overflow-x-auto">
+                <!-- Desktop Table -->
+                <div class="hidden md:block overflow-x-auto">
                     <table class="w-full text-sm text-left text-gray-600 dark:text-gray-400">
                         <thead class="text-xs text-gray-500 uppercase bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-800">
                             <tr>
@@ -276,6 +281,61 @@ const getRoleBadge = (roleName) => {
                             </tr>
                         </tbody>
                     </table>
+                </div>
+
+                <!-- Mobile Cards -->
+                <div class="md:hidden divide-y divide-gray-150 dark:divide-gray-800">
+                    <div
+                        v-for="user in users.data"
+                        :key="user.id"
+                        class="p-4 space-y-3"
+                    >
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <h4 class="text-sm font-bold text-gray-900 dark:text-white truncate">{{ user.name }}</h4>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">{{ user.email }}</p>
+                                <p class="text-[11px] text-gray-400 mt-1">{{ user.contact?.phone || '-' }}</p>
+                            </div>
+                            <div class="flex shrink-0 gap-1">
+                                <template v-if="isReseller(user) && resellerStatus(user) === 'pending'">
+                                    <Button
+                                        icon="pi pi-check"
+                                        severity="success"
+                                        text
+                                        size="small"
+                                        v-tooltip.top="'Verifikasi Reseller'"
+                                        @click="verifyReseller(user)"
+                                    />
+                                    <Button
+                                        icon="pi pi-times"
+                                        severity="danger"
+                                        text
+                                        size="small"
+                                        v-tooltip.top="'Tolak'"
+                                        @click="rejectReseller(user)"
+                                    />
+                                </template>
+                                <Button icon="pi pi-pencil" severity="secondary" text size="small" @click="openEditModal(user)" />
+                                <Button icon="pi pi-trash" severity="danger" text size="small" @click="deleteUser(user)" :disabled="user.id === page.props.auth.user.id" />
+                            </div>
+                        </div>
+
+                        <div class="flex flex-wrap gap-1.5">
+                            <span
+                                v-for="role in user.roles"
+                                :key="role.id"
+                                :class="['text-[10px] px-2 py-0.5 rounded font-bold uppercase', getRoleBadge(role.name)]"
+                            >
+                                {{ role.name }}
+                            </span>
+                            <template v-if="isReseller(user) && resellerStatus(user)">
+                                <span :class="['text-[10px] px-2 py-0.5 rounded font-bold', getResellerBadge(resellerStatus(user))]">
+                                    {{ getResellerLabel(resellerStatus(user)) }}
+                                </span>
+                            </template>
+                        </div>
+                    </div>
+                    <div v-if="users.data.length === 0" class="p-6 text-center text-gray-400">Tidak ada pengguna ditemukan.</div>
                 </div>
 
                 <!-- Pagination Footer -->

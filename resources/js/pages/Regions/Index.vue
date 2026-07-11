@@ -127,11 +127,11 @@ const formatCurrency = (value) => {
             </div>
 
             <!-- Tabs Navigation -->
-            <div class="flex border-b border-gray-200 dark:border-gray-800">
+            <div class="flex overflow-x-auto border-b border-gray-200 dark:border-gray-800">
                 <button
                     @click="setTab('regions')"
                     :class="[
-                        'px-6 py-3 text-sm font-semibold border-b-2 -mb-px transition-all',
+                        'shrink-0 px-4 sm:px-6 py-3 text-sm font-semibold border-b-2 -mb-px transition-all',
                         activeTab === 'regions'
                             ? 'border-amber-500 text-amber-600 dark:text-amber-400 font-bold'
                             : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
@@ -142,7 +142,7 @@ const formatCurrency = (value) => {
                 <button
                     @click="setTab('shipping')"
                     :class="[
-                        'px-6 py-3 text-sm font-semibold border-b-2 -mb-px transition-all',
+                        'shrink-0 px-4 sm:px-6 py-3 text-sm font-semibold border-b-2 -mb-px transition-all',
                         activeTab === 'shipping'
                             ? 'border-amber-500 text-amber-600 dark:text-amber-400 font-bold'
                             : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
@@ -154,12 +154,12 @@ const formatCurrency = (value) => {
 
             <!-- Toolbar & Actions -->
             <div class="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4">
-                <div class="flex flex-1 gap-3 items-center">
+                <div class="flex flex-col sm:flex-row flex-1 gap-3 sm:items-center">
                     <!-- Type Filter (Only for Master Wilayah tab) -->
                     <select
                         v-if="activeTab === 'regions'"
                         v-model="typeFilter"
-                        class="border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm rounded-lg focus:border-amber-500 focus:ring-amber-500 shadow-sm"
+                        class="w-full sm:w-auto border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm rounded-lg focus:border-amber-500 focus:ring-amber-500 shadow-sm"
                     >
                         <option value="province">Provinsi</option>
                         <option value="city">Kota/Kabupaten</option>
@@ -183,14 +183,14 @@ const formatCurrency = (value) => {
                         v-if="typeFilter === 'province'"
                         label="Tambah Provinsi"
                         icon="pi pi-plus"
-                        class="!bg-amber-500 hover:!bg-amber-600 !border-amber-500 hover:!border-amber-600 !text-gray-950 font-bold"
+                        class="w-full sm:w-auto justify-center !bg-amber-500 hover:!bg-amber-600 !border-amber-500 hover:!border-amber-600 !text-gray-950 font-bold"
                         @click="openModal('add_province')"
                     />
                     <Button
                         v-else
                         label="Tambah Kota"
                         icon="pi pi-plus"
-                        class="!bg-amber-500 hover:!bg-amber-600 !border-amber-500 hover:!border-amber-600 !text-gray-950 font-bold"
+                        class="w-full sm:w-auto justify-center !bg-amber-500 hover:!bg-amber-600 !border-amber-500 hover:!border-amber-600 !text-gray-950 font-bold"
                         @click="openModal('add_city')"
                     />
                 </div>
@@ -199,7 +199,7 @@ const formatCurrency = (value) => {
             <!-- Table Card -->
             <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden shadow-sm">
                 <!-- 1. Master Wilayah Table -->
-                <div v-if="activeTab === 'regions'" class="overflow-x-auto">
+                <div v-if="activeTab === 'regions'" class="hidden md:block overflow-x-auto">
                     <table class="w-full text-sm text-left text-gray-600 dark:text-gray-400">
                         <thead class="text-xs text-gray-500 uppercase bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-800">
                             <tr>
@@ -234,8 +234,35 @@ const formatCurrency = (value) => {
                     </table>
                 </div>
 
+                <!-- 1. Master Wilayah Mobile Cards -->
+                <div v-if="activeTab === 'regions'" class="md:hidden divide-y divide-gray-150 dark:divide-gray-800">
+                    <div
+                        v-for="region in regions.data"
+                        :key="region.id"
+                        class="p-4 space-y-3"
+                    >
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <h4 class="text-sm font-bold text-gray-900 dark:text-white truncate">{{ region.name }}</h4>
+                                <p v-if="typeFilter === 'city'" class="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">
+                                    Provinsi: {{ region.parent ? region.parent.name : '-' }}
+                                </p>
+                            </div>
+                            <span class="shrink-0 text-[10px] px-2 py-0.5 rounded-full font-semibold bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+                                {{ region.type === 'province' ? 'Provinsi' : 'Kota/Kabupaten' }}
+                            </span>
+                        </div>
+
+                        <div class="flex justify-end gap-1">
+                            <Button icon="pi pi-pencil" severity="secondary" text size="small" @click="openModal('edit_region', region)" />
+                            <Button icon="pi pi-trash" severity="danger" text size="small" @click="deleteRegion(region)" />
+                        </div>
+                    </div>
+                    <div v-if="regions.data.length === 0" class="p-6 text-center text-gray-400">Tidak ada data wilayah ditemukan.</div>
+                </div>
+
                 <!-- 2. Pengaturan Ongkir Table -->
-                <div v-else class="overflow-x-auto">
+                <div v-else class="hidden md:block overflow-x-auto">
                     <table class="w-full text-sm text-left text-gray-600 dark:text-gray-400">
                         <thead class="text-xs text-gray-500 uppercase bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-800">
                             <tr>
@@ -271,6 +298,39 @@ const formatCurrency = (value) => {
                             </tr>
                         </tbody>
                     </table>
+                </div>
+
+                <!-- 2. Pengaturan Ongkir Mobile Cards -->
+                <div v-if="activeTab === 'shipping'" class="md:hidden divide-y divide-gray-150 dark:divide-gray-800">
+                    <div
+                        v-for="region in regions.data"
+                        :key="region.id"
+                        class="p-4 space-y-3"
+                    >
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <h4 class="text-sm font-bold text-gray-900 dark:text-white truncate">{{ region.name }}</h4>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">
+                                    {{ region.parent ? region.parent.name : '-' }}
+                                </p>
+                            </div>
+                            <span class="shrink-0 text-xs font-bold text-amber-600 dark:text-amber-400">
+                                {{ formatCurrency(region.shipping_rate ? region.shipping_rate.shipping_cost : 0) }}
+                            </span>
+                        </div>
+
+                        <div class="flex justify-end">
+                            <Button
+                                label="Atur Ongkir"
+                                icon="pi pi-dollar"
+                                severity="secondary"
+                                text
+                                size="small"
+                                @click="openModal('edit_shipping', region)"
+                            />
+                        </div>
+                    </div>
+                    <div v-if="regions.data.length === 0" class="p-6 text-center text-gray-400">Tidak ada data kota/kabupaten ditemukan.</div>
                 </div>
 
                 <!-- Pagination Footer -->

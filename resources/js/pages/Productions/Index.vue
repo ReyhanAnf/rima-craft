@@ -52,8 +52,8 @@ const formatDate = (dateStr) => {
                     <h2 class="text-xl font-bold text-gray-900 dark:text-white">Batch Produksi</h2>
                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Pantau konversi bahan baku menjadi produk jadi.</p>
                 </div>
-                <div class="flex w-full md:w-auto gap-3">
-                    <div class="relative w-full md:w-64">
+                <div class="flex flex-col sm:flex-row w-full md:w-auto gap-3">
+                    <div class="relative w-full sm:flex-1 md:w-64">
                         <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                         </span>
@@ -64,11 +64,11 @@ const formatDate = (dateStr) => {
                             @input="applySearch"
                         />
                     </div>
-                    <Link :href="route('productions.create')">
+                    <Link :href="route('productions.create')" class="w-full sm:w-auto">
                         <Button
                             label="Mulai Produksi"
                             icon="pi pi-plus"
-                            class="!bg-amber-500 hover:!bg-amber-600 !border-amber-500 hover:!border-amber-600 !text-gray-950 font-bold"
+                            class="w-full sm:w-auto justify-center !bg-amber-500 hover:!bg-amber-600 !border-amber-500 hover:!border-amber-600 !text-gray-950 font-bold"
                         />
                     </Link>
                 </div>
@@ -76,7 +76,8 @@ const formatDate = (dateStr) => {
 
             <!-- Table of Productions -->
             <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden shadow-sm">
-                <div class="overflow-x-auto">
+                <!-- Desktop Table -->
+                <div class="hidden md:block overflow-x-auto">
                     <table class="w-full text-sm text-left text-gray-600 dark:text-gray-400">
                         <thead class="text-xs text-gray-500 uppercase bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-800">
                             <tr>
@@ -126,6 +127,60 @@ const formatDate = (dateStr) => {
                             </tr>
                         </tbody>
                     </table>
+                </div>
+
+                <!-- Mobile Cards -->
+                <div class="md:hidden divide-y divide-gray-150 dark:divide-gray-800">
+                    <div
+                        v-for="prod in productions.data"
+                        :key="prod.id"
+                        class="p-4 space-y-3"
+                    >
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <h4 class="text-sm font-bold text-gray-900 dark:text-white">#{{ prod.id }}</h4>
+                                <p class="text-[11px] text-gray-400 mt-0.5">{{ formatDate(prod.date) }}</p>
+                            </div>
+                            <span class="shrink-0 text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                                Selesai
+                            </span>
+                        </div>
+
+                        <div class="space-y-2">
+                            <div>
+                                <p class="text-[10px] font-bold uppercase text-gray-400 tracking-wide">Hasil Produk Jadi</p>
+                                <div class="mt-1 flex flex-wrap gap-1.5">
+                                    <span
+                                        v-for="res in prod.results"
+                                        :key="res.id"
+                                        class="text-[11px] font-semibold px-2 py-1 rounded bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300"
+                                    >
+                                        {{ res.product?.name }} ({{ res.qty }} pcs)
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <p class="text-[10px] font-bold uppercase text-gray-400 tracking-wide">Bahan Terpakai</p>
+                                <div class="mt-1 flex flex-wrap gap-1.5">
+                                    <span
+                                        v-for="mat in prod.materials"
+                                        :key="mat.id"
+                                        class="text-[11px] px-2 py-1 rounded bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
+                                    >
+                                        {{ mat.material?.name }}: {{ mat.qty }} {{ mat.material?.unit }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end pt-1">
+                            <Link :href="route('productions.show', prod.id)">
+                                <Button label="Detail" icon="pi pi-eye" size="small" text rounded />
+                            </Link>
+                        </div>
+                    </div>
+                    <div v-if="productions.data.length === 0" class="p-6 text-center text-gray-400">Tidak ada batch produksi ditemukan.</div>
                 </div>
 
                 <!-- Pagination Footer -->

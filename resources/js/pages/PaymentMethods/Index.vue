@@ -132,14 +132,15 @@ function stripTags(html) {
                 <Button
                     label="Tambah Metode"
                     icon="pi pi-plus"
-                    class="!bg-amber-500 hover:!bg-amber-600 !border-amber-500 hover:!border-amber-600 !text-gray-950 font-bold"
+                    class="w-full sm:w-auto justify-center !bg-amber-500 hover:!bg-amber-600 !border-amber-500 hover:!border-amber-600 !text-gray-950 font-bold"
                     @click="openCreateModal"
                 />
             </div>
 
             <!-- List Table -->
             <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden shadow-sm">
-                <div class="overflow-x-auto">
+                <!-- Desktop Table -->
+                <div class="hidden md:block overflow-x-auto">
                     <table class="w-full text-sm text-left text-gray-600 dark:text-gray-400">
                         <thead class="text-xs text-gray-500 uppercase bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-800">
                             <tr>
@@ -198,6 +199,61 @@ function stripTags(html) {
                             </tr>
                         </tbody>
                     </table>
+                </div>
+
+                <!-- Mobile Cards -->
+                <div class="md:hidden divide-y divide-gray-150 dark:divide-gray-800">
+                    <div
+                        v-for="method in paymentMethods"
+                        :key="method.id"
+                        class="p-4 space-y-3"
+                    >
+                        <div class="flex items-start gap-3">
+                            <img
+                                :src="method.icon ? `/storage/${method.icon}` : 'https://placehold.co/100'"
+                                class="w-14 h-14 object-contain rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 p-1 shrink-0"
+                                alt=""
+                            />
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-start justify-between gap-2">
+                                    <div class="min-w-0">
+                                        <h4 class="text-sm font-bold text-gray-900 dark:text-white truncate">{{ method.name }}</h4>
+                                        <p class="text-xs text-gray-400 truncate mt-0.5">{{ stripTags(method.description) }}</p>
+                                    </div>
+                                    <span :class="['shrink-0 text-[10px] px-2 py-0.5 rounded-full font-bold', method.is_active ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400']">
+                                        {{ method.is_active ? 'Aktif' : 'Nonaktif' }}
+                                    </span>
+                                </div>
+
+                                <div class="flex flex-wrap gap-1.5 mt-2">
+                                    <span class="text-[10px] px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-mono uppercase">
+                                        {{ method.code }}
+                                    </span>
+                                    <span class="text-[10px] px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 font-bold uppercase">
+                                        {{ method.type }}
+                                    </span>
+                                    <span class="text-[10px] px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+                                        Urutan {{ method.sort_order }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-end justify-between gap-3">
+                            <div class="min-w-0 text-xs">
+                                <template v-if="method.account_number">
+                                    <p class="font-semibold text-gray-800 dark:text-gray-200 truncate">{{ method.account_number }}</p>
+                                    <p class="text-gray-500 truncate">a/n {{ method.account_name }}</p>
+                                </template>
+                                <span v-else class="text-gray-400 italic">Tidak ada detail akun</span>
+                            </div>
+                            <div class="flex shrink-0 gap-1">
+                                <Button icon="pi pi-pencil" severity="secondary" text size="small" @click="openEditModal(method)" />
+                                <Button icon="pi pi-trash" severity="danger" text size="small" @click="deleteMethod(method)" />
+                            </div>
+                        </div>
+                    </div>
+                    <div v-if="paymentMethods.length === 0" class="p-6 text-center text-gray-400">Belum ada metode pembayaran yang terdaftar.</div>
                 </div>
             </div>
 

@@ -169,7 +169,67 @@ const getRequiredAction = (order) => {
 
             <!-- Table of Orders -->
             <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden shadow-sm">
-                <div class="overflow-x-auto">
+
+                <!-- Mobile: card list -->
+                <div class="md:hidden divide-y divide-gray-100 dark:divide-gray-800">
+                    <div v-if="orders.data.length === 0" class="px-4 py-10 text-center text-gray-400 text-sm">Tidak ada pesanan ditemukan.</div>
+                    <div
+                        v-for="order in orders.data"
+                        :key="order.id"
+                        class="p-4 space-y-3"
+                    >
+                        <!-- Row 1: order number + action badge -->
+                        <div class="flex items-start justify-between gap-2">
+                            <div>
+                                <p class="text-xs font-black text-gray-900 dark:text-white">{{ order.order_number }}</p>
+                                <p class="text-[11px] text-gray-400 mt-0.5">{{ formatDate(order.created_at) }}</p>
+                            </div>
+                            <span v-if="getRequiredAction(order)" :class="[
+                                'inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded font-bold uppercase border shrink-0',
+                                getRequiredAction(order).severity === 'warning' ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20 animate-pulse' :
+                                getRequiredAction(order).severity === 'danger' ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20' :
+                                'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20'
+                            ]">
+                                <i :class="[getRequiredAction(order).icon, 'text-[9px]']"></i>
+                                {{ getRequiredAction(order).label }}
+                            </span>
+                        </div>
+
+                        <!-- Row 2: customer name + phone -->
+                        <div>
+                            <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ order.customer_name }}</p>
+                            <p class="text-[11px] text-gray-400">{{ order.customer_phone }}</p>
+                        </div>
+
+                        <!-- Row 3: badges + total + action button -->
+                        <div class="flex items-center justify-between gap-2 pt-1">
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <span :class="[
+                                    'text-[10px] px-2 py-0.5 rounded-full font-bold uppercase',
+                                    order.status === 'completed' ? 'bg-emerald-50 text-emerald-700' :
+                                    order.status === 'shipped' ? 'bg-blue-50 text-blue-600' :
+                                    order.status === 'cancelled' ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'
+                                ]">{{ order.status }}</span>
+                                <span :class="[
+                                    'text-[10px] px-2 py-0.5 rounded-full font-bold uppercase',
+                                    order.payment_status === 'paid' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'
+                                ]">{{ order.payment_status }}</span>
+                                <span class="text-sm font-black text-gray-900 dark:text-white">{{ formatCurrency(order.total) }}</span>
+                            </div>
+                            <Link :href="route('orders.show', order.id)" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition active:scale-[0.97]"
+                                :class="getRequiredAction(order)
+                                    ? 'bg-amber-500 hover:bg-amber-600 text-gray-950'
+                                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'"
+                            >
+                                <i :class="getRequiredAction(order) ? getRequiredAction(order).icon : 'pi pi-eye'" class="text-[11px]"></i>
+                                {{ getRequiredAction(order) ? 'Tindak' : 'Detail' }}
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Desktop: table -->
+                <div class="hidden md:block overflow-x-auto">
                     <table class="w-full text-sm text-left text-gray-600 dark:text-gray-400">
                         <thead class="text-xs text-gray-500 uppercase bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-800">
                             <tr>
@@ -232,37 +292,37 @@ const getRequiredAction = (order) => {
                                 </td>
                                 <td class="px-6 py-4 text-right">
                                     <Link :href="route('orders.show', order.id)">
-                                        <Button 
+                                        <Button
                                             v-if="getRequiredAction(order)"
-                                            :label="getRequiredAction(order).label === 'Butuh Verifikasi' ? 'Verifikasi' : getRequiredAction(order).label" 
+                                            :label="getRequiredAction(order).label === 'Butuh Verifikasi' ? 'Verifikasi' : getRequiredAction(order).label"
                                             :icon="getRequiredAction(order).icon"
                                             :severity="getRequiredAction(order).severity"
-                                            size="small" 
+                                            size="small"
                                             class="font-bold shadow-sm"
                                         />
-                                        <Button 
+                                        <Button
                                             v-else
-                                            label="Detail" 
-                                            icon="pi pi-eye" 
-                                            severity="secondary" 
-                                            text 
-                                            rounded 
-                                            size="small" 
+                                            label="Detail"
+                                            icon="pi pi-eye"
+                                            severity="secondary"
+                                            text
+                                            rounded
+                                            size="small"
                                         />
                                     </Link>
                                 </td>
                             </tr>
                             <tr v-if="orders.data.length === 0">
-                                <td colspan="7" class="px-6 py-8 text-center text-gray-400">Tidak ada pesanan ditemukan.</td>
+                                <td colspan="8" class="px-6 py-8 text-center text-gray-400">Tidak ada pesanan ditemukan.</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
 
                 <!-- Pagination Footer -->
-                <div v-if="orders.links.length > 3" class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/20 flex justify-between items-center">
-                    <span class="text-xs text-gray-500">Menampilkan {{ orders.from || 0 }} - {{ orders.to || 0 }} dari {{ orders.total }} pesanan</span>
-                    <div class="flex gap-1">
+                <div v-if="orders.links.length > 3" class="px-4 md:px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/20 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <span class="text-xs text-gray-500">Menampilkan {{ orders.from || 0 }} – {{ orders.to || 0 }} dari {{ orders.total }} pesanan</span>
+                    <div class="flex flex-wrap gap-1">
                         <Link
                             v-for="link in orders.links"
                             :key="link.label"
