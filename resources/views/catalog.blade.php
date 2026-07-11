@@ -29,36 +29,35 @@
     </div>
 
     <!-- Cinematic Video Showcase Section -->
-    <section id="cinematic-showcase" class="bg-white dark:bg-gray-950 overflow-hidden">
+    <section id="cinematic-showcase" class="bg-[#f7f3ed] dark:bg-gray-950 overflow-hidden">
         <div class="grid grid-cols-1 lg:grid-cols-5 min-h-[70vh] lg:min-h-[85vh]">
             <!-- Text Content -->
             <div class="flex flex-col justify-center px-8 py-20 lg:py-28 lg:px-16 xl:px-24 order-2 lg:order-1 lg:col-span-3">
-                <span class="text-amber-600 dark:text-amber-500 font-bold tracking-widest uppercase text-xs mb-4 block">Di Balik Layar</span>
-                <h2 class="text-4xl md:text-5xl font-serif font-bold tracking-wide text-gray-900 dark:text-white mb-6 leading-tight">
-                    Proses Pembuatan Produk Kami
-                </h2>
-                <p class="text-lg text-gray-500 dark:text-gray-400 font-light mb-12 leading-relaxed">
-                    Lihat bagaimana para pengrajin lokal kami memproses bahan mentah menjadi karya seni yang indah dan fungsional untuk Anda. Sebuah proses presisi tinggi yang melestarikan warisan budaya.
+                <div class="mb-10">
+                    <p class="text-sm text-amber-700 dark:text-amber-400 mb-5 flex items-center gap-3">
+                        <span class="block h-px w-10 bg-amber-400"></span>
+                        <span>Cara kami bekerja</span>
+                    </p>
+                    <h2 class="max-w-lg">
+                        <span class="block font-serif italic text-3xl md:text-4xl text-gray-800 dark:text-gray-100 leading-snug mb-1">Proses anyaman</span>
+                        <span class="block text-2xl md:text-3xl font-semibold text-gray-900 dark:text-white tracking-tight leading-snug">dari bahan mentah ke produk jadi.</span>
+                    </h2>
+                </div>
+
+                <p class="text-[15px] md:text-base text-gray-600 dark:text-gray-300 leading-[1.8] max-w-md mb-14">
+                    Rotan dan pandan diolah oleh pengrajin lokal. Dikupas, dikeringkan, lalu dianyam satu per satu.
                 </p>
-                
-                <div class="space-y-8">
-                    <div class="flex items-start gap-5">
-                        <div class="mt-1.5 flex-shrink-0">
-                            <div class="w-2.5 h-2.5 rounded-full bg-amber-500 ring-4 ring-amber-500/20"></div>
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-xl text-gray-900 dark:text-white mb-2">Dibuat dengan Tangan</h4>
-                            <p class="text-gray-500 dark:text-gray-400 font-light leading-relaxed">Diproses secara manual tanpa campur tangan mesin pabrik massal, menjaga nilai otentik di setiap anyaman.</p>
-                        </div>
+
+                <div class="grid sm:grid-cols-2 gap-8 max-w-lg">
+                    <div class="border-l-2 border-amber-400 pl-5">
+                        <span class="text-[11px] font-medium text-amber-600 dark:text-amber-400 tabular-nums mb-2 block">01</span>
+                        <p class="text-sm font-semibold text-gray-900 dark:text-white mb-1.5">Anyaman manual</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">Setiap produk dianyam tangan, tanpa mesin produksi massal.</p>
                     </div>
-                    <div class="flex items-start gap-5">
-                        <div class="mt-1.5 flex-shrink-0">
-                            <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 ring-4 ring-emerald-500/20"></div>
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-xl text-gray-900 dark:text-white mb-2">Kualitas Terjaga</h4>
-                            <p class="text-gray-500 dark:text-gray-400 font-light leading-relaxed">Menggunakan material alam pilihan terbaik yang telah melalui tahap sortir ketat agar awet dan tahan lama.</p>
-                        </div>
+                    <div class="border-l-2 border-stone-300 dark:border-stone-600 pl-5">
+                        <span class="text-[11px] font-medium text-stone-500 dark:text-stone-400 tabular-nums mb-2 block">02</span>
+                        <p class="text-sm font-semibold text-gray-900 dark:text-white mb-1.5">Sortir bahan</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">Bahan diseleksi sebelum masuk proses anyaman.</p>
                     </div>
                 </div>
             </div>
@@ -86,97 +85,91 @@
         </div>
     </section>
 
-    <!-- Image Gallery Mosaic -->
-    <section class="py-20 lg:py-28 bg-white dark:bg-gray-900 border-t border-b border-gray-100 dark:border-gray-800">
+    <!-- Image Gallery -->
+    <section class="py-16 md:py-24 bg-white dark:bg-gray-900">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
-                <div class="max-w-2xl">
-                    <h2 class="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight mb-4">Galeri</h2>
-                    <p class="text-lg text-gray-500 dark:text-gray-400">Estetika kerajinan tangan lokal yang diabadikan melalui lensa visual yang menceritakan sebuah kisah karya.</p>
+            <div class="mb-10 md:mb-14 md:flex md:items-end md:justify-between md:gap-12">
+                <div class="max-w-md">
+                    <p class="text-sm text-amber-700 dark:text-amber-400 mb-5 flex items-center gap-3">
+                        <span class="block h-px w-10 bg-amber-400"></span>
+                        <span>Galeri</span>
+                    </p>
+                    <h2 class="max-w-sm">
+                        <span class="block font-serif italic text-2xl md:text-3xl text-gray-800 dark:text-gray-100 leading-snug mb-1">Foto workshop</span>
+                        <span class="block text-xl md:text-2xl font-semibold text-gray-900 dark:text-white tracking-tight leading-snug">dan produk jadi.</span>
+                    </h2>
                 </div>
+                <p class="mt-6 md:mt-0 text-[15px] text-gray-500 dark:text-gray-400 leading-relaxed max-w-xs md:text-right">
+                    Dokumentasi proses anyaman dan hasil karya dari workshop kami.
+                </p>
             </div>
-            
-            <!-- Horizontal Asymmetric Slider Gallery -->
+
             @if(isset($galleries) && $galleries->count() > 0)
-                <div class="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar gap-6 md:gap-8 pb-8 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
-                    @foreach($galleries->chunk(2) as $chunk)
-                        <div class="flex-none w-[90vw] md:w-[80vw] lg:w-[65vw] snap-center">
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 h-full">
-                                @foreach($chunk as $gallery)
-                                    @if($loop->first)
-                                        <!-- Large Image (Landscape) -->
-                                        <div class="md:col-span-2 h-[350px] md:h-[500px] rounded-2xl overflow-hidden shadow-lg group relative bg-gray-200 dark:bg-gray-800">
-                                            <img src="{{ asset('storage/' . $gallery->image_url) }}" alt="{{ $gallery->title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000">
-                                            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6 md:p-8">
-                                                @if($gallery->label)
-                                                    <span class="text-amber-400 font-bold text-xs md:text-sm tracking-wider uppercase mb-1 md:mb-2">{{ $gallery->label }}</span>
-                                                @endif
-                                                @if($gallery->title)
-                                                    <span class="text-white font-serif font-bold text-2xl md:text-3xl">{{ $gallery->title }}</span>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    @else
-                                        <!-- Small Image (Portrait) -->
-                                        <div class="md:col-span-1 h-[350px] md:h-[500px] rounded-2xl overflow-hidden shadow-lg group relative bg-gray-200 dark:bg-gray-800 hidden md:block">
-                                            <img src="{{ asset('storage/' . $gallery->image_url) }}" alt="{{ $gallery->title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000">
-                                            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6 md:p-8">
-                                                @if($gallery->label)
-                                                    <span class="text-amber-400 font-bold text-[10px] md:text-xs tracking-wider uppercase mb-1">{{ $gallery->label }}</span>
-                                                @endif
-                                                @if($gallery->title)
-                                                    <span class="text-white font-serif font-bold text-lg md:text-xl">{{ $gallery->title }}</span>
-                                                @endif
-                                            </div>
-                                        </div>
-                                        <!-- Mobile version of Small Image -->
-                                        <div class="col-span-1 h-[300px] rounded-2xl overflow-hidden shadow-lg group relative bg-gray-200 dark:bg-gray-800 md:hidden">
-                                            <img src="{{ asset('storage/' . $gallery->image_url) }}" alt="{{ $gallery->title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000">
-                                            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6">
-                                                @if($gallery->label)
-                                                    <span class="text-amber-400 font-bold text-[10px] tracking-wider uppercase mb-1">{{ $gallery->label }}</span>
-                                                @endif
-                                                @if($gallery->title)
-                                                    <span class="text-white font-serif font-bold text-lg">{{ $gallery->title }}</span>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    @endif
-                                @endforeach
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-x-5 md:gap-y-10">
+                    @foreach($galleries as $i => $gallery)
+                        @php
+                            $isWide = $i === 0 || $i % 4 === 3;
+                            $aspect = $i === 0 ? 'aspect-[16/10] sm:aspect-[21/9]' : ($i % 3 === 1 ? 'aspect-[3/4]' : 'aspect-[4/3]');
+                            $colSpan = $isWide ? 'sm:col-span-2 lg:col-span-2' : '';
+                        @endphp
+                        <figure class="group {{ $colSpan }}">
+                            <div class="overflow-hidden bg-stone-100 dark:bg-gray-800 {{ $aspect }}">
+                                <img
+                                    src="{{ asset('storage/' . $gallery->image_url) }}"
+                                    alt="{{ $gallery->title ?? 'Galeri Rima Craft' }}"
+                                    class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+                                    loading="lazy"
+                                >
                             </div>
-                        </div>
+                            @if($gallery->label || $gallery->title)
+                                <figcaption class="pt-3 flex items-baseline justify-between gap-3 px-0.5">
+                                    @if($gallery->title)
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white leading-snug">{{ $gallery->title }}</p>
+                                    @endif
+                                    @if($gallery->label)
+                                        <span class="text-[11px] text-stone-400 dark:text-stone-500 shrink-0">{{ $gallery->label }}</span>
+                                    @endif
+                                </figcaption>
+                            @endif
+                        </figure>
                     @endforeach
                 </div>
-                
-                <!-- Scroll Indicator (Optional) -->
-                @if($galleries->count() > 2)
-                    <div class="flex justify-center items-center gap-2 mt-4 text-gray-400 dark:text-gray-500 text-sm font-medium">
-                        <svg class="w-4 h-4 animate-bounce-x" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
-                        <span>Geser untuk melihat lebih banyak</span>
-                    </div>
-                @endif
             @else
-                <div class="text-center py-20 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800">
-                    <p class="text-gray-500 dark:text-gray-400">Belum ada foto galeri.</p>
+                <div class="py-16 md:py-20 border border-dashed border-stone-200 dark:border-stone-700 text-center">
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Belum ada foto galeri.</p>
                 </div>
             @endif
         </div>
     </section>
 
     <!-- Video Storytelling Section -->
-    <section class="py-20 lg:py-28 bg-gray-50 dark:bg-gray-950">
-        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center max-w-3xl mx-auto mb-12">
-                <span class="text-primary-600 dark:text-primary-400 font-bold tracking-wider uppercase text-sm mb-2 block">Storytelling</span>
-                <h2 class="text-3xl md:text-5xl font-extrabold text-gray-900 dark:text-white tracking-tight mb-6">Melihat Proses Kerajinan</h2>
-                <p class="text-lg text-gray-500 dark:text-gray-400">Saksikan secara langsung bagaimana dedikasi dan keterampilan tangan maestro pengrajin lokal kami berpadu untuk menciptakan produk bernilai seni tinggi.</p>
+    <section class="py-16 md:py-24 bg-stone-50 dark:bg-gray-950">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="mb-8 md:mb-10 md:flex md:items-end md:justify-between md:gap-12">
+                <div class="max-w-md">
+                    <p class="text-sm text-amber-700 dark:text-amber-400 mb-5 flex items-center gap-3">
+                        <span class="block h-px w-10 bg-amber-400"></span>
+                        <span>Video proses</span>
+                    </p>
+                    <h2 class="max-w-sm">
+                        <span class="block font-serif italic text-2xl md:text-3xl text-gray-800 dark:text-gray-100 leading-snug mb-1">Proses di workshop</span>
+                        <span class="block text-xl md:text-2xl font-semibold text-gray-900 dark:text-white tracking-tight leading-snug">dalam video singkat.</span>
+                    </h2>
+                </div>
+                <p class="mt-6 md:mt-0 text-[15px] text-gray-500 dark:text-gray-400 leading-relaxed max-w-xs md:text-right">
+                    Cuplikan pekerjaan anyaman langsung dari bengkel pengrajin kami.
+                </p>
             </div>
-            
-            <div class="aspect-video w-full rounded-3xl overflow-hidden shadow-2xl relative bg-black ring-1 ring-gray-200 dark:ring-gray-800 group">
-                <!-- Fallback background / overlay if needed -->
-                <div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition duration-500 pointer-events-none z-10"></div>
-                <!-- YouTube Iframe -->
-                <iframe class="w-full h-full absolute inset-0 z-0" src="{{ config('settings.video_url', 'https://www.youtube.com/embed/ScMzIvxBSi4') }}?rel=0&modestbranding=1" title="Proses Pembuatan Anyaman" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+
+            <div class="relative aspect-video w-full overflow-hidden bg-stone-900 border border-stone-200 dark:border-stone-700">
+                <iframe
+                    class="absolute inset-0 w-full h-full"
+                    src="{{ config('settings.video_url', 'https://www.youtube.com/embed/ScMzIvxBSi4') }}?rel=0&modestbranding=1"
+                    title="Video proses anyaman Rima Craft"
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowfullscreen
+                ></iframe>
             </div>
         </div>
     </section>
