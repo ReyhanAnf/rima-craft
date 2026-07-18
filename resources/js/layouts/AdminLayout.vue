@@ -230,7 +230,7 @@ const mobileBottomItems = computed(() => {
                         <span class="text-white font-bold">R</span>
                     </div>
                     <div v-show="adminStore.isSidebarOpen" class="flex flex-col min-w-0">
-                        <span class="font-bold text-sm text-gray-900 dark:text-white leading-tight truncate">
+                        <span class="font-serif font-extrabold text-sm uppercase tracking-wider bg-gradient-to-r from-amber-600 to-amber-500 dark:from-amber-400 dark:to-amber-300 bg-clip-text text-transparent leading-tight truncate block">
                             {{ siteConfig.business_name || 'Rima Craft' }}
                         </span>
                     </div>
@@ -320,7 +320,7 @@ const mobileBottomItems = computed(() => {
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                         </svg>
                     </button>
-                    <span v-if="siteConfig.business_subtitle" class="text-xs text-gray-500 dark:text-gray-400 font-medium leading-none truncate">
+                    <span v-if="siteConfig.business_subtitle" class="text-xs text-gray-500 dark:text-gray-400 font-bold tracking-wider uppercase leading-none truncate">
                         {{ siteConfig.business_subtitle }}
                     </span>
                 </div>
@@ -330,7 +330,7 @@ const mobileBottomItems = computed(() => {
                         <span class="text-white font-bold">R</span>
                     </div>
                     <div class="flex flex-col min-w-0">
-                        <span class="font-bold text-sm text-gray-900 dark:text-white leading-tight truncate">
+                        <span class="font-serif font-extrabold text-sm uppercase tracking-wider bg-gradient-to-r from-amber-600 to-amber-500 dark:from-amber-400 dark:to-amber-300 bg-clip-text text-transparent leading-tight truncate block">
                             {{ siteConfig.business_name || 'Rima Craft' }}
                         </span>
                     </div>

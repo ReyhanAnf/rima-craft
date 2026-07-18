@@ -8,24 +8,12 @@ import Editor from 'primevue/editor';
 import InputNumber from 'primevue/inputnumber';
 import Dialog from 'primevue/dialog';
 import Message from 'primevue/message';
-import Toast from 'primevue/toast';
-import { useToast } from 'primevue/usetoast';
 
 const props = defineProps({
     paymentMethods: Array,
 });
 
-const toast = useToast();
 const page = usePage();
-
-watch(() => page.props.flash, (flash) => {
-    if (flash?.success) {
-        toast.add({ severity: 'success', summary: 'Sukses', detail: flash.success, life: 3000 });
-    }
-    if (flash?.error) {
-        toast.add({ severity: 'error', summary: 'Error', detail: flash.error, life: 4000 });
-    }
-}, { deep: true, immediate: true });
 
 const isFormOpen = ref(false);
 const editingMethod = ref(null);
@@ -110,7 +98,6 @@ const deleteMethod = (method) => {
 };
 
 
-
 function stripTags(html) {
     if (!html) return '';
     return html.replace(/<[^>]*>/g, '');
@@ -120,7 +107,6 @@ function stripTags(html) {
 <template>
     <AdminLayout>
         <Head title="Pengaturan Metode Pembayaran" />
-        <Toast />
 
         <div class="space-y-6">
             <!-- Header -->

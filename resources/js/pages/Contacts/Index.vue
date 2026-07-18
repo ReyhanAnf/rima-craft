@@ -8,25 +8,13 @@ import Textarea from 'primevue/textarea';
 import Dropdown from 'primevue/dropdown';
 import Dialog from 'primevue/dialog';
 import Message from 'primevue/message';
-import Toast from 'primevue/toast';
-import { useToast } from 'primevue/usetoast';
 
 const props = defineProps({
     contacts: Object,
     filters: Object,
 });
 
-const toast = useToast();
 const page = usePage();
-
-watch(() => page.props.flash, (flash) => {
-    if (flash?.success) {
-        toast.add({ severity: 'success', summary: 'Sukses', detail: flash.success, life: 3000 });
-    }
-    if (flash?.error) {
-        toast.add({ severity: 'error', summary: 'Error', detail: flash.error, life: 4000 });
-    }
-}, { deep: true, immediate: true });
 
 // Filter Panel State
 const searchQuery = ref(props.filters.search || '');
@@ -134,7 +122,6 @@ const getTypeText = (type) => {
 <template>
     <AdminLayout>
         <Head title="Manajemen Kontak & Relasi" />
-        <Toast />
 
         <div class="space-y-6">
             <!-- Header section -->

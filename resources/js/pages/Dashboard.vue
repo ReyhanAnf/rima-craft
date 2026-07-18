@@ -324,7 +324,6 @@ const maxProductQty = computed(() => {
                 <div>
                     <h2 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                         <span>Halo, {{ $page.props.auth.user.name }}!</span>
-                        <span class="text-amber-500 wave-animation">👋</span>
                     </h2>
                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                         Berikut performa & analisis data operasional keuangan Rima Craft terkini.

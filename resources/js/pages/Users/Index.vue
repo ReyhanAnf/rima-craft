@@ -8,8 +8,6 @@ import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
 import Dropdown from 'primevue/dropdown';
 import Dialog from 'primevue/dialog';
-import Toast from 'primevue/toast';
-import { useToast } from 'primevue/usetoast';
 import Message from 'primevue/message';
 
 const props = defineProps({
@@ -18,17 +16,7 @@ const props = defineProps({
     filters: Object,
 });
 
-const toast = useToast();
 const page = usePage();
-
-watch(() => page.props.flash, (flash) => {
-    if (flash?.success) {
-        toast.add({ severity: 'success', summary: 'Sukses', detail: flash.success, life: 3000 });
-    }
-    if (flash?.error) {
-        toast.add({ severity: 'error', summary: 'Error', detail: flash.error, life: 4000 });
-    }
-}, { deep: true, immediate: true });
 
 // Filters
 const searchQuery = ref(props.filters.search || '');
@@ -167,7 +155,6 @@ const getRoleBadge = (roleName) => {
 <template>
     <AdminLayout>
         <Head title="Manajemen Pengguna" />
-        <Toast />
 
         <div class="space-y-6">
             <!-- Header section -->

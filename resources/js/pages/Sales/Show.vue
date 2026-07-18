@@ -5,24 +5,12 @@ import AdminLayout from '@/layouts/AdminLayout.vue';
 import Card from 'primevue/card';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
-import Toast from 'primevue/toast';
-import { useToast } from 'primevue/usetoast';
 
 const props = defineProps({
     sale: Object,
 });
 
-const toast = useToast();
 const page = usePage();
-
-watch(() => page.props.flash, (flash) => {
-    if (flash?.success) {
-        toast.add({ severity: 'success', summary: 'Sukses', detail: flash.success, life: 3000 });
-    }
-    if (flash?.error) {
-        toast.add({ severity: 'error', summary: 'Error', detail: flash.error, life: 4000 });
-    }
-}, { deep: true, immediate: true });
 
 const shippingStatus = ref(props.sale.shipping_status);
 const paymentStatus = ref(props.sale.payment_status);
@@ -77,7 +65,6 @@ const balanceDue = computed(() => {
 <template>
     <AdminLayout>
         <Head :title="`Faktur Penjualan ${sale.invoice_number || sale.id}`" />
-        <Toast />
 
         <div class="space-y-6 max-w-4xl mx-auto">
             <!-- Header buttons -->

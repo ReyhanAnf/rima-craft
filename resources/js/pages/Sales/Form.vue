@@ -9,15 +9,12 @@ import InputNumber from 'primevue/inputnumber';
 import Dropdown from 'primevue/dropdown';
 import Checkbox from 'primevue/checkbox';
 import Message from 'primevue/message';
-import Toast from 'primevue/toast';
-import { useToast } from 'primevue/usetoast';
 
 const props = defineProps({
     customers: Array,
     products: Array,
 });
 
-const toast = useToast();
 const page = usePage();
 
 const customerType = ref('registered'); // 'registered' or 'manual'
@@ -94,7 +91,6 @@ const formatCurrency = (val) => {
 <template>
     <AdminLayout>
         <Head title="Catat Penjualan Baru" />
-        <Toast />
 
         <div class="max-w-4xl mx-auto pb-24 space-y-6">
             <div class="flex items-center gap-4">

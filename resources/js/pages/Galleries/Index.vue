@@ -6,25 +6,13 @@ import Card from 'primevue/card';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Dialog from 'primevue/dialog';
-import Toast from 'primevue/toast';
-import { useToast } from 'primevue/usetoast';
 import Message from 'primevue/message';
 
 const props = defineProps({
     galleries: Array,
 });
 
-const toast = useToast();
 const page = usePage();
-
-watch(() => page.props.flash, (flash) => {
-    if (flash?.success) {
-        toast.add({ severity: 'success', summary: 'Sukses', detail: flash.success, life: 3000 });
-    }
-    if (flash?.error) {
-        toast.add({ severity: 'error', summary: 'Error', detail: flash.error, life: 4000 });
-    }
-}, { deep: true, immediate: true });
 
 const isUploadOpen = ref(false);
 
@@ -57,7 +45,6 @@ const deletePhoto = (photo) => {
 <template>
     <AdminLayout>
         <Head title="Manajemen Galeri Foto" />
-        <Toast />
 
         <div class="space-y-6">
             <!-- Header section -->

@@ -8,16 +8,12 @@ import InputText from "primevue/inputtext";
 import InputNumber from "primevue/inputnumber";
 import Dropdown from "primevue/dropdown";
 import Message from "primevue/message";
-import Toast from "primevue/toast";
-import { useToast } from "primevue/usetoast";
 
 const props = defineProps({
     materials: Array,
     products: Array,
     artisans: Array,
 });
-
-const toast = useToast();
 
 const form = useForm({
     date: new Date().toISOString().split("T")[0],
@@ -113,7 +109,6 @@ const formatCurrency = (val) => {
 <template>
     <AdminLayout>
         <Head title="Proses Produksi Baru" />
-        <Toast />
 
         <div class="max-w-5xl mx-auto pb-24 space-y-6">
             <div class="flex items-center gap-4">

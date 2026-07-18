@@ -93,7 +93,7 @@ const installPWA = async () => {
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-12 md:gap-8 mb-16">
                     <div class="md:col-span-2">
-                        <h2 class="text-2xl font-serif font-bold tracking-widest text-gray-900 dark:text-white uppercase mb-6">{{ businessName }}</h2>
+                        <h2 class="text-2xl font-serif font-extrabold tracking-widest bg-gradient-to-r from-amber-600 to-amber-500 dark:from-amber-400 dark:to-amber-300 bg-clip-text text-transparent uppercase mb-6">{{ businessName }}</h2>
                         <p class="text-gray-500 dark:text-gray-400 font-light leading-relaxed max-w-md">{{ heroDescription }}</p>
                     </div>
 

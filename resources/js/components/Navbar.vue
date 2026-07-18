@@ -54,12 +54,12 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll));
         >
             <div class="flex items-center">
                 <Link href="/" class="flex items-center gap-3">
-                    <img v-if="siteConfig.logo_url" :src="`/storage/${siteConfig.logo_url}`" class="h-14 w-auto object-contain rounded" alt="Logo" />
+                    <img v-if="siteConfig.logo_url" :src="`/storage/${siteConfig.logo_url}`" class="h-14 w-auto object-contain rounded transition-transform duration-300 hover:scale-105" alt="Logo" />
                     <div>
-                        <h1 class="text-xl md:text-2xl font-serif font-bold tracking-[0.10em] text-gray-900 dark:text-white uppercase transition-colors leading-none">
+                        <h1 class="text-xl md:text-2xl font-serif font-extrabold tracking-[0.12em] bg-gradient-to-r from-amber-600 to-amber-500 dark:from-amber-400 dark:to-amber-300 bg-clip-text text-transparent uppercase transition-all duration-300 leading-none">
                             {{ businessName }}
                         </h1>
-                        <p v-if="siteConfig.business_subtitle" class="text-[9px] md:text-[10px] text-gray-500 dark:text-gray-400 font-medium tracking-normal mt-1.5 leading-tight">
+                        <p v-if="siteConfig.business_subtitle" class="text-[9px] md:text-[10px] text-gray-500 dark:text-gray-400 font-bold tracking-[0.15em] uppercase mt-1 leading-tight">
                             {{ siteConfig.business_subtitle }}
                         </p>
                     </div>

@@ -4,32 +4,20 @@ import { Head, Link, usePage } from '@inertiajs/vue3';
 import AdminLayout from '@/layouts/AdminLayout.vue';
 import Card from 'primevue/card';
 import Button from 'primevue/button';
-import Toast from 'primevue/toast';
-import { useToast } from 'primevue/usetoast';
 
 const props = defineProps({
     roles: Array,
 });
 
-const toast = useToast();
 const page = usePage();
 
 const isDevAdmin = computed(() => page.props.auth?.roles?.includes('dev-admin'));
 
-watch(() => page.props.flash, (flash) => {
-    if (flash?.success) {
-        toast.add({ severity: 'success', summary: 'Sukses', detail: flash.success, life: 3000 });
-    }
-    if (flash?.error) {
-        toast.add({ severity: 'error', summary: 'Error', detail: flash.error, life: 4000 });
-    }
-}, { deep: true, immediate: true });
 </script>
 
 <template>
     <AdminLayout>
         <Head title="Manajemen Peran / Hak Akses" />
-        <Toast />
 
         <div class="space-y-6 max-w-4xl mx-auto">
             <!-- Access Restriction Warning -->

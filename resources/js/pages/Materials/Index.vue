@@ -9,26 +9,15 @@ import InputNumber from 'primevue/inputnumber';
 import Dropdown from 'primevue/dropdown';
 import Dialog from 'primevue/dialog';
 import Message from 'primevue/message';
-import Toast from 'primevue/toast';
-import { useToast } from 'primevue/usetoast';
 
 const props = defineProps({
     materials: Object,
     filters: Object,
 });
 
-const toast = useToast();
 const page = usePage();
 
 // Handle Flash Messages
-watch(() => page.props.flash, (flash) => {
-    if (flash?.success) {
-        toast.add({ severity: 'success', summary: 'Sukses', detail: flash.success, life: 3000 });
-    }
-    if (flash?.error) {
-        toast.add({ severity: 'error', summary: 'Error', detail: flash.error, life: 4000 });
-    }
-}, { deep: true, immediate: true });
 
 // Filters State
 const searchQuery = ref(props.filters.search || '');
@@ -132,7 +121,6 @@ const formatCurrency = (val) => {
 <template>
     <AdminLayout>
         <Head title="Manajemen Bahan Baku" />
-        <Toast />
 
         <div class="space-y-6">
             <!-- Header section -->

@@ -9,8 +9,6 @@ import InputNumber from 'primevue/inputnumber';
 import Dropdown from 'primevue/dropdown';
 import DatePicker from 'primevue/datepicker';
 import Dialog from 'primevue/dialog';
-import Toast from 'primevue/toast';
-import { useToast } from 'primevue/usetoast';
 import Message from 'primevue/message';
 import Chart from 'primevue/chart';
 
@@ -29,17 +27,7 @@ const props = defineProps({
     filters: Object,
 });
 
-const toast = useToast();
 const page = usePage();
-
-watch(() => page.props.flash, (flash) => {
-    if (flash?.success) {
-        toast.add({ severity: 'success', summary: 'Sukses', detail: flash.success, life: 3000 });
-    }
-    if (flash?.error) {
-        toast.add({ severity: 'error', summary: 'Error', detail: flash.error, life: 4000 });
-    }
-}, { deep: true, immediate: true });
 
 // Filter Panel State
 const filterStartDate = ref(props.filters.start_date || props.startDate);
@@ -244,7 +232,6 @@ const getLabelColor = (label) => {
 <template>
     <AdminLayout>
         <Head title="Dasbor Keuangan & Kas" />
-        <Toast />
 
         <div class="space-y-6">
             <!-- Header section -->
