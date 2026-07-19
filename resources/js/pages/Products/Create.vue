@@ -6,6 +6,7 @@ import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
 import InputNumber from 'primevue/inputnumber';
+import Dropdown from 'primevue/dropdown';
 import Message from 'primevue/message';
 
 const props = defineProps({
@@ -137,7 +138,7 @@ const submitForm = () => {
                             <Textarea v-model="form.description" rows="3" placeholder="Tuliskan spesifikasi/keterangan produk..." />
                         </div>
 
-                        <div class="grid grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div class="flex flex-col gap-1.5">
                                 <label class="text-xs font-semibold">Harga Jual Dasar (Rp) <span class="text-red-500">*</span></label>
                                 <InputNumber v-model="form.base_price" mode="decimal" required :min="0" class="w-full" inputClass="w-full" />
@@ -195,10 +196,18 @@ const submitForm = () => {
                         <div v-if="form.variants.length === 0" class="text-xs text-gray-400 dark:text-gray-600 italic py-6 text-center border border-dashed border-gray-200 dark:border-gray-700 rounded-xl">
                             Belum ada varian — produk dijual tanpa pilihan varian.
                         </div>
-                        <div v-for="(variant, idx) in form.variants" :key="idx" class="flex gap-3 items-center">
-                            <InputText v-model="form.variants[idx].label" placeholder="Nama varian (mis: Ukuran S)" class="flex-1" required />
-                            <InputNumber v-model="form.variants[idx].price_adj" placeholder="+ Harga Penambahan (Rp)" mode="decimal" :min="0" class="w-48" inputClass="w-full text-sm font-bold text-gray-800" />
-                            <Button icon="pi pi-trash" severity="danger" text @click="removeVariant(idx)" />
+                        <div v-for="(variant, idx) in form.variants" :key="idx" class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center p-3 sm:p-0 border sm:border-0 border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50/50 sm:bg-transparent dark:bg-gray-900/40 dark:sm:bg-transparent">
+                            <div class="flex-1">
+                                <label class="text-[10px] font-bold text-gray-400 sm:hidden block mb-1">Nama Varian <span class="text-red-500">*</span></label>
+                                <InputText v-model="form.variants[idx].label" placeholder="Nama varian (mis: Ukuran S)" class="w-full" required />
+                            </div>
+                            <div class="w-full sm:w-60 flex gap-2 items-center">
+                                <div class="flex-1 sm:w-full">
+                                    <label class="text-[10px] font-bold text-gray-400 sm:hidden block mb-1">+ Harga Penambahan (Rp)</label>
+                                    <InputNumber v-model="form.variants[idx].price_adj" placeholder="+ Harga Penambahan (Rp)" mode="decimal" :min="0" class="w-full" inputClass="w-full text-sm font-bold text-gray-800 dark:text-white" />
+                                </div>
+                                <Button icon="pi pi-trash" severity="danger" text @click="removeVariant(idx)" class="self-end sm:self-center" />
+                            </div>
                         </div>
                     </div>
 
@@ -207,7 +216,7 @@ const submitForm = () => {
                         <div class="flex justify-between items-center pb-1.5 border-b border-gray-100 dark:border-gray-800">
                             <div>
                                 <h3 class="text-sm font-bold text-gray-800 dark:text-gray-200 uppercase tracking-wider">4. Harga Khusus Wilayah</h3>
-                                <p class="text-[10px] text-gray-400 mt-0.5">Opsional — Harga retail/reseller override per Provinsi atau Kabupaten/Kota. Kota/Kab lebih prioritas dari Provinsi.</p>
+                                <p class="text-[10px] text-gray-400 mt-0.5">Opsional — Harga customer/reseller override per Provinsi atau Kabupaten/Kota. Kota/Kab lebih prioritas dari Provinsi.</p>
                             </div>
                             <Button label="Tambah Harga Wilayah" icon="pi pi-plus" size="small" text @click="addRegionPrice" />
                         </div>
@@ -219,30 +228,20 @@ const submitForm = () => {
                         <div v-for="(rp, idx) in form.region_prices" :key="idx" class="flex flex-col md:flex-row gap-3 items-end p-4 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50/30 dark:bg-gray-900/20">
                             <div class="w-full md:flex-1">
                                 <label class="text-xs font-semibold block mb-1">Wilayah <span class="text-red-500">*</span></label>
-                                <div class="relative">
-                                    <input
-                                        type="text"
-                                        v-model="regionSearch[idx]"
-                                        placeholder="Cari provinsi atau kota/kab..."
-                                        class="w-full rounded-lg border-gray-200 dark:border-gray-700 text-sm bg-white dark:bg-gray-950 text-gray-900 dark:text-white"
-                                    />
-                                    <select
-                                        v-model="form.region_prices[idx].region_id"
-                                        class="w-full mt-1 focus:ring-amber-500 focus:border-amber-500 rounded-lg text-sm border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-900 dark:text-white"
-                                        required
-                                        size="4"
-                                    >
-                                        <option value="" disabled>Pilih Wilayah</option>
-                                        <option v-for="region in filteredRegions(idx)" :key="region.id" :value="region.id">{{ region.name }}</option>
-                                    </select>
-                                </div>
-                                <!-- Show selected -->
-                                <div v-if="form.region_prices[idx].region_id" class="mt-1 text-[10px] text-amber-600 dark:text-amber-400 font-semibold">
-                                    ✓ {{ regions.find(r => r.id === form.region_prices[idx].region_id)?.name }}
-                                </div>
+                                <Dropdown
+                                    v-model="form.region_prices[idx].region_id"
+                                    :options="regions"
+                                    optionLabel="name"
+                                    optionValue="id"
+                                    :filter="true"
+                                    filterPlaceholder="Cari provinsi atau kota/kab..."
+                                    placeholder="Pilih Wilayah (Provinsi/Kota)"
+                                    class="w-full text-xs"
+                                    required
+                                />
                             </div>
                             <div class="w-full md:w-40">
-                                <label class="text-xs font-semibold block mb-1">Harga Retail (Rp)</label>
+                                <label class="text-xs font-semibold block mb-1">Harga Customer (Rp)</label>
                                 <InputNumber v-model="form.region_prices[idx].base_price" placeholder="Opsional" mode="decimal" :min="0" class="w-full" inputClass="w-full text-sm" />
                             </div>
                             <div class="w-full md:w-40">
@@ -281,16 +280,21 @@ const submitForm = () => {
                         <div v-for="(up, idx) in form.user_prices" :key="idx" class="flex flex-col md:flex-row gap-3 items-end p-4 border border-purple-200 dark:border-purple-900/50 rounded-xl bg-purple-50/30 dark:bg-purple-900/10">
                             <div class="w-full md:flex-1">
                                 <label class="text-xs font-semibold block mb-1">Reseller <span class="text-red-500">*</span></label>
-                                <select
+                                <Dropdown
                                     v-model="form.user_prices[idx].user_id"
-                                    class="w-full focus:ring-purple-500 focus:border-purple-500 rounded-lg text-sm border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-900 dark:text-white"
+                                    :options="availableResellers(idx)"
+                                    optionLabel="name"
+                                    optionValue="id"
+                                    :filter="true"
+                                    filterPlaceholder="Cari nama reseller..."
+                                    placeholder="Pilih Reseller"
+                                    class="w-full text-xs"
                                     required
                                 >
-                                    <option value="" disabled>Pilih Reseller</option>
-                                    <option v-for="reseller in availableResellers(idx)" :key="reseller.id" :value="reseller.id">
-                                        {{ reseller.name }} — {{ reseller.email }}
-                                    </option>
-                                </select>
+                                    <template #option="slotProps">
+                                        <div>{{ slotProps.option.name }} — <span class="text-gray-400 text-xs">{{ slotProps.option.email }}</span></div>
+                                    </template>
+                                </Dropdown>
                             </div>
                             <div class="w-full md:w-48">
                                 <label class="text-xs font-semibold block mb-1">Harga Khusus (Rp) <span class="text-red-500">*</span></label>

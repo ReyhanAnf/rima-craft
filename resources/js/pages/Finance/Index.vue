@@ -81,7 +81,15 @@ const printReport = () => {
         start_date: filterStartDate.value,
         end_date: filterEndDate.value,
     });
-    window.open(url, '_blank');
+    window.location.href = url;
+};
+
+const downloadPdf = () => {
+    const url = route('finance.pdf', {
+        start_date: filterStartDate.value,
+        end_date: filterEndDate.value,
+    });
+    window.location.href = url;
 };
 
 // Modals State
@@ -240,9 +248,10 @@ const getLabelColor = (label) => {
                     <h2 class="text-xl font-bold text-gray-900 dark:text-white">Keuangan & Kas</h2>
                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Pantau ringkasan pendapatan, pengeluaran HPP, serta penyebaran alokasi kas.</p>
                 </div>
-                <div class="flex flex-wrap gap-2">
-                    <Button label="Print Laporan" icon="pi pi-print" severity="secondary" outlined @click="printReport" />
-                    <Button label="Catat Transaksi" icon="pi pi-plus" class="!bg-amber-500 hover:!bg-amber-600 !border-amber-500 hover:!border-amber-600 !text-gray-950 font-bold" @click="isTxModalOpen = true" />
+                <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                    <Button label="Unduh Laporan" icon="pi pi-file-pdf" severity="warning" class="w-full sm:w-auto justify-center" @click="downloadPdf" />
+                    <Button label="Lihat Laporan" icon="pi pi-print" severity="secondary" outlined class="w-full sm:w-auto justify-center" @click="printReport" />
+                    <Button label="Catat Transaksi" icon="pi pi-plus" class="w-full sm:w-auto justify-center !bg-amber-500 hover:!bg-amber-600 !border-amber-500 hover:!border-amber-600 !text-gray-950 font-bold" @click="isTxModalOpen = true" />
                 </div>
             </div>
 

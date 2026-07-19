@@ -8,13 +8,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <!-- PWA Meta Tags -->
+    <!-- PWA Meta Tags & Favicon -->
     <meta name="theme-color" content="#030712">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Rima Craft">
+    <meta name="apple-mobile-web-app-title" content="{{ config('settings.business_name', 'Rima Craft') }}">
     <link rel="manifest" href="/manifest.json">
-    <link rel="apple-touch-icon" href="/assets/icon.png">
+    @if(config('settings.logo_url'))
+        <link rel="icon" href="{{ asset('storage/' . config('settings.logo_url')) }}">
+        <link rel="apple-touch-icon" href="{{ asset('storage/' . config('settings.logo_url')) }}">
+    @else
+        <link rel="icon" href="/favicon.ico">
+        <link rel="apple-touch-icon" href="/assets/icon.png">
+    @endif
 
     <title>{{ config('settings.seo_title') ?: config('settings.business_name', 'Rima Craft') . ' - Katalog Produk' }}</title>
     <meta name="description" content="{{ config('settings.seo_description', 'Katalog eksklusif kerajinan tangan dari Rima Craft.') }}">
@@ -86,6 +92,26 @@
                           class="absolute top-0 right-0 inline-flex items-center justify-center w-4 h-4 text-[9px] font-bold text-black bg-amber-500 rounded-full shadow-sm" style="display: none;">
                     </span>
                 </button>
+
+                @auth
+                    <!-- Desktop button -->
+                    <a href="{{ route('dashboard') }}" class="hidden sm:inline-flex items-center text-xs font-black uppercase tracking-wider px-3.5 py-1.5 rounded-lg border border-amber-500 bg-amber-500 text-black hover:bg-amber-600 transition-colors">
+                        Profil Saya
+                    </a>
+                    <!-- Mobile icon button -->
+                    <a href="{{ route('dashboard') }}" class="inline-flex sm:hidden p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition" :class="!scrolled && !darkMode ? 'text-gray-900' : ''" title="Profil Saya">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                    </a>
+                @else
+                    <!-- Desktop button -->
+                    <a href="{{ route('login') }}" class="hidden sm:inline-flex items-center text-xs font-black uppercase tracking-wider px-3.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:border-amber-500 hover:text-amber-500 dark:hover:text-amber-400 transition-all">
+                        Login
+                    </a>
+                    <!-- Mobile icon button -->
+                    <a href="{{ route('login') }}" class="inline-flex sm:hidden p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition" :class="!scrolled && !darkMode ? 'text-gray-900' : ''" title="Login">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
+                    </a>
+                @endauth
             </div>
         </div>
     </header>
@@ -128,7 +154,11 @@
                     &copy; {{ date('Y') }} {{ config('settings.business_name', 'Rima Craft') }}. Hak cipta dilindungi.
                 </div>
                 <div class="flex items-center gap-6">
-                    <a href="{{ route('login') }}" class="text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-gray-600 hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-300">Login</a>
+                    @auth
+                        <a href="{{ route('dashboard') }}" class="text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-gray-600 hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-300">Profil Saya</a>
+                    @else
+                        <a href="{{ route('login') }}" class="text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-gray-600 hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-300">Login</a>
+                    @endauth
                 </div>
             </div>
         </div>

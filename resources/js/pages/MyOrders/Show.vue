@@ -175,7 +175,10 @@ function completeOrder() {
                             </thead>
                             <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                                 <tr v-for="(item, i) in order.items" :key="i">
-                                    <td class="py-2.5 pr-4 font-semibold text-gray-900 dark:text-white">{{ item.name }}</td>
+                                    <td class="py-2.5 pr-4 font-semibold text-gray-900 dark:text-white">
+                                        <div>{{ item.name }}</div>
+                                        <div v-if="item.variantLabel" class="text-xs font-semibold text-amber-600 dark:text-amber-400 mt-0.5">Varian: {{ item.variantLabel }}</div>
+                                    </td>
                                     <td class="py-2.5 text-center text-gray-600 dark:text-gray-300">{{ item.qty }}</td>
                                     <td class="py-2.5 text-right text-gray-600 dark:text-gray-300">{{ formatPrice(item.price) }}</td>
                                     <td class="py-2.5 text-right font-bold text-gray-900 dark:text-white">{{ formatPrice(item.qty * item.price) }}</td>

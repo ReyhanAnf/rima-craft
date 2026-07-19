@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\View\View;
 
 class AdminOrderController extends Controller
 {
@@ -82,14 +84,13 @@ class AdminOrderController extends Controller
 
         $toastMessage = 'Order berhasil diperbarui!';
 
-        // Update payment proof if uploaded
+        // Update payment proof if uploaded (stack in history without deleting previous ones)
         if ($request->hasFile('payment_proof')) {
-            if ($order->payment_proof) {
-                Storage::disk('public')->delete($order->payment_proof);
-            }
             $path = $request->file('payment_proof')->store('payment_proofs', 'public');
-            $order->update(['payment_proof' => $path]);
-            $toastMessage = 'Bukti pembayaran berhasil diunggah!';
+            $currentProofs = $order->payment_proofs_list;
+            $currentProofs[] = $path;
+            $order->update(['payment_proof' => json_encode(array_values($currentProofs))]);
+            $toastMessage = 'Bukti pembayaran baru berhasil diunggah!';
         }
 
         // Update tracking number if provided
@@ -234,5 +235,24 @@ class AdminOrderController extends Controller
                 $order->update(['remaining_balance' => 0]);
             }
         });
+    }
+
+    public function printInvoice(Order $order): View
+    {
+        $order->load(['user']);
+        return view('orders.print', compact('order'));
+    }
+
+    public function downloadPdf(Order $order)
+    {
+        $order->load(['user']);
+        $pdf = Pdf::loadView('orders.pdf', [
+            'order' => $order,
+        ]);
+        $pdf->setPaper('a4', 'portrait');
+
+        $filename = 'Invoice-' . $order->order_number . '.pdf';
+
+        return $pdf->download($filename);
     }
 }

@@ -101,22 +101,63 @@ const submitForm = () => {
     }
 };
 
-const deleteUser = (user) => {
-    if (confirm(`Hapus pengguna ${user.name}?`)) {
-        router.delete(route('users.destroy', user.id));
+const confirmDialog = ref({
+    visible: false,
+    title: '',
+    message: '',
+    severity: 'info',
+    acceptLabel: 'Ya',
+    rejectLabel: 'Batal',
+    onAccept: null,
+});
+
+const showConfirm = (options) => {
+    confirmDialog.value = {
+        visible: true,
+        title: options.title || 'Konfirmasi',
+        message: options.message || 'Apakah Anda yakin?',
+        severity: options.severity || 'info',
+        acceptLabel: options.acceptLabel || 'Ya',
+        rejectLabel: options.rejectLabel || 'Batal',
+        onAccept: options.onAccept,
+    };
+};
+
+const handleAccept = () => {
+    if (confirmDialog.value.onAccept) {
+        confirmDialog.value.onAccept();
     }
+    confirmDialog.value.visible = false;
+};
+
+const deleteUser = (user) => {
+    showConfirm({
+        title: 'Hapus Pengguna',
+        message: `Apakah Anda yakin ingin menghapus pengguna "${user.name}"? Tindakan ini tidak dapat dibatalkan.`,
+        severity: 'danger',
+        acceptLabel: 'Hapus',
+        onAccept: () => router.delete(route('users.destroy', user.id)),
+    });
 };
 
 const verifyReseller = (user) => {
-    if (confirm(`Verifikasi akun reseller ${user.name}?`)) {
-        router.patch(route('users.verify-reseller', user.id));
-    }
+    showConfirm({
+        title: 'Verifikasi Reseller',
+        message: `Apakah Anda yakin ingin menyetujui pendaftaran reseller "${user.name}"? Hak akses reseller akan segera diaktifkan.`,
+        severity: 'success',
+        acceptLabel: 'Setujui',
+        onAccept: () => router.patch(route('users.verify-reseller', user.id)),
+    });
 };
 
 const rejectReseller = (user) => {
-    if (confirm(`Tolak pendaftaran reseller ${user.name}?`)) {
-        router.patch(route('users.reject-reseller', user.id));
-    }
+    showConfirm({
+        title: 'Tolak Reseller',
+        message: `Apakah Anda yakin ingin menolak pendaftaran reseller "${user.name}"?`,
+        severity: 'danger',
+        acceptLabel: 'Tolak',
+        onAccept: () => router.patch(route('users.reject-reseller', user.id)),
+    });
 };
 
 const isReseller = (user) => user.roles?.some(r => r.name === 'reseller');
@@ -402,6 +443,22 @@ const getRoleBadge = (roleName) => {
                         <Button type="submit" :label="editingUser ? 'Simpan Perubahan' : 'Buat Akun'" :loading="form.processing" class="!bg-amber-500 hover:!bg-amber-600 !border-amber-500 hover:!border-amber-600 !text-gray-950 font-bold" />
                     </div>
                 </form>
+            </Dialog>
+
+            <!-- Custom Confirmation Dialog Popup -->
+            <Dialog v-model:visible="confirmDialog.visible" modal :header="confirmDialog.title" class="w-full max-w-sm !rounded-2xl" :closable="false">
+                <div class="space-y-4 pt-2">
+                    <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{{ confirmDialog.message }}</p>
+                    <div class="flex justify-end gap-2 pt-3 border-t border-gray-100 dark:border-gray-800">
+                        <Button :label="confirmDialog.rejectLabel" severity="secondary" text @click="confirmDialog.visible = false" />
+                        <Button 
+                            :label="confirmDialog.acceptLabel" 
+                            :severity="confirmDialog.severity === 'danger' ? 'danger' : (confirmDialog.severity === 'success' ? 'success' : 'primary')" 
+                            class="font-bold px-4 text-xs" 
+                            @click="handleAccept" 
+                        />
+                    </div>
+                </div>
             </Dialog>
         </div>
     </AdminLayout>

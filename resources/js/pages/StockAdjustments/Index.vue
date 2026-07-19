@@ -85,11 +85,24 @@ watch(itemType, (newType) => {
     form.actual_stock = 0;
 });
 
+const selectedItem = computed(() => {
+    const list = itemType.value === 'Product' ? props.products : props.materials;
+    return list.find(i => i.id === form.adjustable_id) || null;
+});
+
 // Watch current stock and updates actual_stock automatically
 const currentStockOfSelectedItem = computed(() => {
-    const list = itemType.value === 'Product' ? props.products : props.materials;
-    const item = list.find(i => i.id === form.adjustable_id);
-    return item ? Number(item.current_stock) : 0;
+    return selectedItem.value ? Number(selectedItem.value.current_stock) : 0;
+});
+
+const estimatedStockAfterAdjustment = computed(() => {
+    if (!selectedItem.value) return 0;
+    const current = currentStockOfSelectedItem.value;
+    const qty = Number(form.quantity) || 0;
+    if (form.type === 'in') {
+        return current + qty;
+    }
+    return Math.max(0, current - qty);
 });
 
 const submitForm = () => {
@@ -283,7 +296,32 @@ const formatDate = (dateStr) => {
                             filter
                             class="w-full"
                             required
-                        />
+                        >
+                            <template #option="slotProps">
+                                <div class="flex justify-between items-center w-full gap-2">
+                                    <span class="font-medium text-gray-900 dark:text-white text-xs truncate">{{ slotProps.option.name }}</span>
+                                    <span class="shrink-0 text-[10px] px-2 py-0.5 rounded font-bold bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400">
+                                        Stok: {{ slotProps.option.current_stock }} {{ slotProps.option.unit || '' }}
+                                    </span>
+                                </div>
+                            </template>
+                        </Dropdown>
+                    </div>
+
+                    <!-- Info Card for Selected Item's Current Stock & Dynamic Calculation -->
+                    <div v-if="selectedItem" class="p-3.5 rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50/50 dark:bg-amber-950/20 space-y-2">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-gray-500 dark:text-gray-400 font-medium">Stok Saat Ini:</span>
+                            <span class="font-bold text-gray-900 dark:text-white text-sm">
+                                {{ selectedItem.current_stock }} {{ selectedItem.unit || '' }}
+                            </span>
+                        </div>
+                        <div class="flex justify-between items-center text-xs pt-1.5 border-t border-amber-200/60 dark:border-amber-900/40">
+                            <span class="text-gray-500 dark:text-gray-400 font-medium">Estimasi Stok Akhir:</span>
+                            <span :class="['font-extrabold text-sm', estimatedStockAfterAdjustment < selectedItem.current_stock ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400']">
+                                {{ estimatedStockAfterAdjustment }} {{ selectedItem.unit || '' }}
+                            </span>
+                        </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">

@@ -108,3 +108,40 @@ select {
   background-color: #030712 !important;
   color: #f3f4f6 !important;
 }
+
+/* Media Print Styling for In-Page Printing without tab navigation */
+@media print {
+  body {
+    background-color: white !important;
+    color: black !important;
+  }
+  aside, header, nav, footer, button, .p-button, .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 1rem !important;
+    background: white !important;
+    color: black !important;
+    z-index: 999999 !important;
+  }
+}
+
+/* Responsive Toast overrides for PrimeVue */
+@media (max-width: 640px) {
+  .p-toast {
+    width: auto !important;
+    left: 1rem !important;
+    right: 1rem !important;
+    max-width: none !important;
+  }
+  .p-toast-message {
+    width: 100% !important;
+    margin: 0 0 0.5rem 0 !important;
+  }
+}

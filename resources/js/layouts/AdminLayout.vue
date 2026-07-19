@@ -26,13 +26,12 @@ watch(
 );
 
 const dashboardRouteName = computed(() => {
-    if (!page.props.auth?.roles) return null;
+    if (!page.props.auth?.roles || page.props.auth.roles.length === 0) return null;
     const rolesList = page.props.auth.roles;
     if (rolesList.includes('customer')) return 'customer.dashboard';
     if (rolesList.includes('reseller')) return 'reseller.dashboard';
     if (rolesList.includes('pengrajin')) return 'artisan.dashboard';
-    if (rolesList.some(r => ['super-admin', 'owner', 'operator'].includes(r))) return 'dashboard';
-    return null;
+    return 'dashboard';
 });
 
 // PWA Install Prompt State
@@ -95,51 +94,54 @@ const isRouteActive = (itemRoute) => {
 // Filtered navigation structure grouped by category
 const categorizedNavigation = computed(() => {
     const list = [];
+    
+    // Add Beranda Toko as the first category for everyone
+    list.push({
+        title: 'Navigasi Utama',
+        items: [
+            { name: 'Beranda Toko', route: 'catalog.index', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3M9 21h6' }
+        ]
+    });
+
     const isCustomer = roles.value.includes('customer');
     const isReseller = roles.value.includes('reseller');
     const isArtisan = roles.value.includes('pengrajin');
 
     // Customer Portal Items
     if (isCustomer) {
-        return [
-            {
-                title: 'Portal Pelanggan',
-                items: [
-                    { name: 'Portal Dashboard', route: 'customer.dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3M9 21h6' },
-                    { name: 'Belanja Sekarang', route: 'catalog.index', icon: 'M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z' },
-                    { name: 'Pesanan Saya', route: 'customer.orders', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2' },
-                    { name: 'Profil Saya', route: 'customer.profile', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' }
-                ]
-            }
-        ];
+        list.push({
+            title: 'Portal Pelanggan',
+            items: [
+                { name: 'Portal Dashboard', route: 'customer.dashboard', icon: 'M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z' },
+                { name: 'Pesanan Saya', route: 'customer.orders', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2' },
+                { name: 'Profil Saya', route: 'customer.profile', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' }
+            ]
+        });
+        return list;
     }
 
     // Reseller Portal Items
     if (isReseller) {
-        return [
-            {
-                title: 'Portal Reseller',
-                items: [
-                    { name: 'Portal Reseller', route: 'reseller.dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3M9 21h6' },
-                    { name: 'Belanja Sekarang', route: 'catalog.index', icon: 'M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z' },
-                    { name: 'Riwayat Order', route: 'reseller.orders', icon: 'M9 5H7a2 2 0 00-2-2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2' },
-                    { name: 'Tagihan / Billing', route: 'reseller.billing', icon: 'M9 8h6m-6 2h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
-                    { name: 'Profil Reseller', route: 'reseller.profile', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' }
-                ]
-            }
-        ];
+        list.push({
+            title: 'Portal Reseller',
+            items: [
+                { name: 'Portal Reseller', route: 'reseller.dashboard', icon: 'M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z' },
+                { name: 'Riwayat Order', route: 'reseller.orders', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2' },
+                { name: 'Tagihan / Billing', route: 'reseller.billing', icon: 'M9 8h6m-6 2h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
+                { name: 'Profil Reseller', route: 'reseller.profile', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' }
+            ]
+        });
+        return list;
     }
 
     if (isArtisan) {
-        return [
-            {
-                title: 'Portal Pengrajin',
-                items: [
-                    { name: 'Upah & Pekerjaan', route: 'artisan.dashboard', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
-                    { name: 'Katalog', route: 'catalog.index', icon: 'M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z' }
-                ]
-            }
-        ];
+        list.push({
+            title: 'Portal Pengrajin',
+            items: [
+                { name: 'Upah & Pekerjaan', route: 'artisan.dashboard', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' }
+            ]
+        });
+        return list;
     }
 
     // Admin Config-driven Categorized Items
@@ -175,7 +177,7 @@ const mobileBottomItems = computed(() => {
 
     if (isCustomer) {
         return [
-            { name: 'Dashboard', route: 'customer.dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3M9 21h6' },
+            { name: 'Dashboard', route: 'customer.dashboard', icon: 'M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z' },
             { name: 'Belanja', route: 'catalog.index', icon: 'M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z' },
             { name: 'Pesanan', route: 'customer.orders', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2' },
             { name: 'Profil', route: 'customer.profile', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' }
@@ -184,9 +186,9 @@ const mobileBottomItems = computed(() => {
 
     if (isReseller) {
         return [
-            { name: 'Dashboard', route: 'reseller.dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3M9 21h6' },
+            { name: 'Dashboard', route: 'reseller.dashboard', icon: 'M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z' },
             { name: 'Belanja', route: 'catalog.index', icon: 'M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z' },
-            { name: 'Pesanan', route: 'reseller.orders', icon: 'M9 5H7a2 2 0 00-2-2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2' },
+            { name: 'Pesanan', route: 'reseller.orders', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2' },
             { name: 'Profil', route: 'reseller.profile', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' }
         ];
     }
@@ -198,9 +200,11 @@ const mobileBottomItems = computed(() => {
         ];
     }
 
-    const items = [];
+    const items = [
+        { name: 'Beranda', route: 'catalog.index', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3M9 21h6' }
+    ];
     if (flatNavigation.value.some(item => item.route === 'dashboard')) {
-        items.push({ name: 'Dashboard', route: 'dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' });
+        items.push({ name: 'Dashboard', route: 'dashboard', icon: 'M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z' });
     }
     if (flatNavigation.value.some(item => item.route === 'sales.index')) {
         items.push({ name: 'Penjualan', route: 'sales.index', icon: 'M9 8h6m-6 2h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' });
@@ -320,7 +324,7 @@ const mobileBottomItems = computed(() => {
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                         </svg>
                     </button>
-                    <span v-if="siteConfig.business_subtitle" class="text-xs text-gray-500 dark:text-gray-400 font-bold tracking-wider uppercase leading-none truncate">
+                    <span v-if="siteConfig.business_subtitle" class="text-sm text-gray-800 dark:text-gray-200 font-extrabold tracking-wider uppercase leading-none truncate">
                         {{ siteConfig.business_subtitle }}
                     </span>
                 </div>
@@ -332,6 +336,9 @@ const mobileBottomItems = computed(() => {
                     <div class="flex flex-col min-w-0">
                         <span class="font-serif font-extrabold text-sm uppercase tracking-wider bg-gradient-to-r from-amber-600 to-amber-500 dark:from-amber-400 dark:to-amber-300 bg-clip-text text-transparent leading-tight truncate block">
                             {{ siteConfig.business_name || 'Rima Craft' }}
+                        </span>
+                        <span v-if="siteConfig.business_subtitle" class="text-[9px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider truncate leading-none mt-0.5 block">
+                            {{ siteConfig.business_subtitle }}
                         </span>
                     </div>
                 </div>

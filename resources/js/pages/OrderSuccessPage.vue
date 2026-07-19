@@ -97,6 +97,7 @@ function buildWaConfirmUrl() {
                                 </div>
                                 <div class="flex-1 min-w-0">
                                     <p class="text-sm font-bold text-gray-900 dark:text-white break-words leading-snug">{{ item.name }}</p>
+                                    <p v-if="item.variantLabel" class="text-xs font-semibold text-amber-605 dark:text-amber-400 mt-0.5">Varian: {{ item.variantLabel }}</p>
                                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ item.qty }} x {{ formatPrice(item.price) }}</p>
                                 </div>
                                 <p class="shrink-0 text-sm font-extrabold text-gray-900 dark:text-white">{{ formatPrice(item.qty * item.price) }}</p>
@@ -256,7 +257,6 @@ function buildWaConfirmUrl() {
                     </Link>
                     <a
                         :href="buildWaConfirmUrl()"
-                        target="_blank"
                         class="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#25D366] hover:bg-[#20ba5a] px-4 py-3.5 text-sm font-black text-white shadow-md transition active:scale-[0.98]"
                     >
                         <svg class="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 24 24">

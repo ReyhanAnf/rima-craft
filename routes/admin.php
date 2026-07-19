@@ -62,8 +62,9 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('permission:view-sales')->controller(SaleController::class)->group(function () {
         Route::get('sales/{sale}/print', 'printInvoice')
-            ->middleware('permission:print-sales')
             ->name('sales.print');
+        Route::get('sales/{sale}/pdf', 'downloadPdf')
+            ->name('sales.pdf');
         Route::resource('sales', SaleController::class)->except(['edit', 'update', 'destroy']);
         Route::patch('sales/{sale}/status', 'updateStatus')
             ->middleware('permission:update-sales-status')
@@ -75,6 +76,8 @@ Route::middleware('auth')->group(function () {
         ->group(function () {
             Route::get('orders', 'index')->name('orders.index');
             Route::get('orders/{order}', 'show')->name('orders.show');
+            Route::get('orders/{order}/print', 'printInvoice')->name('orders.print');
+            Route::get('orders/{order}/pdf', 'downloadPdf')->name('orders.pdf');
             Route::patch('orders/{order}/status', 'updateStatus')
                 ->middleware('permission:manage-orders')
                 ->name('orders.update-status');
@@ -100,6 +103,9 @@ Route::middleware('auth')->group(function () {
             Route::get('/print', 'printReport')
                 ->middleware('permission:print-finance-reports')
                 ->name('print');
+            Route::get('/pdf', 'downloadPdf')
+                ->middleware('permission:print-finance-reports')
+                ->name('pdf');
             Route::post('/accounts', 'storeAccount')
                 ->middleware('permission:manage-accounts')
                 ->name('accounts.store');

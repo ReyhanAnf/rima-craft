@@ -14,13 +14,12 @@ const page = usePage();
 const authUser = computed(() => page.props.auth?.user);
 
 const dashboardRouteName = computed(() => {
-    if (!page.props.auth?.roles) return null;
+    if (!page.props.auth?.roles || page.props.auth.roles.length === 0) return null;
     const roles = page.props.auth.roles;
     if (roles.includes('customer')) return 'customer.dashboard';
     if (roles.includes('reseller')) return 'reseller.dashboard';
     if (roles.includes('pengrajin')) return 'artisan.dashboard';
-    if (roles.some(r => ['super-admin', 'owner', 'operator'].includes(r))) return 'dashboard';
-    return null;
+    return 'dashboard';
 });
 
 const logout = () => {
@@ -100,15 +99,6 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll));
                         Masuk
                 </a>
 
-                <!-- Keluar (if logged in - Desktop) -->
-                <button v-if="authUser" @click="logout"
-                    class="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-red-650 hover:text-red-700 dark:text-red-400 dark:hover:text-red-350 transition-colors px-2 py-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                    </svg>
-                    Keluar
-                </button>
-
                 <!-- Mobile Auth Buttons -->
                 <!-- Portal Saya Icon (if logged in - Mobile) -->
                 <Link v-if="authUser && dashboardRouteName" :href="route(dashboardRouteName)"
@@ -119,21 +109,12 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll));
                     </svg>
                 </Link>
 
-                <!-- Logout Icon (if logged in - Mobile) -->
-                <button v-if="authUser" @click="logout"
-                    class="flex sm:hidden items-center justify-center p-2 text-red-500 hover:text-red-600 transition-colors"
-                    title="Keluar">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                    </svg>
-                </button>
-
                 <!-- Login Icon (if guest - Mobile) -->
                 <a v-if="!authUser" :href="route('login')"
                     class="flex sm:hidden items-center justify-center p-2 text-gray-700 dark:text-gray-300 hover:text-amber-500 transition-colors"
                     title="Masuk">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                     </svg>
                 </a>
 

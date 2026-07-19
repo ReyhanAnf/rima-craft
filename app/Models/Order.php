@@ -34,6 +34,24 @@ class Order extends Model
         'cancelled_at' => 'datetime',
     ];
 
+    protected $appends = [
+        'payment_proofs_list',
+    ];
+
+    public function getPaymentProofsListAttribute(): array
+    {
+        if (empty($this->payment_proof)) {
+            return [];
+        }
+
+        $decoded = json_decode((string) $this->payment_proof, true);
+        if (is_array($decoded)) {
+            return array_values($decoded);
+        }
+
+        return [$this->payment_proof];
+    }
+
     protected static function boot()
     {
         parent::boot();

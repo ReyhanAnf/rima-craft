@@ -1,10 +1,19 @@
 <script setup>
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, onMounted } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import AdminLayout from '@/layouts/AdminLayout.vue';
 import Card from 'primevue/card';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
+
+const printTarget = ref('_blank');
+
+onMounted(() => {
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    if (isStandalone) {
+        printTarget.value = '_self';
+    }
+});
 
 const props = defineProps({
     sale: Object,
@@ -66,22 +75,25 @@ const balanceDue = computed(() => {
     <AdminLayout>
         <Head :title="`Faktur Penjualan ${sale.invoice_number || sale.id}`" />
 
-        <div class="space-y-6 max-w-4xl mx-auto">
+        <div class="space-y-6 w-full max-w-[1400px] mx-auto pb-12">
             <!-- Header buttons -->
             <div class="flex justify-between items-center">
                 <Link :href="route('sales.index')">
                     <Button label="Kembali" icon="pi pi-arrow-left" severity="secondary" text />
                 </Link>
                 <div class="flex gap-2">
-                    <a :href="route('sales.print', sale.id)" target="_blank">
-                        <Button label="Cetak Invoice" icon="pi pi-print" severity="secondary" outlined />
+                    <a :href="route('sales.pdf', sale.id)" download>
+                        <Button label="Download PDF" icon="pi pi-file-pdf" severity="warning" />
+                    </a>
+                    <a :href="route('sales.print', sale.id)">
+                        <Button label="Lihat Invoice" icon="pi pi-print" severity="secondary" outlined />
                     </a>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 <!-- Main Invoice Info -->
-                <div class="md:col-span-2 space-y-6">
+                <div class="lg:col-span-7 xl:col-span-8 space-y-6">
                     <Card class="!border !border-gray-200 dark:!border-gray-800 !bg-white dark:!bg-gray-900">
                         <template #title>
                             <div class="flex justify-between items-center border-b border-gray-150 dark:border-gray-855 pb-3">
@@ -148,7 +160,7 @@ const balanceDue = computed(() => {
                 </div>
 
                 <!-- Status Management Panel -->
-                <div class="space-y-6">
+                <div class="lg:col-span-5 xl:col-span-4 space-y-6">
                     <Card class="!border !border-gray-200 dark:!border-gray-800 !bg-white dark:!bg-gray-900">
                         <template #title><span class="text-sm font-bold uppercase tracking-wider text-gray-400">Pengaturan Status</span></template>
                         <template #content>
@@ -213,5 +225,6 @@ const balanceDue = computed(() => {
                 </div>
             </div>
         </div>
+
     </AdminLayout>
 </template>

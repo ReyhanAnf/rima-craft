@@ -79,4 +79,18 @@ class FinanceController extends Controller
             return back()->withInput()->withErrors(['error' => $e->getMessage()]);
         }
     }
+
+    public function downloadPdf(Request $request)
+    {
+        $accountId = $request->filled('account_id') ? (int) $request->account_id : null;
+        $startDate = $request->input('start_date', date('Y-m-01'));
+        $endDate = $request->input('end_date', date('Y-m-t'));
+
+        $data = $this->financeRepo->getPrintReport($accountId, $startDate, $endDate);
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('finance.pdf', $data);
+        
+        $filename = 'Laporan-Keuangan-' . $startDate . '-to-' . $endDate . '.pdf';
+        return $pdf->download($filename);
+    }
 }

@@ -17,15 +17,23 @@
         body { background-color: white; color: black; font-family: 'Inter', sans-serif; }
     </style>
 </head>
-<body class="p-8 max-w-4xl mx-auto">
+<body class="p-4 md:p-8 max-w-4xl mx-auto">
+
+    <!-- PWA Helper Message (Hidden in Print) -->
+    <div id="pwa-print-helper" class="no-print hidden bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 p-4 rounded-lg mb-6 text-xs text-amber-800 dark:text-amber-600">
+        <p class="font-bold mb-1">Mode Aplikasi (PWA) Terdeteksi:</p>
+        <p>Pencetakan langsung tidak didukung oleh sistem operasi dalam mode ini. Silakan klik tombol <strong>Bagikan</strong> di bawah untuk membuka di browser eksternal (Safari/Chrome) guna mencetak, atau ambil tangkapan layar (screenshot) invoice ini.</p>
+    </div>
 
     <!-- Print Action Buttons (Hidden in Print) -->
-    <div class="no-print flex justify-end mb-8 space-x-4">
-        <button onclick="window.close()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md text-sm font-semibold hover:bg-gray-300">Tutup</button>
-        <button onclick="window.print()" class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-semibold hover:bg-blue-700 flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-            Cetak Invoice
-        </button>
+    <div class="no-print flex justify-between md:justify-end mb-8 gap-3">
+        <button onclick="closeInvoice()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md text-sm font-semibold hover:bg-gray-300">Tutup</button>
+        <div class="flex gap-2">
+            <a href="{{ route('sales.pdf', $sale->id) }}" download class="px-4 py-2 bg-amber-500 text-gray-950 rounded-md text-sm font-bold hover:bg-amber-600 flex items-center gap-2 shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                Download PDF
+            </a>
+        </div>
     </div>
 
     <!-- Header Laporan -->
@@ -142,12 +150,61 @@
         </div>
     </div>
 
-    <!-- Auto Print Script -->
+    <!-- Auto Print & PWA Detection Script -->
     <script>
-        window.onload = function() {
-            // Optional: Uncomment to auto-trigger print dialog when opened
-            // window.print();
+        function checkStandalone() {
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            
+            if (isStandalone) {
+                // Show PWA helper instruction
+                const helper = document.getElementById('pwa-print-helper');
+                if (helper) {
+                    helper.classList.remove('hidden');
+                }
+                
+                // Dim non-functional print button on iOS PWA
+                if (isIOS) {
+                    const printBtn = document.getElementById('btn-print');
+                    if (printBtn) {
+                        printBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                        printBtn.title = "Cetak langsung tidak didukung di iOS PWA. Gunakan tombol Bagikan.";
+                    }
+                }
+            } else {
+                // Auto-trigger print when opened in standard browser tab
+                // window.print();
+            }
         }
+
+        function shareInvoice() {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Invoice {{ $sale->invoice_number || "Rima Craft" }}',
+                    text: 'Invoice Penjualan {{ $sale->invoice_number || "" }} - {{ config("settings.business_name", "Rima Craft") }}',
+                    url: window.location.href
+                }).catch(err => console.log(err));
+            } else {
+                // Fallback copy to clipboard
+                const el = document.createElement('textarea');
+                el.value = window.location.href;
+                document.body.appendChild(el);
+                el.select();
+                document.execCommand('copy');
+                document.body.removeChild(el);
+                alert('Link invoice berhasil disalin ke clipboard!');
+            }
+        }
+
+        function closeInvoice() {
+            if (window.opener) {
+                window.close();
+            } else {
+                window.location.href = "{{ route('sales.show', $sale->id) }}";
+            }
+        }
+
+        window.onload = checkStandalone;
     </script>
 </body>
 </html>

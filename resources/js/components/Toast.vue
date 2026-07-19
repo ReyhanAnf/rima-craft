@@ -4,12 +4,12 @@ const toast = useToastStore();
 </script>
 
 <template>
-    <div class="fixed top-6 right-4 md:right-6 z-[100] flex flex-col gap-3 pointer-events-none">
+    <div class="fixed top-6 right-4 left-4 sm:left-auto sm:right-6 z-[100] flex flex-col gap-3 pointer-events-none items-stretch sm:items-end">
         <TransitionGroup name="toast">
             <div
                 v-for="t in toast.toasts"
                 :key="t.id"
-                class="pointer-events-auto max-w-sm rounded-xl shadow-2xl backdrop-blur-xl overflow-hidden"
+                class="pointer-events-auto w-full sm:max-w-sm rounded-xl shadow-2xl backdrop-blur-xl overflow-hidden"
                 :class="{
                     'bg-white dark:bg-gray-900 border border-emerald-200/50 dark:border-emerald-500/30': t.type === 'success',
                     'bg-white dark:bg-gray-900 border border-red-200/50 dark:border-red-500/30': t.type === 'error',

@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 use Illuminate\View\View;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class SaleController extends Controller
 {
@@ -95,7 +96,7 @@ class SaleController extends Controller
 
     public function show(Sale $sale): InertiaResponse
     {
-        $sale->load(['items.product', 'customer']);
+        $sale->load(['items.product', 'customer', 'payments.account']);
         return Inertia::render('Sales/Show', [
             'sale' => $sale,
         ]);
@@ -119,5 +120,18 @@ class SaleController extends Controller
     {
         $sale->load(['items.product', 'customer', 'payments.account']);
         return view('sales.print', compact('sale'));
+    }
+
+    public function downloadPdf(Sale $sale)
+    {
+        $sale->load(['items.product', 'customer', 'payments.account']);
+        $pdf = Pdf::loadView('sales.pdf', [
+            'sale' => $sale,
+        ]);
+        $pdf->setPaper('a4', 'portrait');
+
+        $filename = 'Invoice-' . ($sale->invoice_number ? str_replace('/', '-', $sale->invoice_number) : $sale->id) . '.pdf';
+
+        return $pdf->download($filename);
     }
 }

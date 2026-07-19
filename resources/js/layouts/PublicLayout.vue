@@ -25,13 +25,12 @@ function openCart() {
 const authUser = computed(() => page.props.auth?.user);
 
 const dashboardRouteName = computed(() => {
-    if (!page.props.auth?.roles) return null;
+    if (!page.props.auth?.roles || page.props.auth.roles.length === 0) return null;
     const roles = page.props.auth.roles;
     if (roles.includes('customer')) return 'customer.dashboard';
     if (roles.includes('reseller')) return 'reseller.dashboard';
     if (roles.includes('pengrajin')) return 'artisan.dashboard';
-    if (roles.some(r => ['super-admin', 'owner', 'operator'].includes(r))) return 'dashboard';
-    return null;
+    return 'dashboard';
 });
 
 const businessName    = computed(() => siteConfig.value.business_name    ?? 'Rima Craft');

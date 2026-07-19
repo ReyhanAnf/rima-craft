@@ -7,10 +7,52 @@ import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import Textarea from 'primevue/textarea';
 import InputText from 'primevue/inputtext';
+import Dialog from 'primevue/dialog';
+
+const isProofModalOpen = ref(false);
+const selectedProofPath = ref('');
+const isUploadModalOpen = ref(false);
+const uploadPreviewUrl = ref(null);
+
+const openProofModal = (path) => {
+    selectedProofPath.value = path;
+    isProofModalOpen.value = true;
+};
 
 const props = defineProps({
     order: Object,
 });
+
+const uploadForm = useForm({
+    payment_proof: null,
+    payment_status: props.order.payment_status,
+});
+
+const handleUploadFileChange = (e) => {
+    const file = e.target.files[0];
+    uploadForm.payment_proof = file;
+    if (file) {
+        uploadPreviewUrl.value = URL.createObjectURL(file);
+    } else {
+        uploadPreviewUrl.value = null;
+    }
+};
+
+const submitUploadProof = () => {
+    if (!uploadForm.payment_proof) return;
+
+    uploadForm.transform((data) => ({
+        ...data,
+        _method: 'PATCH',
+    })).post(route('orders.update-status', props.order.id), {
+        preserveState: true,
+        onSuccess: () => {
+            isUploadModalOpen.value = false;
+            uploadPreviewUrl.value = null;
+            uploadForm.reset('payment_proof');
+        }
+    });
+};
 
 const form = useForm({
     status: props.order.status,
@@ -96,17 +138,25 @@ const whatsappLink = computed(() => {
     <AdminLayout>
         <Head :title="`Detail Pesanan ${order.order_number}`" />
 
-        <div class="space-y-6 max-w-4xl mx-auto pb-24">
+        <div class="space-y-6 w-full max-w-[1400px] mx-auto pb-24">
             <!-- Header buttons -->
             <div class="flex justify-between items-center">
                 <Link :href="route('orders.index')">
                     <Button label="Kembali" icon="pi pi-arrow-left" severity="secondary" text />
                 </Link>
+                <div class="flex gap-2">
+                    <a :href="route('orders.pdf', order.id)" download>
+                        <Button label="Download PDF" icon="pi pi-file-pdf" severity="warning" />
+                    </a>
+                    <a :href="route('orders.print', order.id)">
+                        <Button label="Lihat Invoice" icon="pi pi-print" severity="secondary" outlined />
+                    </a>
+                </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 <!-- Order Details & Customer Info -->
-                <div class="md:col-span-2 space-y-6">
+                <div class="lg:col-span-7 xl:col-span-8 space-y-6">
                     <Card class="!border !border-gray-200 dark:!border-gray-800 !bg-white dark:!bg-gray-900">
                         <template #title>
                             <div class="flex justify-between items-center border-b border-gray-150 dark:border-gray-855 pb-3">
@@ -147,7 +197,7 @@ const whatsappLink = computed(() => {
 
                             <!-- WhatsApp CTA -->
                             <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800 flex">
-                                <a :href="whatsappLink" target="_blank" class="w-full flex items-center justify-center gap-2 py-2.5 bg-[#25D366] hover:bg-[#20ba5a] text-white rounded-lg font-bold text-xs shadow-sm transition">
+                                <a :href="whatsappLink" class="w-full flex items-center justify-center gap-2 py-2.5 bg-[#25D366] hover:bg-[#20ba5a] text-white rounded-lg font-bold text-xs shadow-sm transition">
                                     <i class="pi pi-whatsapp"></i>
                                     Hubungi via WhatsApp
                                 </a>
@@ -163,6 +213,7 @@ const whatsappLink = computed(() => {
                                 <div v-for="item in order.items" :key="item.id" class="flex justify-between items-center text-xs py-3 first:pt-0 last:pb-0">
                                     <div>
                                         <div class="font-bold text-gray-900 dark:text-white">{{ item.name }}</div>
+                                        <div v-if="item.variantLabel" class="text-[10px] font-bold text-amber-600 dark:text-amber-400 mt-0.5">Varian: {{ item.variantLabel }}</div>
                                         <div class="text-[10px] text-gray-400 mt-0.5">{{ item.qty }} pcs x {{ formatCurrency(item.price) }}</div>
                                     </div>
                                     <div class="font-bold text-gray-900 dark:text-white">
@@ -450,7 +501,7 @@ const whatsappLink = computed(() => {
                 </div>
 
                 <!-- Status & Action Forms -->
-                <div class="space-y-6">
+                <div class="lg:col-span-5 xl:col-span-4 space-y-6">
                     <Card class="!border !border-gray-200 dark:!border-gray-800 !bg-white dark:!bg-gray-900">
                         <template #title><span class="text-sm font-bold uppercase tracking-wider text-gray-400">Pengaturan Manual Status</span></template>
                         <template #content>
@@ -485,21 +536,84 @@ const whatsappLink = computed(() => {
                         </template>
                     </Card>
 
-                    <!-- Payment Proof Display Card -->
+                    <!-- Payment Proof Display Card (Stacked History) -->
                     <Card class="!border !border-gray-200 dark:!border-gray-800 !bg-white dark:!bg-gray-900">
-                        <template #title><span class="text-sm font-bold uppercase tracking-wider text-gray-400">Bukti Dokumen</span></template>
+                        <template #title>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm font-bold uppercase tracking-wider text-gray-400">Riwayat Bukti Transfer</span>
+                                <span v-if="order.payment_proofs_list && order.payment_proofs_list.length > 0" class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400">
+                                    {{ order.payment_proofs_list.length }} Dokumen
+                                </span>
+                            </div>
+                        </template>
                         <template #content>
-                            <div class="pt-2">
-                                <div v-if="order.payment_proof" class="relative group w-full aspect-square rounded-lg overflow-hidden border border-gray-200 dark:border-gray-800">
-                                    <img :src="`/storage/${order.payment_proof}`" class="w-full h-full object-cover" alt="" />
-                                    <a :href="`/storage/${order.payment_proof}`" target="_blank" class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-bold transition">
-                                        Lihat Fullscreen
-                                    </a>
+                            <div class="pt-2 space-y-4">
+                                <div v-if="order.payment_proofs_list && order.payment_proofs_list.length > 0" class="grid grid-cols-2 gap-3">
+                                    <div v-for="(proof, index) in order.payment_proofs_list" :key="index" class="relative group aspect-square rounded-lg overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950">
+                                        <img :src="`/storage/${proof}`" @click="openProofModal(proof)" class="w-full h-full object-cover cursor-pointer" :alt="`Bukti ${index + 1}`" />
+                                        <div class="absolute top-1.5 left-1.5 bg-black/70 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow">
+                                            #{{ index + 1 }}
+                                        </div>
+                                        <button type="button" @click="openProofModal(proof)" class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-bold transition cursor-pointer">
+                                            <i class="pi pi-search-plus mr-1"></i> Zoom
+                                        </button>
+                                    </div>
                                 </div>
-                                <span v-else class="text-xs text-gray-400 italic">Belum ada dokumen bukti transfer diunggah.</span>
+                                <div v-else class="text-xs text-gray-400 italic py-1">Belum ada dokumen bukti transfer diunggah.</div>
+
+                                <!-- Button to trigger upload modal -->
+                                <Button 
+                                    label="Upload Bukti Pembayaran Lagi" 
+                                    icon="pi pi-upload" 
+                                    severity="warning" 
+                                    outlined
+                                    class="w-full text-xs font-bold" 
+                                    @click="isUploadModalOpen = true" 
+                                />
                             </div>
                         </template>
                     </Card>
+
+                    <!-- Dialog Lightbox Bukti Pembayaran -->
+                    <Dialog v-model:visible="isProofModalOpen" modal header="Bukti Pembayaran" :style="{ width: '90vw', maxWidth: '650px' }">
+                        <div class="flex justify-center items-center p-2 bg-white dark:bg-gray-900 rounded-lg">
+                            <img :src="`/storage/${selectedProofPath}`" class="max-w-full max-h-[75vh] object-contain rounded-lg shadow-md" alt="Bukti Transfer Full" />
+                        </div>
+                    </Dialog>
+
+                    <!-- Dialog Modal Upload Bukti Pembayaran Lagi -->
+                    <Dialog v-model:visible="isUploadModalOpen" modal header="Upload Bukti Pembayaran Lagi" :style="{ width: '90vw', maxWidth: '480px' }">
+                        <form @submit.prevent="submitUploadProof" class="space-y-4 pt-2">
+                            <p class="text-xs text-gray-500 leading-relaxed">
+                                Bukti transfer baru ini akan ditambahkan ke riwayat tanpa menghapus bukti transfer sebelumnya.
+                            </p>
+                            
+                            <div class="flex flex-col gap-2">
+                                <label class="text-xs font-bold text-gray-700 dark:text-gray-300">Pilih Foto / Struk Bukti Transfer <span class="text-red-500">*</span></label>
+                                <div class="relative group border-2 border-dashed border-gray-200 dark:border-gray-800 hover:border-amber-400 rounded-lg p-4 transition flex flex-col items-center justify-center cursor-pointer min-h-[110px] bg-gray-50 dark:bg-gray-950">
+                                    <input type="file" accept="image/*" @change="handleUploadFileChange" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" required />
+                                    <div v-if="!uploadPreviewUrl" class="text-center">
+                                        <i class="pi pi-cloud-upload text-amber-500 text-2xl block mb-1"></i>
+                                        <span class="text-xs font-semibold text-gray-600 dark:text-gray-300 block">Klik di sini untuk memilih file</span>
+                                    </div>
+                                    <div v-else class="w-full flex items-center gap-3">
+                                        <img :src="uploadPreviewUrl" class="w-14 h-14 object-cover rounded border" />
+                                        <span class="text-xs text-gray-700 dark:text-gray-200 font-medium truncate flex-1">{{ uploadForm.payment_proof?.name }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col gap-1.5">
+                                <label class="text-xs font-semibold">Ubah Status Pembayaran (Opsional)</label>
+                                <Dropdown v-model="uploadForm.payment_status" :options="paymentStatusOptions" optionLabel="label" optionValue="value" class="w-full text-xs" />
+                            </div>
+
+                            <div class="flex justify-end gap-2 pt-3 border-t border-gray-100 dark:border-gray-800">
+                                <Button label="Batal" severity="secondary" text text-xs @click="isUploadModalOpen = false" />
+                                <Button type="submit" label="Unggah Bukti Baru" icon="pi pi-check" severity="warning" class="font-bold text-xs" :loading="uploadForm.processing" :disabled="!uploadForm.payment_proof" />
+                            </div>
+                        </form>
+                    </Dialog>
 
                     <!-- Danger soft delete zone -->
                     <Card class="!border !border-red-200/50 dark:!border-red-950/50 !bg-red-50/20 dark:!bg-red-950/10">
