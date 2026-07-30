@@ -66,10 +66,12 @@ class PurchaseController extends Controller
     public function create(): InertiaResponse
     {
         $suppliers = Contact::where('type', 'supplier')->orderBy('name')->get();
+        $users = \App\Models\User::orderBy('name')->get();
         $materials = Material::orderBy('name')->get();
 
         return Inertia::render('Purchases/Form', [
             'suppliers' => $suppliers,
+            'users' => $users,
             'materials' => $materials,
         ]);
     }

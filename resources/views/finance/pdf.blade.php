@@ -80,7 +80,7 @@
                 <tr>
                     <td>{{ $index + 1 }}</td>
                     <td>{{ $ledger->date->format('d/m/Y') }}</td>
-                    <td>{{ $ledger->account->name }}</td>
+                    <td>{{ $ledger->account?->name ?? 'Lainnya' }}</td>
                     <td>{{ $ledger->description }}</td>
                     <td class="text-right text-emerald">
                         {{ $ledger->type === 'in' ? number_format($ledger->amount, 0, ',', '.') : '-' }}

@@ -88,6 +88,10 @@ class HandleInertiaRequests extends Middleware
                 'terms_url'        => route('page.terms'),
                 'privacy_url'      => route('page.privacy'),
                 'shipping_url'     => route('page.shipping'),
+                'rajaongkir_enabled' => (function () {
+                    $enabled = config('settings.rajaongkir_enabled');
+                    return $enabled === '1' || $enabled === 'true' || $enabled === true;
+                })(),
             ],
 
             // Sidebar Menu configuration

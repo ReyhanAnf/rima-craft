@@ -78,6 +78,7 @@ class ProductController extends Controller
         $product->description = $validated['description'] ?? '';
         $product->base_price = $validated['base_price'];
         $product->current_stock = $validated['current_stock'];
+        $product->weight = $validated['weight'] ?? 1000;
 
         if ($request->hasFile('image')) {
             $product->image_path = $request->file('image')->store('products', 'public');
@@ -178,6 +179,7 @@ class ProductController extends Controller
         $product->description = $validated['description'] ?? '';
         $product->base_price = $validated['base_price'];
         $product->current_stock = $validated['current_stock'];
+        $product->weight = $validated['weight'] ?? 1000;
 
         if ($request->hasFile('image')) {
             if ($product->image_path) {

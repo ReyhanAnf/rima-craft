@@ -12,18 +12,20 @@ import Message from 'primevue/message';
 
 const props = defineProps({
     customers: Array,
+    user_customers: Array,
     products: Array,
 });
 
 const page = usePage();
 
-const customerType = ref('registered'); // 'registered' or 'manual'
+const customerType = ref('registered'); // 'registered', 'user', or 'manual'
 
 const form = useForm({
     date: new Date().toISOString().split('T')[0],
     payment_status: 'paid',
     shipping_status: 'pending',
     customer_id: null,
+    user_id: null,
     customer_name: '',
     customer_phone: '',
     save_customer: false,
@@ -86,6 +88,21 @@ const formatCurrency = (val) => {
         maximumFractionDigits: 0,
     }).format(val || 0);
 };
+
+watch(customerType, (newVal) => {
+    if (newVal === 'registered') {
+        form.user_id = null;
+        form.customer_name = '';
+        form.customer_phone = '';
+    } else if (newVal === 'user') {
+        form.customer_id = null;
+        form.customer_name = '';
+        form.customer_phone = '';
+    } else if (newVal === 'manual') {
+        form.customer_id = null;
+        form.user_id = null;
+    }
+});
 </script>
 
 <template>
@@ -140,6 +157,10 @@ const formatCurrency = (val) => {
                                     <label for="type_reg" class="text-xs font-medium cursor-pointer">Pilih dari Buku Kontak</label>
                                 </div>
                                 <div class="flex items-center gap-2">
+                                    <input type="radio" id="type_user" value="user" v-model="customerType" class="text-amber-500 focus:ring-amber-500" />
+                                    <label for="type_user" class="text-xs font-medium cursor-pointer">User Customer</label>
+                                </div>
+                                <div class="flex items-center gap-2">
                                     <input type="radio" id="type_manual" value="manual" v-model="customerType" class="text-amber-500 focus:ring-amber-500" />
                                     <label for="type_manual" class="text-xs font-medium cursor-pointer">Input Manual</label>
                                 </div>
@@ -156,6 +177,20 @@ const formatCurrency = (val) => {
                                     filter
                                     class="w-full"
                                     :required="customerType === 'registered'"
+                                />
+                            </div>
+
+                            <!-- User Customer Dropdown -->
+                            <div v-if="customerType === 'user'">
+                                <Dropdown
+                                    v-model="form.user_id"
+                                    :options="user_customers"
+                                    optionLabel="name"
+                                    optionValue="id"
+                                    placeholder="Pilih User Customer..."
+                                    filter
+                                    class="w-full"
+                                    :required="customerType === 'user'"
                                 />
                             </div>
 
@@ -223,13 +258,13 @@ const formatCurrency = (val) => {
                                 </div>
 
                                 <!-- Price -->
-                                <div class="w-full md:w-44 flex flex-col gap-1.5">
+                                <div class="w-full md:w-40 flex flex-col gap-1.5">
                                     <label class="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Harga Satuan</label>
-                                    <InputNumber v-model="item.price" :min="0" required class="w-full" mode="currency" currency="IDR" locale="id-ID" />
+                                    <InputNumber v-model="item.price" :min="0" required class="w-full" inputClass="w-full" mode="currency" currency="IDR" locale="id-ID" />
                                 </div>
 
                                 <!-- Line Subtotal & Delete -->
-                                <div class="w-full md:w-48 flex flex-col gap-1.5">
+                                <div class="w-full md:w-36 flex flex-col gap-1.5">
                                     <label class="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider hidden md:block">Subtotal</label>
                                     <div class="flex justify-between items-center w-full h-10 md:h-11 border-t md:border-t-0 border-gray-150 dark:border-gray-800 pt-2 md:pt-0">
                                         <span class="text-sm font-bold text-gray-900 dark:text-white">

@@ -176,9 +176,10 @@ const formatDate = (dateStr) => {
                         <thead class="text-xs text-gray-500 uppercase bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-800">
                             <tr>
                                 <th scope="col" class="px-6 py-4 font-bold">Waktu</th>
-                                <th scope="col" class="px-6 py-4 font-bold">Item</th>
-                                <th scope="col" class="px-6 py-4 font-bold">Tipe Item</th>
-                                <th scope="col" class="px-6 py-4 font-bold">Penyesuaian</th>
+                                <th scope="col" class="px-6 py-4 font-bold">Item & Tipe</th>
+                                <th scope="col" class="px-6 py-4 font-bold text-center">Stok Awal</th>
+                                <th scope="col" class="px-6 py-4 font-bold text-center">Penyesuaian</th>
+                                <th scope="col" class="px-6 py-4 font-bold text-center">Stok Akhir</th>
                                 <th scope="col" class="px-6 py-4 font-bold">Alasan</th>
                                 <th scope="col" class="px-6 py-4 font-bold">Oleh</th>
                             </tr>
@@ -186,18 +187,22 @@ const formatDate = (dateStr) => {
                         <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                             <tr v-for="adj in adjustments.data" :key="adj.id" class="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition">
                                 <td class="px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400">{{ formatDate(adj.created_at) }}</td>
-                                <td class="px-6 py-4 font-bold text-gray-900 dark:text-white">
-                                    {{ adj.adjustable?.name || 'Item Dihapus' }}
-                                </td>
                                 <td class="px-6 py-4">
-                                    <span :class="['px-2 py-0.5 rounded font-semibold text-[10px] uppercase tracking-wider', adj.adjustable_type.includes('Product') ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400']">
+                                    <div class="font-bold text-gray-900 dark:text-white">{{ adj.adjustable?.name || 'Item Dihapus' }}</div>
+                                    <span :class="['mt-1 inline-block px-2 py-0.5 rounded font-semibold text-[10px] uppercase tracking-wider', adj.adjustable_type.includes('Product') ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400']">
                                         {{ adj.adjustable_type.includes('Product') ? 'Produk Jadi' : 'Bahan Baku' }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 font-semibold">
-                                    <span :class="['text-xs px-2 py-0.5 rounded font-bold uppercase inline-flex items-center gap-1', adj.type === 'in' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-650' : 'bg-red-50 dark:bg-red-500/10 text-red-600']">
-                                        {{ adj.type === 'in' ? '+' : '-' }}{{ adj.quantity }}
+                                <td class="px-6 py-4 text-center font-bold text-gray-700 dark:text-gray-300">
+                                    {{ Number(adj.previous_stock) }}
+                                </td>
+                                <td class="px-6 py-4 font-semibold text-center">
+                                    <span :class="['text-xs px-2 py-0.5 rounded font-bold uppercase inline-flex items-center gap-1', adj.quantity_difference > 0 ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-650' : 'bg-red-50 dark:bg-red-500/10 text-red-600']">
+                                        {{ adj.quantity_difference > 0 ? '+' : '' }}{{ Number(adj.quantity_difference) }}
                                     </span>
+                                </td>
+                                <td class="px-6 py-4 text-center font-bold text-gray-900 dark:text-white">
+                                    {{ Number(adj.actual_stock) }}
                                 </td>
                                 <td class="px-6 py-4 text-xs max-w-xs truncate">{{ adj.reason || '-' }}</td>
                                 <td class="px-6 py-4 text-xs">{{ adj.user?.name || '-' }}</td>
@@ -228,20 +233,39 @@ const formatDate = (dateStr) => {
                             </span>
                         </div>
 
-                        <div class="flex items-center justify-between gap-3">
-                            <span :class="['text-xs px-2 py-1 rounded font-bold uppercase inline-flex items-center gap-1', adj.type === 'in' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-650' : 'bg-red-50 dark:bg-red-500/10 text-red-600']">
-                                {{ adj.type === 'in' ? '+' : '-' }}{{ adj.quantity }}
-                            </span>
-                            <span class="text-[11px] text-gray-500 dark:text-gray-400 truncate">
-                                Oleh: {{ adj.user?.name || '-' }}
-                            </span>
+                        <div class="flex items-center justify-between gap-3 bg-gray-50 dark:bg-gray-800/50 p-2 rounded-lg">
+                            <div class="text-center">
+                                <p class="text-[10px] text-gray-500 uppercase font-semibold">Awal</p>
+                                <p class="text-sm font-bold text-gray-700 dark:text-gray-300">{{ Number(adj.previous_stock) }}</p>
+                            </div>
+                            <div class="flex flex-col items-center">
+                                <i class="pi pi-arrow-right text-gray-300 text-[10px]"></i>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-[10px] text-gray-500 uppercase font-semibold">Penyesuaian</p>
+                                <span :class="['text-xs px-2 py-0.5 rounded font-bold uppercase inline-flex items-center gap-1 mt-0.5', adj.quantity_difference > 0 ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-650' : 'bg-red-50 dark:bg-red-500/10 text-red-600']">
+                                    {{ adj.quantity_difference > 0 ? '+' : '' }}{{ Number(adj.quantity_difference) }}
+                                </span>
+                            </div>
+                            <div class="flex flex-col items-center">
+                                <i class="pi pi-arrow-right text-gray-300 text-[10px]"></i>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-[10px] text-gray-500 uppercase font-semibold">Akhir</p>
+                                <p class="text-sm font-bold text-gray-900 dark:text-white">{{ Number(adj.actual_stock) }}</p>
+                            </div>
                         </div>
 
-                        <div>
-                            <p class="text-[10px] font-bold uppercase text-gray-400 tracking-wide">Alasan</p>
-                            <p class="text-xs text-gray-600 dark:text-gray-300 mt-1 line-clamp-2">
-                                {{ adj.reason || '-' }}
-                            </p>
+                        <div class="flex items-center justify-between gap-3">
+                            <div>
+                                <p class="text-[10px] font-bold uppercase text-gray-400 tracking-wide">Alasan</p>
+                                <p class="text-xs text-gray-600 dark:text-gray-300 mt-0.5 line-clamp-2">
+                                    {{ adj.reason || '-' }}
+                                </p>
+                            </div>
+                            <span class="text-[11px] text-gray-500 dark:text-gray-400 shrink-0">
+                                Oleh: {{ adj.user?.name || '-' }}
+                            </span>
                         </div>
                     </div>
                     <div v-if="adjustments.data.length === 0" class="p-6 text-center text-gray-400">Tidak ada log penyesuaian stok.</div>

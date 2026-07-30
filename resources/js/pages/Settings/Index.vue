@@ -11,6 +11,7 @@ import TabLanding from './Components/TabLanding.vue';
 import TabSEO from './Components/TabSEO.vue';
 import TabInfo from './Components/TabInfo.vue';
 import TabDev from './Components/TabDev.vue';
+import TabIntegrasi from './Components/TabIntegrasi.vue';
 
 const props = defineProps({
     settings: Object,
@@ -57,6 +58,15 @@ const form = useForm({
     business_subtitle: props.settings.business_subtitle || '',
     sponsors_json: props.settings.sponsors_json || '[]',
     sponsor_logos: {},
+
+    // Integrasi
+    rajaongkir_enabled: props.settings.rajaongkir_enabled === 'true' || props.settings.rajaongkir_enabled == 1 || props.settings.rajaongkir_enabled === true,
+    payment_enabled: props.settings.payment_enabled === 'true' || props.settings.payment_enabled == 1 || props.settings.payment_enabled === true,
+    qrisly_enabled: props.settings.qrisly_enabled === 'true' || props.settings.qrisly_enabled == 1 || props.settings.qrisly_enabled === true,
+    rajaongkir_api_key: props.settings.rajaongkir_api_key || '',
+    rajaongkir_type: props.settings.rajaongkir_type || 'starter',
+    store_origin_province_id: props.settings.store_origin_province_id ? Number(props.settings.store_origin_province_id) : '',
+    store_origin_city_id: props.settings.store_origin_city_id ? Number(props.settings.store_origin_city_id) : '',
 });
 
 const isDevAdmin = computed(() => page.props.auth?.roles?.includes('dev-admin'));
@@ -98,6 +108,9 @@ const submitForm = () => {
                         <button @click="activeTab = 'info'" type="button" :class="['px-4 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap', activeTab === 'info' ? 'bg-white dark:bg-gray-800 text-amber-600 dark:text-amber-400 shadow border border-gray-200/50 dark:border-gray-700' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300']">
                             Halaman Info
                         </button>
+                        <button @click="activeTab = 'integrasi'" type="button" :class="['px-4 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap', activeTab === 'integrasi' ? 'bg-white dark:bg-gray-800 text-amber-600 dark:text-amber-400 shadow border border-gray-200/50 dark:border-gray-700' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300']">
+                            Integrasi API
+                        </button>
                         <button @click="activeTab = 'dev'" type="button" :class="['px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1 whitespace-nowrap', activeTab === 'dev' ? 'bg-white dark:bg-gray-800 text-amber-600 dark:text-amber-400 shadow border border-gray-200/50 dark:border-gray-700' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300']">
                             <svg class="w-3.5 h-3.5 flex-shrink-0" :class="isDevAdmin ? 'text-amber-500' : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
@@ -124,6 +137,8 @@ const submitForm = () => {
                 <TabSEO v-show="activeTab === 'seo'" :form="form" />
                 
                 <TabInfo v-show="activeTab === 'info'" :form="form" />
+                
+                <TabIntegrasi v-show="activeTab === 'integrasi'" :form="form" :settings="settings" />
                 
                 <TabDev v-show="activeTab === 'dev'" :form="form" :settings="settings" :isDevAdmin="isDevAdmin" />
 

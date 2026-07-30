@@ -33,6 +33,14 @@ class RecordPurchaseAction
             $supplierName = $data['supplier_name'] ?? null;
             $supplierPhone = $data['supplier_phone'] ?? null;
 
+            if (!empty($data['user_id'])) {
+                $user = \App\Models\User::find($data['user_id']);
+                if ($user) {
+                    $supplierName = $user->name;
+                    $supplierPhone = $user->phone;
+                }
+            }
+
             // Save supplier to contacts if requested
             if (empty($supplierId) && !empty($supplierName) && !empty($data['save_supplier'])) {
                 $contact = Contact::create([

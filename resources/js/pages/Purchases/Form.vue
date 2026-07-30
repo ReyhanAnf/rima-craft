@@ -12,6 +12,7 @@ import Message from 'primevue/message';
 
 const props = defineProps({
     suppliers: Array,
+    users: Array,
     materials: Array,
 });
 
@@ -21,6 +22,7 @@ const form = useForm({
     date: new Date().toISOString().split('T')[0],
     payment_status: 'paid',
     supplier_id: null,
+    user_id: null,
     supplier_name: '',
     supplier_phone: '',
     save_supplier: false,
@@ -118,10 +120,14 @@ const formatCurrency = (val) => {
 
                         <!-- Supplier Selection -->
                         <div class="mt-6 pt-6 border-t border-gray-100 dark:border-gray-800 space-y-4">
-                            <div class="flex items-center gap-4">
+                            <div class="flex flex-wrap items-center gap-4">
                                 <div class="flex items-center gap-2">
                                     <input type="radio" id="sup_reg" value="registered" v-model="supplierType" class="text-amber-500 focus:ring-amber-500" />
                                     <label for="sup_reg" class="text-xs font-medium cursor-pointer">Pilih dari Buku Kontak</label>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <input type="radio" id="sup_user" value="user" v-model="supplierType" class="text-amber-500 focus:ring-amber-500" />
+                                    <label for="sup_user" class="text-xs font-medium cursor-pointer">Pilih User Customer</label>
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <input type="radio" id="sup_manual" value="manual" v-model="supplierType" class="text-amber-500 focus:ring-amber-500" />
@@ -136,10 +142,24 @@ const formatCurrency = (val) => {
                                     :options="suppliers"
                                     optionLabel="name"
                                     optionValue="id"
-                                    placeholder="Pilih Supplier..."
+                                    placeholder="Pilih Supplier dari Buku Kontak..."
                                     filter
                                     class="w-full"
                                     :required="supplierType === 'registered'"
+                                />
+                            </div>
+
+                            <!-- User Dropdown -->
+                            <div v-if="supplierType === 'user'">
+                                <Dropdown
+                                    v-model="form.user_id"
+                                    :options="users"
+                                    optionLabel="name"
+                                    optionValue="id"
+                                    placeholder="Pilih User Customer..."
+                                    filter
+                                    class="w-full"
+                                    :required="supplierType === 'user'"
                                 />
                             </div>
 
@@ -175,10 +195,10 @@ const formatCurrency = (val) => {
                             <div
                                 v-for="(item, idx) in form.items"
                                 :key="idx"
-                                class="flex flex-col md:flex-row gap-3 items-end bg-gray-50/50 dark:bg-gray-800/40 p-3 rounded-lg border border-gray-200 dark:border-gray-800"
+                                class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end bg-gray-50/50 dark:bg-gray-800/40 p-3 rounded-lg border border-gray-200 dark:border-gray-800"
                             >
                                 <!-- Material Selection -->
-                                <div class="w-full md:flex-1 flex flex-col gap-1">
+                                <div class="md:col-span-4 flex flex-col gap-1">
                                     <label class="text-[10px] font-bold text-gray-400 uppercase">Pilih Bahan</label>
                                     <Dropdown
                                         v-model="item.material_id"
@@ -194,19 +214,19 @@ const formatCurrency = (val) => {
                                 </div>
 
                                 <!-- Qty -->
-                                <div class="w-full md:w-28 flex flex-col gap-1">
+                                <div class="md:col-span-2 flex flex-col gap-1">
                                     <label class="text-[10px] font-bold text-gray-400 uppercase">Qty ({{ getMaterialUnit(item.material_id) || 'satuan' }})</label>
-                                    <InputNumber v-model="item.qty" :min="0.01" :maxFractionDigits="2" required class="w-full" />
+                                    <InputNumber v-model="item.qty" :min="0.01" :maxFractionDigits="2" required class="w-full" showButtons inputClass="w-full" />
                                 </div>
 
                                 <!-- Price -->
-                                <div class="w-full md:w-36 flex flex-col gap-1">
+                                <div class="md:col-span-3 flex flex-col gap-1">
                                     <label class="text-[10px] font-bold text-gray-400 uppercase">Harga Satuan</label>
-                                    <InputNumber v-model="item.price" :min="0" required class="w-full" />
+                                    <InputNumber v-model="item.price" :min="0" required class="w-full" inputClass="w-full" />
                                 </div>
 
                                 <!-- Line Subtotal & Delete -->
-                                <div class="w-full md:w-40 flex justify-between items-center pt-2 md:pt-0">
+                                <div class="md:col-span-3 flex justify-between items-center pt-2 md:pt-0">
                                     <div class="text-sm font-bold text-gray-900 dark:text-white">
                                         {{ formatCurrency(item.qty * item.price) }}
                                     </div>

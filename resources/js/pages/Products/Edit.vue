@@ -21,6 +21,7 @@ const form = useForm({
     description: props.product.description || '',
     base_price: Number(props.product.base_price) || 0,
     current_stock: Number(props.product.current_stock) || 0,
+    weight: Number(props.product.weight) || 1000,
     image: null,
     gallery_images: [],
     video_links: (props.product.media_assets || [])
@@ -164,7 +165,7 @@ const deleteMedia = (index) => {
                             <Textarea v-model="form.description" rows="3" placeholder="Tuliskan spesifikasi/keterangan produk..." />
                         </div>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div class="flex flex-col gap-1.5">
                                 <label class="text-xs font-semibold">Harga Jual Dasar (Rp) <span class="text-red-500">*</span></label>
                                 <InputNumber v-model="form.base_price" mode="decimal" required :min="0" class="w-full" inputClass="w-full" />
@@ -172,6 +173,10 @@ const deleteMedia = (index) => {
                             <div class="flex flex-col gap-1.5">
                                 <label class="text-xs font-semibold">Stok Saat Ini <span class="text-red-500">*</span></label>
                                 <InputNumber v-model="form.current_stock" mode="decimal" required :min="0" class="w-full" inputClass="w-full" />
+                            </div>
+                            <div class="flex flex-col gap-1.5">
+                                <label class="text-xs font-semibold">Berat (Gram) <span class="text-red-500">*</span></label>
+                                <InputNumber v-model="form.weight" mode="decimal" required :min="1" class="w-full" inputClass="w-full" placeholder="1000" />
                             </div>
                         </div>
                     </div>

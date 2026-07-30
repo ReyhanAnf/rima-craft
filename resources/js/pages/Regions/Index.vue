@@ -3,6 +3,7 @@
 <script setup>
 import { ref, watch } from 'vue';
 import { Head, useForm, router, Link } from '@inertiajs/vue3';
+import axios from 'axios';
 import AdminLayout from '@/layouts/AdminLayout.vue';
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
@@ -51,13 +52,14 @@ const setTab = (tab) => {
 
 const isModalOpen = ref(false);
 const editingRegion = ref(null);
-const modalAction = ref('add_province'); // 'add_province', 'add_city', 'edit_region', 'edit_shipping'
+const modalAction = ref('add_province'); // 'add_province', 'add_city', 'edit_region', 'edit_shipping', 'bulk_shipping'
 
 const form = useForm({
     type: 'province',
     name: '',
     parent_id: '',
     shipping_cost: 0,
+    province_id: '',
 });
 
 const openModal = (action, region = null) => {
@@ -79,6 +81,9 @@ const openModal = (action, region = null) => {
         form.name = region.name;
         form.parent_id = region.parent_id || '';
         form.shipping_cost = region.shipping_rate ? Number(region.shipping_rate.shipping_cost) : 0;
+    } else if (action === 'bulk_shipping') {
+        form.province_id = '';
+        form.shipping_cost = 0;
     }
     isModalOpen.value = true;
 };
@@ -90,7 +95,11 @@ const closeModal = () => {
 };
 
 const submitForm = () => {
-    if (editingRegion.value) {
+    if (modalAction.value === 'bulk_shipping') {
+        form.post(route('regions.bulk-shipping'), {
+            onSuccess: () => closeModal(),
+        });
+    } else if (editingRegion.value) {
         // For editing shipping, we only update shipping cost. But we can pass all validated fields.
         form.put(route('regions.update', editingRegion.value.id), {
             onSuccess: () => closeModal(),
@@ -110,6 +119,61 @@ const deleteRegion = (region) => {
 
 const formatCurrency = (value) => {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value || 0);
+};
+
+const inlineState = ref({});
+
+const initInlineState = () => {
+    if (!props.regions || !props.regions.data) return;
+    props.regions.data.forEach(region => {
+        if (!inlineState.value[region.id] || !inlineState.value[region.id].saving) {
+            inlineState.value[region.id] = {
+                cost: region.shipping_rate ? Number(region.shipping_rate.shipping_cost) : 0,
+                saving: false,
+                saved: false
+            };
+        }
+    });
+};
+
+watch(() => props.regions, () => {
+    initInlineState();
+}, { immediate: true, deep: true });
+
+const saveInlineShipping = async (region) => {
+    const state = inlineState.value[region.id];
+    const originalCost = region.shipping_rate ? Number(region.shipping_rate.shipping_cost) : 0;
+    
+    if (state.cost === originalCost) return;
+
+    state.saving = true;
+    state.saved = false;
+
+    try {
+        await axios.put(route('regions.update', region.id), {
+            type: region.type,
+            name: region.name,
+            parent_id: region.parent_id,
+            shipping_cost: state.cost
+        }, {
+            headers: { 'Accept': 'application/json' }
+        });
+        
+        state.saved = true;
+        if (!region.shipping_rate) region.shipping_rate = {};
+        region.shipping_rate.shipping_cost = state.cost;
+
+        setTimeout(() => {
+            if (inlineState.value[region.id]) {
+                inlineState.value[region.id].saved = false;
+            }
+        }, 2000);
+    } catch (e) {
+        console.error(e);
+        state.cost = originalCost;
+    } finally {
+        state.saving = false;
+    }
 };
 </script>
 
@@ -177,22 +241,32 @@ const formatCurrency = (value) => {
                     </div>
                 </div>
 
-                <!-- Add Button (Only for Master Wilayah tab) -->
-                <div v-if="activeTab === 'regions'" class="flex gap-2">
-                    <Button
-                        v-if="typeFilter === 'province'"
-                        label="Tambah Provinsi"
-                        icon="pi pi-plus"
-                        class="w-full sm:w-auto justify-center !bg-amber-500 hover:!bg-amber-600 !border-amber-500 hover:!border-amber-600 !text-gray-950 font-bold"
-                        @click="openModal('add_province')"
-                    />
-                    <Button
-                        v-else
-                        label="Tambah Kota"
-                        icon="pi pi-plus"
-                        class="w-full sm:w-auto justify-center !bg-amber-500 hover:!bg-amber-600 !border-amber-500 hover:!border-amber-600 !text-gray-950 font-bold"
-                        @click="openModal('add_city')"
-                    />
+                <!-- Action Buttons -->
+                <div class="flex gap-2">
+                    <template v-if="activeTab === 'regions'">
+                        <Button
+                            v-if="typeFilter === 'province'"
+                            label="Tambah Provinsi"
+                            icon="pi pi-plus"
+                            class="w-full sm:w-auto justify-center !bg-amber-500 hover:!bg-amber-600 !border-amber-500 hover:!border-amber-600 !text-gray-950 font-bold"
+                            @click="openModal('add_province')"
+                        />
+                        <Button
+                            v-else
+                            label="Tambah Kota"
+                            icon="pi pi-plus"
+                            class="w-full sm:w-auto justify-center !bg-amber-500 hover:!bg-amber-600 !border-amber-500 hover:!border-amber-600 !text-gray-950 font-bold"
+                            @click="openModal('add_city')"
+                        />
+                    </template>
+                    <template v-if="activeTab === 'shipping'">
+                        <Button
+                            label="Set Ongkir Massal"
+                            icon="pi pi-bolt"
+                            class="w-full sm:w-auto justify-center !bg-amber-500 hover:!bg-amber-600 !border-amber-500 hover:!border-amber-600 !text-gray-950 font-bold"
+                            @click="openModal('bulk_shipping')"
+                        />
+                    </template>
                 </div>
             </div>
 
@@ -280,17 +354,24 @@ const formatCurrency = (value) => {
                                 <td class="px-6 py-4 text-gray-500">
                                     {{ region.parent ? region.parent.name : '-' }}
                                 </td>
-                                <td class="px-6 py-4 font-semibold text-amber-600 dark:text-amber-400">
-                                    {{ formatCurrency(region.shipping_rate ? region.shipping_rate.shipping_cost : 0) }}
+                                <td class="px-6 py-4 font-semibold">
+                                    <div class="flex items-center gap-2 max-w-[200px]">
+                                        <InputNumber
+                                            v-if="inlineState[region.id]"
+                                            v-model="inlineState[region.id].cost"
+                                            :min="0"
+                                            mode="decimal"
+                                            class="w-full"
+                                            inputClass="w-full py-2 px-3 text-sm"
+                                            @blur="saveInlineShipping(region)"
+                                            @keyup.enter="$event.target.blur()"
+                                        />
+                                        <i v-if="inlineState[region.id] && inlineState[region.id].saving" class="pi pi-spin pi-spinner text-amber-500"></i>
+                                        <i v-else-if="inlineState[region.id] && inlineState[region.id].saved" class="pi pi-check-circle text-emerald-500"></i>
+                                    </div>
                                 </td>
                                 <td class="px-6 py-4 text-right">
-                                    <Button
-                                        label="Atur Ongkir"
-                                        icon="pi pi-dollar"
-                                        severity="secondary"
-                                        text
-                                        @click="openModal('edit_shipping', region)"
-                                    />
+                                    <!-- Tombol Atur Ongkir disembunyikan karena sudah inline editing, tapi tetap bisa ada jika mau -->
                                 </td>
                             </tr>
                             <tr v-if="regions.data.length === 0">
@@ -307,27 +388,30 @@ const formatCurrency = (value) => {
                         :key="region.id"
                         class="p-4 space-y-3"
                     >
-                        <div class="flex items-start justify-between gap-3">
+                        <div class="flex flex-col gap-3">
                             <div class="min-w-0">
                                 <h4 class="text-sm font-bold text-gray-900 dark:text-white truncate">{{ region.name }}</h4>
                                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">
                                     {{ region.parent ? region.parent.name : '-' }}
                                 </p>
                             </div>
-                            <span class="shrink-0 text-xs font-bold text-amber-600 dark:text-amber-400">
-                                {{ formatCurrency(region.shipping_rate ? region.shipping_rate.shipping_cost : 0) }}
-                            </span>
-                        </div>
-
-                        <div class="flex justify-end">
-                            <Button
-                                label="Atur Ongkir"
-                                icon="pi pi-dollar"
-                                severity="secondary"
-                                text
-                                size="small"
-                                @click="openModal('edit_shipping', region)"
-                            />
+                            <div class="flex items-center gap-2">
+                                <InputNumber
+                                    v-if="inlineState[region.id]"
+                                    v-model="inlineState[region.id].cost"
+                                    :min="0"
+                                    mode="decimal"
+                                    class="w-full"
+                                    inputClass="w-full py-2 px-3 text-sm"
+                                    placeholder="Ongkos Kirim"
+                                    @blur="saveInlineShipping(region)"
+                                    @keyup.enter="$event.target.blur()"
+                                />
+                                <div class="w-6 flex justify-center shrink-0">
+                                    <i v-if="inlineState[region.id] && inlineState[region.id].saving" class="pi pi-spin pi-spinner text-amber-500"></i>
+                                    <i v-else-if="inlineState[region.id] && inlineState[region.id].saved" class="pi pi-check-circle text-emerald-500"></i>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div v-if="regions.data.length === 0" class="p-6 text-center text-gray-400">Tidak ada data kota/kabupaten ditemukan.</div>
@@ -362,7 +446,8 @@ const formatCurrency = (value) => {
             :header="
                 modalAction === 'add_province' ? 'Tambah Provinsi' :
                 modalAction === 'add_city' ? 'Tambah Kota/Kabupaten' :
-                modalAction === 'edit_region' ? 'Edit Wilayah' : 'Pengaturan Ongkos Kirim'
+                modalAction === 'edit_region' ? 'Edit Wilayah' :
+                modalAction === 'bulk_shipping' ? 'Atur Ongkir Massal' : 'Pengaturan Ongkos Kirim'
             "
             class="w-full max-w-md"
             @hide="closeModal"
@@ -451,6 +536,38 @@ const formatCurrency = (value) => {
                                 class="w-full"
                                 inputClass="w-full"
                                 placeholder="Contoh: 15000"
+                                required
+                            />
+                            <div v-if="form.errors.shipping_cost" class="text-red-500 text-xs">{{ form.errors.shipping_cost }}</div>
+                        </div>
+                    </template>
+
+                    <template v-else-if="modalAction === 'bulk_shipping'">
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-xs font-semibold">Pilih Provinsi <span class="text-red-500">*</span></label>
+                            <select
+                                v-model="form.province_id"
+                                required
+                                class="w-full border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm rounded-lg focus:border-amber-500 focus:ring-amber-500 shadow-sm"
+                            >
+                                <option value="" disabled>-- Pilih Provinsi --</option>
+                                <option v-for="prov in provinces" :key="prov.id" :value="prov.id">
+                                    {{ prov.name }}
+                                </option>
+                            </select>
+                            <p class="text-[10px] text-gray-500 mt-1">Tarif baru akan diterapkan ke <b>seluruh kota/kabupaten</b> di dalam provinsi ini.</p>
+                            <div v-if="form.errors.province_id" class="text-red-500 text-xs">{{ form.errors.province_id }}</div>
+                        </div>
+
+                        <div class="flex flex-col gap-1.5 mt-2">
+                            <label class="text-xs font-semibold">Ongkos Kirim Seragam (Rp) <span class="text-red-500">*</span></label>
+                            <InputNumber
+                                v-model="form.shipping_cost"
+                                :min="0"
+                                mode="decimal"
+                                class="w-full"
+                                inputClass="w-full"
+                                placeholder="Contoh: 20000"
                                 required
                             />
                             <div v-if="form.errors.shipping_cost" class="text-red-500 text-xs">{{ form.errors.shipping_cost }}</div>

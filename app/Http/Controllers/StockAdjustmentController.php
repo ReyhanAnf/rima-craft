@@ -21,7 +21,11 @@ class StockAdjustmentController extends Controller
         
         // Filter by adjustment type
         if ($request->filled('type')) {
-            $query->where('type', $request->type);
+            if ($request->type === 'in') {
+                $query->where('quantity_difference', '>', 0);
+            } elseif ($request->type === 'out') {
+                $query->where('quantity_difference', '<', 0);
+            }
         }
         
         // Filter by date range

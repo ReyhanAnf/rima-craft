@@ -55,6 +55,8 @@ const form = useForm({
     items:            '[]',
     payment_mode:         'full',
     down_payment_amount:  0,
+    courier:              '',
+    shipping_service:     '',
 });
 
 // Region states
@@ -66,6 +68,8 @@ const subtotal = ref(cart.totalPrice);
 const shippingCost = ref(0);
 const finalTotal = ref(cart.totalPrice);
 const updatedItems = ref([...cart.items]);
+const rajaongkirOptions = ref(null);
+const isRajaOngkirActive = computed(() => rajaongkirOptions.value && rajaongkirOptions.value.length > 0);
 
 // DP state (partner only)
 const paymentMode = ref('full')
@@ -123,6 +127,7 @@ async function onCityChange() {
             },
             body: JSON.stringify({
                 city_id: form.city_id,
+                courier: form.courier,
                 items: cart.items,
             }),
         });
@@ -130,9 +135,19 @@ async function onCityChange() {
         if (response.ok) {
             const data = await response.json();
             subtotal.value = data.subtotal;
-            shippingCost.value = data.shipping_cost;
-            finalTotal.value = data.total;
             updatedItems.value = data.items;
+            rajaongkirOptions.value = data.rajaongkir_costs;
+            
+            if (data.rajaongkir_costs && data.rajaongkir_costs.length > 0) {
+                // Jika ada opsi dari RajaOngkir, set default ke yang pertama
+                form.shipping_service = data.rajaongkir_costs[0].service;
+                shippingCost.value = data.rajaongkir_costs[0].cost[0].value;
+                finalTotal.value = subtotal.value + shippingCost.value;
+            } else {
+                form.shipping_service = '';
+                shippingCost.value = data.shipping_cost;
+                finalTotal.value = data.total;
+            }
             validateDp();
         }
     } catch (e) {
@@ -293,7 +308,7 @@ onMounted(async () => {
                             <div class="flex justify-between">
                                 <span class="text-gray-600 dark:text-gray-400">Ongkos Kirim</span>
                                 <span class="font-semibold text-gray-900 dark:text-white">
-                                    {{ form.city_id ? (shippingCost > 0 ? formatPrice(shippingCost) : 'Gratis') : 'Pilih Kota/Kab' }}
+                                    {{ form.city_id ? (shippingCost > 0 ? formatPrice(shippingCost) : 'Dihitung Terpisah') : 'Pilih Kota/Kab' }}
                                 </span>
                             </div>
                             <div v-if="paymentMode === 'dp'" class="flex justify-between">
@@ -469,6 +484,53 @@ onMounted(async () => {
                                                 </span>
                                             </div>
                                             <p v-if="form.errors.city_id" class="mt-1.5 text-xs text-red-500">{{ form.errors.city_id }}</p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Courier Selection & Service Options -->
+                                    <div v-if="form.city_id && config.rajaongkir_enabled" class="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 rounded-xl border border-amber-200 dark:border-amber-900 bg-amber-50/50 dark:bg-amber-950/20">
+                                        <div>
+                                            <label class="block text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                                                Kurir Pengiriman <span class="text-red-500">*</span>
+                                            </label>
+                                            <div class="flex gap-2">
+                                                <label class="flex-1 relative flex items-center justify-center p-3 border-2 rounded-xl cursor-pointer transition-all" :class="form.courier === 'jne' ? 'border-amber-500 bg-white dark:bg-gray-800 shadow-sm' : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 opacity-70 hover:opacity-100'">
+                                                    <input type="radio" v-model="form.courier" value="jne" class="sr-only" @change="onCityChange" />
+                                                    <span class="font-bold text-sm uppercase">JNE</span>
+                                                </label>
+                                                <label class="flex-1 relative flex items-center justify-center p-3 border-2 rounded-xl cursor-pointer transition-all" :class="form.courier === 'pos' ? 'border-amber-500 bg-white dark:bg-gray-800 shadow-sm' : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 opacity-70 hover:opacity-100'">
+                                                    <input type="radio" v-model="form.courier" value="pos" class="sr-only" @change="onCityChange" />
+                                                    <span class="font-bold text-sm uppercase">POS</span>
+                                                </label>
+                                                <label class="flex-1 relative flex items-center justify-center p-3 border-2 rounded-xl cursor-pointer transition-all" :class="form.courier === 'tiki' ? 'border-amber-500 bg-white dark:bg-gray-800 shadow-sm' : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 opacity-70 hover:opacity-100'">
+                                                    <input type="radio" v-model="form.courier" value="tiki" class="sr-only" @change="onCityChange" />
+                                                    <span class="font-bold text-sm uppercase">TIKI</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div v-if="isRajaOngkirActive">
+                                            <label class="block text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                                                Layanan (Otomatis)
+                                            </label>
+                                            <select
+                                                v-model="form.shipping_service"
+                                                @change="() => {
+                                                    const selected = rajaongkirOptions.find(o => o.service === form.shipping_service);
+                                                    if(selected) {
+                                                        shippingCost = selected.cost[0].value;
+                                                        finalTotal = subtotal + shippingCost;
+                                                        validateDp();
+                                                    }
+                                                }"
+                                                class="w-full px-4 py-3.5 rounded-xl border border-amber-300 dark:border-amber-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all outline-none"
+                                            >
+                                                <option v-for="opt in rajaongkirOptions" :key="opt.service" :value="opt.service">
+                                                    {{ opt.service }} - {{ formatPrice(opt.cost[0].value) }} ({{ opt.cost[0].etd }} hari)
+                                                </option>
+                                            </select>
+                                        </div>
+                                        <div v-else-if="form.courier" class="flex items-center text-xs text-amber-600">
+                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> Sistem akan menggunakan harga tarif wilayah default/manual jika API tidak tersedia.
                                         </div>
                                     </div>
 
@@ -710,8 +772,11 @@ onMounted(async () => {
                                 <div class="flex justify-between text-sm items-center">
                                     <span class="text-gray-500 dark:text-gray-400 font-medium">Ongkos Kirim</span>
                                     <span class="font-bold text-gray-900 dark:text-white">
-                                        {{ form.city_id ? (shippingCost > 0 ? formatPrice(shippingCost) : 'Gratis') : 'Pilih Kota/Kab' }}
+                                        {{ form.city_id ? (shippingCost > 0 ? formatPrice(shippingCost) : 'Dihitung Terpisah') : 'Pilih Kota/Kab' }}
                                     </span>
+                                </div>
+                                <div v-if="form.city_id && shippingCost > 0" class="text-[10px] text-amber-700 dark:text-amber-500 bg-amber-50 dark:bg-amber-950/30 p-2 rounded-lg leading-relaxed border border-amber-200 dark:border-amber-900/50 mt-1">
+                                    <span class="font-bold">*Estimasi Ongkir:</span> Tarif ongkos kirim dapat berubah sewaktu-waktu tergantung pada penyesuaian berat volume atau tarif riil ekspedisi.
                                 </div>
                                 
                                 <Transition name="expand">

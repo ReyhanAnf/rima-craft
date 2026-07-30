@@ -1,4 +1,5 @@
 <script setup>
+import { watch } from 'vue';
 import Card from 'primevue/card';
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
@@ -11,6 +12,15 @@ const props = defineProps({
 const handleFileChange = (e, field) => {
     props.form[field] = e.target.files[0];
 };
+
+watch(() => props.form.gmaps_iframe, (newVal) => {
+    if (newVal && newVal.includes('<iframe') && newVal.includes('src="')) {
+        const match = newVal.match(/src="([^"]+)"/);
+        if (match && match[1]) {
+            props.form.gmaps_iframe = match[1];
+        }
+    }
+});
 </script>
 
 <template>
@@ -59,13 +69,30 @@ const handleFileChange = (e, field) => {
                         <Textarea v-model="form.address" rows="3" placeholder="Masukkan alamat lengkap workshop..." />
                     </div>
                     <div class="flex flex-col gap-1.5">
-                        <label class="text-xs font-semibold">Google Maps Embed URL (SRC)</label>
-                        <InputText v-model="form.gmaps_iframe" placeholder="Contoh: https://www.google.com/maps/embed?pb=..." />
-                        <p class="text-[10px] text-gray-500">Buka Google Maps > Bagikan > Sematkan Peta > Copy isi dari <code>src="..."</code></p>
+                        <label class="text-xs font-semibold">Google Maps Embed (URL / Kode Iframe)</label>
+                        <InputText v-model="form.gmaps_iframe" placeholder="Paste URL atau seluruh kode <iframe...> di sini" />
+                        <p class="text-[10px] text-gray-500">
+                            <b>Panduan:</b> Buka <a href="https://maps.google.com" target="_blank" class="text-emerald-600 hover:underline">Google Maps</a> > Cari Lokasi > Klik <b>Bagikan</b> > Pilih <b>Sematkan Peta</b> > Klik <b>Salin HTML</b>, lalu langsung paste ke kolom di atas. Sistem otomatis memprosesnya.
+                        </p>
+                        <div v-if="form.gmaps_iframe" class="mt-2 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-800 h-48 relative bg-gray-50 dark:bg-gray-800/50 shadow-inner">
+                            <iframe 
+                                :src="form.gmaps_iframe" 
+                                width="100%" 
+                                height="100%" 
+                                style="border:0;" 
+                                allowfullscreen="" 
+                                loading="lazy" 
+                                referrerpolicy="no-referrer-when-downgrade"
+                                class="absolute inset-0 w-full h-full"
+                            ></iframe>
+                        </div>
                     </div>
                     <div class="flex flex-col gap-1.5">
                         <label class="text-xs font-semibold">Jam Operasional</label>
-                        <InputText v-model="form.business_hours" placeholder="Contoh: Senin–Sabtu, 08.00–17.00 WIB" />
+                        <Textarea v-model="form.business_hours" rows="3" placeholder="Contoh:&#10;Senin - Jumat: 08.00 - 17.00 WIB&#10;Sabtu: 08.00 - 14.00 WIB&#10;Minggu: Tutup" />
+                        <p class="text-[10px] text-gray-500">
+                            Anda dapat menekan <b>Enter</b> untuk memisahkan jam operasional per baris agar lebih rapi saat ditampilkan ke pelanggan.
+                        </p>
                     </div>
                 </div>
             </template>

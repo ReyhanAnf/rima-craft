@@ -9,6 +9,8 @@ use App\Models\PaymentMethod;
 use App\Models\User;
 use App\Models\Role;
 use App\Models\Contact;
+use App\Services\RajaOngkirService;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -62,10 +64,52 @@ class OrderController extends Controller
         return redirect()->route('order.checkout');
     }
 
+    private function getRajaOngkirCityId($localCityId, $rajaOngkir)
+    {
+        $city = \App\Models\Region::find($localCityId);
+        if (!$city) return null;
+        
+        $province = \App\Models\Region::find($city->parent_id);
+        if (!$province) return null;
+
+        $roProvinces = $rajaOngkir->getProvinces();
+        $roProvinceId = null;
+        
+        $localProvName = strtolower($province->name);
+        $cleanLocalProv = trim(str_replace(['daerah istimewa ', 'kepulauan ', 'nanggroe ', ' darussalam', 'di '], '', $localProvName));
+
+        foreach ($roProvinces as $roProv) {
+            $roProvName = strtolower($roProv['name'] ?? $roProv['province'] ?? '');
+            $cleanRoProv = trim(str_replace(['daerah istimewa ', 'kepulauan ', 'nanggroe ', ' darussalam', ' (nad)', ' (ntb)', ' (ntt)', 'di '], '', $roProvName));
+            
+            if ($cleanRoProv === $cleanLocalProv || str_contains($cleanRoProv, $cleanLocalProv) || str_contains($cleanLocalProv, $cleanRoProv)) {
+                $roProvinceId = $roProv['id'] ?? $roProv['province_id'];
+                break;
+            }
+        }
+
+        if (!$roProvinceId) return null;
+
+        $rajaOngkirCities = $rajaOngkir->getCities($roProvinceId);
+        $localName = strtolower(str_replace(['kota ', 'kabupaten ', 'kab. '], '', strtolower($city->name)));
+        $cleanLocalName = trim($localName);
+        
+        foreach ($rajaOngkirCities as $roCity) {
+            $roCityName = strtolower($roCity['name'] ?? $roCity['city_name'] ?? '');
+            $cleanRoCity = trim(str_replace(['kota ', 'kabupaten ', 'kab. '], '', $roCityName));
+            
+            if ($cleanRoCity === $cleanLocalName || str_contains($cleanRoCity, $cleanLocalName) || str_contains($cleanLocalName, $cleanRoCity)) {
+                return $roCity['id'] ?? $roCity['city_id'];
+            }
+        }
+
+        return null;
+    }
+
     /**
      * Store a new order (public endpoint)
      */
-    public function store(Request $request, \App\Services\ProductPriceService $priceService)
+    public function store(Request $request, \App\Services\ProductPriceService $priceService, RajaOngkirService $rajaOngkir)
     {
         try {
             // Decode items from JSON string to array
@@ -84,6 +128,8 @@ class OrderController extends Controller
             }
 
             $validated = $request->validate([
+                'courier' => 'nullable|string|in:jne,pos,tiki',
+                'shipping_service' => 'nullable|string',
                 'customer_name' => 'required|string|max:255',
                 'customer_phone' => 'required|string|max:20',
                 'customer_email' => array_filter([
@@ -116,6 +162,7 @@ class OrderController extends Controller
             $city = \App\Models\Region::with('shippingRate')->find($validated['city_id']);
             $user = auth()->user();
             $calculatedSubtotal = 0;
+            $totalWeight = 0;
             $calculatedItems = [];
 
             foreach ($items as $item) {
@@ -144,6 +191,7 @@ class OrderController extends Controller
 
                 $itemSubtotal = $unitPrice * $qty;
                 $calculatedSubtotal += $itemSubtotal;
+                $totalWeight += ((int) ($product->weight ?? 1000)) * $qty;
 
                 $calculatedItems[] = [
                     'id' => $product->id,
@@ -158,6 +206,39 @@ class OrderController extends Controller
             }
 
             $calculatedShippingCost = $city && $city->shippingRate ? (float) $city->shippingRate->shipping_cost : 0.0;
+
+            // Jika RajaOngkir diaktifkan dan valid, override shippingCost
+            if ($city && $rajaOngkir->isConfigured()) {
+                $origin = Setting::where('key', 'store_origin_city_id')->value('value');
+                $courier = $validated['courier'] ?? 'jne';
+                
+                if ($origin) {
+                    $destinationId = $this->getRajaOngkirCityId($validated['city_id'], $rajaOngkir);
+
+                    if ($destinationId) {
+                        $results = $rajaOngkir->getCost($origin, $destinationId, $totalWeight > 0 ? $totalWeight : 1000, $courier);
+                        if (!empty($results)) {
+                            $costs = $results[0]['costs'];
+                            if (count($costs) > 0) {
+                                // Temukan layanan yang dipilih, jika tidak ada fallback ke yang pertama
+                                $selectedServiceCost = null;
+                                $targetService = $validated['shipping_service'] ?? null;
+                                if ($targetService) {
+                                    foreach ($costs as $c) {
+                                        if ($c['service'] === $targetService) {
+                                            $selectedServiceCost = (float) $c['cost'][0]['value'];
+                                            break;
+                                        }
+                                    }
+                                }
+                                
+                                $calculatedShippingCost = $selectedServiceCost ?? (float) $costs[0]['cost'][0]['value'];
+                            }
+                        }
+                    }
+                }
+            }
+
             $calculatedTotal = $calculatedSubtotal + $calculatedShippingCost;
 
             // Enforce calculations onto validated data
@@ -235,6 +316,8 @@ class OrderController extends Controller
                 'items' => $validated['items'],
                 'subtotal' => $validated['subtotal'],
                 'shipping_cost' => $validated['shipping_cost'] ?? 0,
+                'shipping_courier' => $validated['courier'] ?? null,
+                'shipping_service' => $validated['shipping_service'] ?? null,
                 'total' => $validated['total'],
                 'notes' => $validated['notes'] ?? null,
                 'payment_method' => $validated['payment_method'],
@@ -276,7 +359,9 @@ class OrderController extends Controller
      */
     public function success(string $orderNumber): InertiaResponse
     {
-        $order = Order::where('order_number', $orderNumber)->firstOrFail();
+        $order = Order::where('order_number', $orderNumber)
+            ->with(['province', 'city'])
+            ->firstOrFail();
 
         $paymentMethodDetail = PaymentMethod::where('code', $order->payment_method)
             ->first(['name', 'account_number', 'account_name', 'description']);

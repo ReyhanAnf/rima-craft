@@ -28,6 +28,25 @@ const uploadForm = useForm({
     payment_status: props.order.payment_status,
 });
 
+const isEditShippingModalOpen = ref(false);
+const editShippingForm = useForm({
+    shipping_cost: props.order.shipping_cost,
+});
+
+const openEditShippingModal = () => {
+    editShippingForm.shipping_cost = props.order.shipping_cost;
+    isEditShippingModalOpen.value = true;
+};
+
+const submitEditShipping = () => {
+    editShippingForm.patch(route('orders.update-shipping', props.order.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            isEditShippingModalOpen.value = false;
+        },
+    });
+};
+
 const handleUploadFileChange = (e) => {
     const file = e.target.files[0];
     uploadForm.payment_proof = file;
@@ -187,7 +206,21 @@ const whatsappLink = computed(() => {
                                 </div>
                                 <div class="sm:col-span-2 border-t border-gray-100 dark:border-gray-800 pt-3">
                                     <span class="text-gray-400 font-bold block">Alamat Pengiriman</span>
-                                    <p class="font-medium text-gray-800 dark:text-gray-200 mt-1 leading-relaxed">{{ order.customer_address || '-' }}</p>
+                                    <p class="font-medium text-gray-800 dark:text-gray-200 mt-1 leading-relaxed">
+                                        {{ order.customer_address || '-' }}
+                                        <template v-if="order.city || order.province">
+                                            <br />
+                                            <span class="text-gray-500 font-normal">
+                                                {{ order.city?.name || '' }}<template v-if="order.city && order.province">, </template>{{ order.province?.name || '' }}
+                                            </span>
+                                        </template>
+                                    </p>
+                                </div>
+                                <div v-if="order.shipping_courier || order.shipping_service" class="sm:col-span-2 border-t border-gray-100 dark:border-gray-800 pt-3">
+                                    <span class="text-gray-400 font-bold block">Ekspedisi & Layanan</span>
+                                    <p class="font-bold text-amber-600 dark:text-amber-400 mt-1 uppercase text-sm">
+                                        {{ order.shipping_courier }} {{ order.shipping_service ? ' - ' + order.shipping_service : '' }}
+                                    </p>
                                 </div>
                                 <div v-if="order.notes" class="sm:col-span-2 border-t border-gray-100 dark:border-gray-800 pt-3">
                                     <span class="text-gray-400 font-bold block">Catatan Pelanggan</span>
@@ -227,8 +260,13 @@ const whatsappLink = computed(() => {
                                     <span>Subtotal:</span>
                                     <span class="font-semibold text-gray-900 dark:text-white">{{ formatCurrency(order.subtotal) }}</span>
                                 </div>
-                                <div v-if="order.shipping_cost > 0" class="flex justify-end gap-12">
-                                    <span>Ongkir (+):</span>
+                                <div v-if="order.shipping_cost > 0" class="flex justify-end items-center gap-12">
+                                    <div class="flex items-center gap-2">
+                                        <span>Ongkir <template v-if="order.shipping_courier">({{ String(order.shipping_courier).toUpperCase() }})</template> (+):</span>
+                                        <button v-if="order.status !== 'completed' && order.status !== 'cancelled'" @click="openEditShippingModal" class="text-blue-500 hover:text-blue-700 p-1" title="Edit Ongkos Kirim">
+                                            <i class="pi pi-pencil text-[10px]"></i>
+                                        </button>
+                                    </div>
                                     <span class="font-semibold text-gray-900 dark:text-white">{{ formatCurrency(order.shipping_cost) }}</span>
                                 </div>
                                 <div class="flex justify-between items-center pt-3 border-t border-gray-150 dark:border-gray-800 font-bold text-sm">
@@ -573,6 +611,27 @@ const whatsappLink = computed(() => {
                             </div>
                         </template>
                     </Card>
+
+                    <!-- Edit Shipping Cost Dialog -->
+                    <Dialog v-model:visible="isEditShippingModalOpen" modal header="Edit Ongkos Kirim"
+                        :style="{ width: '400px' }" :breakpoints="{ '768px': '90vw' }" dismissableMask>
+                        <form @submit.prevent="submitEditShipping" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Nominal Ongkos Kirim Baru</label>
+                                <div class="p-inputgroup">
+                                    <span class="p-inputgroup-addon bg-gray-50 dark:bg-gray-800 text-gray-500 font-bold text-xs">Rp</span>
+                                    <InputText v-model="editShippingForm.shipping_cost" type="number" min="0" required class="w-full text-sm" />
+                                </div>
+                                <small class="text-gray-500 text-[10px] mt-1 block">
+                                    Total pesanan dan sisa tagihan akan dihitung ulang secara otomatis.
+                                </small>
+                            </div>
+                            <div class="flex justify-end gap-2">
+                                <Button type="button" label="Batal" class="p-button-text p-button-sm" @click="isEditShippingModalOpen = false" />
+                                <Button type="submit" label="Simpan" class="p-button-sm p-button-primary" :loading="editShippingForm.processing" />
+                            </div>
+                        </form>
+                    </Dialog>
 
                     <!-- Dialog Lightbox Bukti Pembayaran -->
                     <Dialog v-model:visible="isProofModalOpen" modal header="Bukti Pembayaran" :style="{ width: '90vw', maxWidth: '650px' }">

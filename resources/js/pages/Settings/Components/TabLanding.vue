@@ -1,4 +1,5 @@
 <script setup>
+import { watch } from 'vue';
 import Card from 'primevue/card';
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
@@ -7,6 +8,15 @@ import ImageUpload from './ImageUpload.vue';
 const props = defineProps({
     form: Object,
     settings: Object,
+});
+
+watch(() => props.form.video_url, (newVal) => {
+    if (newVal) {
+        const match = newVal.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+        if (match && match[1] && !newVal.includes('/embed/' + match[1])) {
+            props.form.video_url = `https://www.youtube.com/embed/${match[1]}`;
+        }
+    }
 });
 </script>
 
@@ -66,7 +76,21 @@ const props = defineProps({
                     </div>
                     <div class="flex flex-col gap-1.5">
                         <label class="text-xs font-semibold">URL YouTube Video (Di Balik Layar)</label>
-                        <InputText v-model="form.video_url" placeholder="Contoh: https://www.youtube.com/embed/XXXXX" />
+                        <InputText v-model="form.video_url" placeholder="Paste link YouTube di sini (misal: https://youtu.be/XXXX)" />
+                        <p class="text-[10px] text-gray-500">
+                            <b>Panduan:</b> Anda bisa langsung mem-paste link video YouTube dari *address bar* atau tombol Share. Sistem akan otomatis mengubahnya menjadi format <i>embed</i>.
+                        </p>
+                        <div v-if="form.video_url" class="mt-2 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-800 relative bg-black shadow-inner aspect-video max-w-sm">
+                            <iframe 
+                                :src="form.video_url" 
+                                width="100%" 
+                                height="100%" 
+                                style="border:0;" 
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                allowfullscreen
+                                class="absolute inset-0 w-full h-full"
+                            ></iframe>
+                        </div>
                     </div>
                 </div>
             </template>

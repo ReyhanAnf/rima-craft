@@ -63,7 +63,7 @@ class AdminOrderController extends Controller
      */
     public function show(Order $order): InertiaResponse
     {
-        $order->load(['user']);
+        $order->load(['user', 'province', 'city']);
         return Inertia::render('Orders/Show', [
             'order' => $order,
         ]);
@@ -140,6 +140,39 @@ class AdminOrderController extends Controller
         }
 
         return redirect()->back()->with('success', $toastMessage);
+    }
+
+    /**
+     * Update shipping cost.
+     */
+    public function updateShippingCost(Request $request, Order $order)
+    {
+        $validated = $request->validate([
+            'shipping_cost' => 'required|numeric|min:0',
+        ]);
+
+        $newShippingCost = (float) $validated['shipping_cost'];
+        $oldShippingCost = (float) $order->shipping_cost;
+
+        if ($newShippingCost !== $oldShippingCost) {
+            $subtotal = (float) $order->subtotal;
+            $newTotal = $subtotal + $newShippingCost;
+            
+            $dataToUpdate = [
+                'shipping_cost' => $newShippingCost,
+                'total'         => $newTotal,
+            ];
+
+            if ((float) $order->down_payment_amount > 0 && $order->payment_status !== 'paid') {
+                $dataToUpdate['remaining_balance'] = max(0, $newTotal - (float) $order->down_payment_amount);
+            } elseif ($order->payment_method === 'cod' || $order->payment_status === 'unpaid') {
+                $dataToUpdate['remaining_balance'] = max(0, $newTotal);
+            }
+
+            $order->update($dataToUpdate);
+        }
+
+        return redirect()->back()->with('success', 'Ongkos kirim berhasil diperbarui! Total pesanan telah disesuaikan.');
     }
 
     /**

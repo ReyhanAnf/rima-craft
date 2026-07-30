@@ -257,7 +257,7 @@ function completeOrder() {
                     </div>
 
                     <a
-                        :href="`https://www.google.com/search?q=${encodeURIComponent(order.tracking_number + ' cek resi')}`"
+                        :href="`https://cekresi.com/?noresi=${encodeURIComponent(order.tracking_number)}`"
                         target="_blank"
                         rel="noopener noreferrer"
                         class="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-cyan-700 hover:text-cyan-800 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors"
@@ -265,7 +265,7 @@ function completeOrder() {
                         <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
                         </svg>
-                        Cek resi di Google
+                        Lacak di CekResi.com
                     </a>
                 </section>
 

@@ -82,6 +82,9 @@ class FinanceController extends Controller
 
     public function downloadPdf(Request $request)
     {
+        ini_set('memory_limit', '512M');
+        ini_set('max_execution_time', '120');
+
         $accountId = $request->filled('account_id') ? (int) $request->account_id : null;
         $startDate = $request->input('start_date', date('Y-m-01'));
         $endDate = $request->input('end_date', date('Y-m-t'));

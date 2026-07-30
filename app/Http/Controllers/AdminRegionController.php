@@ -78,6 +78,10 @@ class AdminRegionController extends Controller
             );
         }
 
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Ongkos kirim disimpan.']);
+        }
+
         return redirect()->back()->with('success', 'Wilayah berhasil diperbarui!');
     }
 
@@ -90,5 +94,24 @@ class AdminRegionController extends Controller
         $region->delete();
 
         return redirect()->back()->with('success', 'Wilayah berhasil dihapus!');
+    }
+
+    public function bulkUpdateShipping(Request $request)
+    {
+        $validated = $request->validate([
+            'province_id' => 'required|exists:regions,id',
+            'shipping_cost' => 'required|numeric|min:0',
+        ]);
+
+        $cities = Region::where('parent_id', $validated['province_id'])->where('type', 'city')->get();
+        
+        foreach ($cities as $city) {
+            $city->shippingRate()->updateOrCreate(
+                ['region_id' => $city->id],
+                ['shipping_cost' => $validated['shipping_cost']]
+            );
+        }
+
+        return redirect()->back()->with('success', 'Ongkos kirim massal berhasil diterapkan ke seluruh kota di provinsi tersebut!');
     }
 }

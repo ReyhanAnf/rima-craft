@@ -55,6 +55,15 @@ Route::prefix('api/regions')
         Route::get('/{province}/cities', 'getCities')->name('cities');
         Route::post('/calculate', 'calculateTotals')->name('calculate');
     });
+
+Route::prefix('api/shipping')
+    ->name('api.shipping.')
+    ->controller(\App\Http\Controllers\Api\ShippingController::class)
+    ->group(function () {
+        Route::get('/provinces', 'getProvinces')->name('provinces');
+        Route::get('/cities', 'getCities')->name('cities');
+        Route::post('/calculate', 'calculateCost')->name('calculateCost');
+    });
 // Google OAuth
 Route::prefix('auth/google')
     ->name('auth.google.')

@@ -21,6 +21,7 @@ class StorePurchaseRequest extends FormRequest
         return [
             'date' => ['required', 'date'],
             'supplier_id' => ['nullable', 'exists:contacts,id'],
+            'user_id' => ['nullable', 'exists:users,id'],
             'supplier_name' => ['nullable', 'string', 'max:255'],
             'supplier_phone' => ['nullable', 'string', 'max:20'],
             'save_supplier' => ['nullable', 'boolean'],

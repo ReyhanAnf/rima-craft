@@ -21,6 +21,7 @@ class StoreSaleRequest extends FormRequest
         return [
             'date' => ['required', 'date'],
             'customer_id' => ['nullable', 'exists:contacts,id'],
+            'user_id' => ['nullable', 'exists:users,id'],
             'customer_name' => ['nullable', 'string', 'max:255'],
             'customer_phone' => ['nullable', 'string', 'max:20'],
             'save_customer' => ['nullable', 'boolean'],

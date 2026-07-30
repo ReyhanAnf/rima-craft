@@ -35,8 +35,23 @@ class RecordSaleAction
             $customerId = $data['customer_id'] ?? null;
             $customerName = $data['customer_name'] ?? null;
             $customerPhone = $data['customer_phone'] ?? null;
+            $userId = $data['user_id'] ?? null;
 
-            // Save customer to contacts if requested
+            // If user_id is provided, link to or create their Contact
+            if (empty($customerId) && !empty($userId)) {
+                $user = \App\Models\User::find($userId);
+                if ($user) {
+                    $customerName = $user->name;
+                    $customerPhone = $user->phone ?? $customerPhone;
+                    $contact = Contact::firstOrCreate(
+                        ['user_id' => $user->id, 'type' => 'customer'],
+                        ['name' => $user->name]
+                    );
+                    $customerId = $contact->id;
+                }
+            }
+
+            // Save customer to contacts if requested (manual input)
             if (empty($customerId) && !empty($customerName) && !empty($data['save_customer'])) {
                 $contact = Contact::create([
                     'type' => 'customer',

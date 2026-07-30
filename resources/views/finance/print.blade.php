@@ -88,7 +88,7 @@
                     <tr>
                         <td class="py-3 px-4 text-gray-500 text-xs">{{ $index + 1 }}</td>
                         <td class="py-3 px-4 text-gray-900 whitespace-nowrap text-xs">{{ $ledger->date->format('d/m/Y') }}</td>
-                        <td class="py-3 px-4 text-gray-900 text-xs">{{ $ledger->account->name }}</td>
+                        <td class="py-3 px-4 text-gray-900 text-xs">{{ $ledger->account?->name ?? 'Lainnya' }}</td>
                         <td class="py-3 px-4 text-gray-600 text-xs font-semibold">{{ $ledger->description }}</td>
                         <td class="py-3 px-4 text-right text-emerald-600 font-bold text-xs">
                             {{ $ledger->type === 'in' ? number_format($ledger->amount, 0, ',', '.') : '-' }}
@@ -126,7 +126,7 @@
                 </div>
                 <div class="flex justify-between items-center text-[10px] pt-1">
                     <span class="px-2 py-0.5 rounded bg-gray-100 text-gray-600 font-bold uppercase text-[9px]">
-                        {{ $ledger->account->name }}
+                        {{ $ledger->account?->name ?? 'Lainnya' }}
                     </span>
                     <span class="text-gray-500 font-bold">
                         Saldo: Rp {{ number_format($ledger->balance_after, 0, ',', '.') }}

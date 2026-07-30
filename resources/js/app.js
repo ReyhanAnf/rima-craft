@@ -254,6 +254,11 @@ window.route = function(name, params = {}) {
         'regions.destroy': '/regions/{id}',
         'payment-methods.index': '/payment-methods',
         
+        // Shipping API
+        'api.shipping.provinces': '/api/shipping/provinces',
+        'api.shipping.cities': '/api/shipping/cities',
+        'api.shipping.calculateCost': '/api/shipping/calculate',
+        
         // Auth routes
         'auth.google.redirect': '/auth/google/redirect',
         'auth.google.callback': '/auth/google/callback',

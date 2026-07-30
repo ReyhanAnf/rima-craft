@@ -10,6 +10,7 @@ use App\Http\Requests\Sale\UpdateSaleStatusRequest;
 use App\Models\Contact;
 use App\Models\Product;
 use App\Models\Sale;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
@@ -75,9 +76,13 @@ class SaleController extends Controller
     {
         $customers = Contact::where('type', 'customer')->orderBy('name')->get();
         $products = Product::orderBy('name')->get();
+        $userCustomers = User::whereHas('roles', function($q) { 
+            $q->whereIn('name', ['customer', 'reseller']); 
+        })->orderBy('name')->get();
 
         return Inertia::render('Sales/Form', [
             'customers' => $customers,
+            'user_customers' => $userCustomers,
             'products' => $products,
         ]);
     }

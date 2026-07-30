@@ -81,6 +81,9 @@ Route::middleware('auth')->group(function () {
             Route::patch('orders/{order}/status', 'updateStatus')
                 ->middleware('permission:manage-orders')
                 ->name('orders.update-status');
+            Route::patch('orders/{order}/shipping-cost', 'updateShippingCost')
+                ->middleware('permission:manage-orders')
+                ->name('orders.update-shipping');
             Route::delete('orders/{order}', 'destroy')
                 ->middleware('permission:manage-orders')
                 ->name('orders.destroy');
@@ -131,6 +134,7 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('permission:view-settings')->group(function () {
         Route::resource('payment-methods', \App\Http\Controllers\AdminPaymentMethodController::class)->except(['show']);
+        Route::post('regions/bulk-shipping', [\App\Http\Controllers\AdminRegionController::class, 'bulkUpdateShipping'])->name('regions.bulk-shipping');
         Route::resource('regions', \App\Http\Controllers\AdminRegionController::class)->except(['create', 'show', 'edit']);
     });
 
