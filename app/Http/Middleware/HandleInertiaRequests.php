@@ -47,7 +47,7 @@ class HandleInertiaRequests extends Middleware
                 'user' => $user ? $user->only(['id', 'name', 'email', 'phone']) : null,
                 'roles' => $user ? $user->roles->pluck('name')->toArray() : [],
                 'reseller_status' => $user?->reseller_status,
-                'permissions' => $user ? ($user->hasRole('dev-admin') ? \App\Models\Permission::pluck('name')->toArray() : \App\Models\Permission::whereHas('roles', function ($q) use ($user) {
+                'permissions' => $user ? (($user->hasRole('dev-admin') || $user->hasRole('super-admin')) ? \App\Models\Permission::pluck('name')->toArray() : \App\Models\Permission::whereHas('roles', function ($q) use ($user) {
                     $q->whereIn('role_id', $user->roles->pluck('id')->toArray());
                 })->pluck('name')->toArray()) : [],
             ],
