@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AdminOrderController;
+use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\ArtisanJobController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\ContactController;
@@ -144,8 +145,15 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('permission:manage-users')->group(function () {
         Route::resource('users', UserController::class)->except(['show']);
+        Route::put('users/{user}/password', [UserController::class, 'updatePassword'])->name('users.update-password');
         Route::patch('users/{user}/verify-reseller', [UserController::class, 'verifyReseller'])->name('users.verify-reseller');
         Route::patch('users/{user}/reject-reseller', [UserController::class, 'rejectReseller'])->name('users.reject-reseller');
+    });
+
+    Route::middleware('permission:manage-announcements')->group(function () {
+        Route::resource('announcements', AnnouncementController::class)->except(['create', 'show', 'edit']);
+        Route::patch('announcements/{announcement}/toggle', [AnnouncementController::class, 'toggleActive'])->name('announcements.toggle');
+        Route::post('announcements/{announcement}/rebroadcast', [AnnouncementController::class, 'rebroadcast'])->name('announcements.rebroadcast');
     });
 
     Route::middleware('permission:manage-roles')

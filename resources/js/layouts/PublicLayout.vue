@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue';
 import { usePage, Link } from '@inertiajs/vue3';
 import Navbar from '@/components/Navbar.vue';
+import AnnouncementBanner from '@/components/AnnouncementBanner.vue';
 import CartDrawer from '@/components/CartDrawer.vue';
 import Toast from '@/components/Toast.vue';
 
@@ -68,6 +69,7 @@ const installPWA = async () => {
 
 <template>
         <div>
+            <AnnouncementBanner />
             <Navbar :business-name="businessName" @open-cart="openCart" />
 
             <button

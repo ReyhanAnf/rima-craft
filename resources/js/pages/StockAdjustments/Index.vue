@@ -9,6 +9,7 @@ import Textarea from 'primevue/textarea';
 import Dropdown from 'primevue/dropdown';
 import DatePicker from 'primevue/datepicker';
 import Dialog from 'primevue/dialog';
+import Drawer from 'primevue/drawer';
 import Message from 'primevue/message';
 
 const props = defineProps({
@@ -272,13 +273,12 @@ const formatDate = (dateStr) => {
                 </div>
             </div>
 
-            <!-- Form Dialog Modal -->
-            <Dialog
+            <!-- Form Drawer Modal -->
+            <Drawer
                 v-model:visible="isFormOpen"
-                modal
+                position="right"
                 header="Catat Penyesuaian Stok"
-                class="w-full max-w-md !rounded-2xl"
-                :breakpoints="{ '960px': '75vw', '641px': '90vw' }"
+                class="!w-full sm:!w-[440px]"
             >
                 <div v-if="Object.keys(form.errors).length > 0" class="mb-4">
                     <Message severity="error" v-for="(err, key) in form.errors" :key="key" size="small" class="mb-1">
@@ -385,7 +385,7 @@ const formatDate = (dateStr) => {
                         />
                     </div>
                 </form>
-            </Dialog>
+            </Drawer>
         </div>
     </AdminLayout>
 </template>

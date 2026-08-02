@@ -8,6 +8,7 @@ import InputNumber from 'primevue/inputnumber';
 import Textarea from 'primevue/textarea';
 import Dropdown from 'primevue/dropdown';
 import Dialog from 'primevue/dialog';
+import Drawer from 'primevue/drawer';
 import Message from 'primevue/message';
 
 const props = defineProps({
@@ -164,12 +165,12 @@ const statusBadge = (status) => {
                 </div>
             </div>
 
-            <Dialog v-model:visible="isFormOpen" modal :header="editingJob ? 'Edit Pekerjaan' : 'Buat Pekerjaan Pengrajin'" class="w-full max-w-2xl">
+            <Drawer v-model:visible="isFormOpen" position="right" :header="editingJob ? 'Edit Pekerjaan' : 'Buat Pekerjaan Pengrajin'" class="!w-full sm:!w-[520px]">
                 <div v-if="Object.keys(form.errors).length" class="mb-4">
                     <Message severity="error" v-for="(err, key) in form.errors" :key="key" size="small" class="mb-1">{{ err }}</Message>
                 </div>
 
-                <form @submit.prevent="submitForm" class="space-y-4">
+                <form @submit.prevent="submitForm" class="space-y-4 pt-2">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="flex flex-col gap-1.5 md:col-span-2">
                             <label class="text-xs font-semibold">Nama Pekerjaan <span class="text-red-500">*</span></label>
@@ -214,7 +215,7 @@ const statusBadge = (status) => {
                         <Button type="submit" label="Simpan" :loading="form.processing" class="!bg-amber-500 hover:!bg-amber-600 !border-amber-500 hover:!border-amber-600 !text-gray-950 font-bold" />
                     </div>
                 </form>
-            </Dialog>
+            </Drawer>
         </div>
     </AdminLayout>
 </template>

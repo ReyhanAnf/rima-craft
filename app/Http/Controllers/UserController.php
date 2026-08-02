@@ -127,6 +127,27 @@ class UserController extends Controller
     }
 
     /**
+     * Update password for specified user.
+     */
+    public function updatePassword(Request $request, User $user): RedirectResponse
+    {
+        $request->validate([
+            'password' => 'required|string|min:8|confirmed',
+        ], [
+            'password.required' => 'Kata sandi baru wajib diisi',
+            'password.min' => 'Kata sandi minimal 8 karakter',
+            'password.confirmed' => 'Konfirmasi kata sandi tidak cocok',
+        ]);
+
+        $user->update([
+            'password' => Hash::make($request->password),
+        ]);
+
+        return redirect()->route('users.index')
+            ->with('success', "Kata sandi pengguna {$user->name} berhasil diperbarui.");
+    }
+
+    /**
      * Verify (approve) a pending reseller account.
      */
     public function verifyReseller(User $user): RedirectResponse

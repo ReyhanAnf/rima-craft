@@ -8,6 +8,7 @@ import Dropdown from 'primevue/dropdown';
 import Textarea from 'primevue/textarea';
 import InputText from 'primevue/inputtext';
 import Dialog from 'primevue/dialog';
+import Drawer from 'primevue/drawer';
 
 const isProofModalOpen = ref(false);
 const selectedProofPath = ref('');
@@ -612,10 +613,9 @@ const whatsappLink = computed(() => {
                         </template>
                     </Card>
 
-                    <!-- Edit Shipping Cost Dialog -->
-                    <Dialog v-model:visible="isEditShippingModalOpen" modal header="Edit Ongkos Kirim"
-                        :style="{ width: '400px' }" :breakpoints="{ '768px': '90vw' }" dismissableMask>
-                        <form @submit.prevent="submitEditShipping" class="space-y-4">
+                    <!-- Edit Shipping Cost Drawer -->
+                    <Drawer v-model:visible="isEditShippingModalOpen" position="right" header="Edit Ongkos Kirim" class="!w-full sm:!w-[400px]">
+                        <form @submit.prevent="submitEditShipping" class="space-y-4 pt-2">
                             <div>
                                 <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Nominal Ongkos Kirim Baru</label>
                                 <div class="p-inputgroup">
@@ -626,12 +626,12 @@ const whatsappLink = computed(() => {
                                     Total pesanan dan sisa tagihan akan dihitung ulang secara otomatis.
                                 </small>
                             </div>
-                            <div class="flex justify-end gap-2">
-                                <Button type="button" label="Batal" class="p-button-text p-button-sm" @click="isEditShippingModalOpen = false" />
-                                <Button type="submit" label="Simpan" class="p-button-sm p-button-primary" :loading="editShippingForm.processing" />
+                            <div class="flex justify-end gap-2 pt-3 border-t border-gray-100 dark:border-gray-800">
+                                <Button type="button" label="Batal" severity="secondary" text class="text-xs" @click="isEditShippingModalOpen = false" />
+                                <Button type="submit" label="Simpan" severity="warning" class="font-bold text-xs" :loading="editShippingForm.processing" />
                             </div>
                         </form>
-                    </Dialog>
+                    </Drawer>
 
                     <!-- Dialog Lightbox Bukti Pembayaran -->
                     <Dialog v-model:visible="isProofModalOpen" modal header="Bukti Pembayaran" :style="{ width: '90vw', maxWidth: '650px' }">
@@ -640,8 +640,8 @@ const whatsappLink = computed(() => {
                         </div>
                     </Dialog>
 
-                    <!-- Dialog Modal Upload Bukti Pembayaran Lagi -->
-                    <Dialog v-model:visible="isUploadModalOpen" modal header="Upload Bukti Pembayaran Lagi" :style="{ width: '90vw', maxWidth: '480px' }">
+                    <!-- Drawer Upload Bukti Pembayaran Lagi -->
+                    <Drawer v-model:visible="isUploadModalOpen" position="right" header="Upload Bukti Pembayaran Lagi" class="!w-full sm:!w-[420px]">
                         <form @submit.prevent="submitUploadProof" class="space-y-4 pt-2">
                             <p class="text-xs text-gray-500 leading-relaxed">
                                 Bukti transfer baru ini akan ditambahkan ke riwayat tanpa menghapus bukti transfer sebelumnya.
@@ -668,11 +668,11 @@ const whatsappLink = computed(() => {
                             </div>
 
                             <div class="flex justify-end gap-2 pt-3 border-t border-gray-100 dark:border-gray-800">
-                                <Button label="Batal" severity="secondary" text text-xs @click="isUploadModalOpen = false" />
+                                <Button label="Batal" severity="secondary" text class="text-xs" @click="isUploadModalOpen = false" />
                                 <Button type="submit" label="Unggah Bukti Baru" icon="pi pi-check" severity="warning" class="font-bold text-xs" :loading="uploadForm.processing" :disabled="!uploadForm.payment_proof" />
                             </div>
                         </form>
-                    </Dialog>
+                    </Drawer>
 
                     <!-- Danger soft delete zone -->
                     <Card class="!border !border-red-200/50 dark:!border-red-950/50 !bg-red-50/20 dark:!bg-red-950/10">

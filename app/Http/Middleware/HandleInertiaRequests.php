@@ -94,6 +94,9 @@ class HandleInertiaRequests extends Middleware
                 })(),
             ],
 
+            // Active Announcement (stuck at top of all pages)
+            'activeAnnouncement' => fn () => \App\Models\Announcement::where('is_active', true)->latest()->first(),
+
             // Sidebar Menu configuration
             'menus' => config('menus.categories', []),
         ];

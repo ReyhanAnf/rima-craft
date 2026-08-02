@@ -9,6 +9,7 @@ import InputNumber from 'primevue/inputnumber';
 import Dropdown from 'primevue/dropdown';
 import DatePicker from 'primevue/datepicker';
 import Dialog from 'primevue/dialog';
+import Drawer from 'primevue/drawer';
 import Message from 'primevue/message';
 import Chart from 'primevue/chart';
 
@@ -501,8 +502,8 @@ const getLabelColor = (label) => {
                 </div>
             </div>
 
-            <!-- Record Transaction Modal -->
-            <Dialog v-model:visible="isTxModalOpen" modal header="Catat Transaksi Kas Baru" class="w-full max-w-md">
+            <!-- Record Transaction Drawer -->
+            <Drawer v-model:visible="isTxModalOpen" position="right" header="Catat Transaksi Kas Baru" class="!w-full sm:!w-[420px]">
                 <form @submit.prevent="submitTransaction" class="space-y-4 pt-2">
                     <div class="grid grid-cols-2 gap-4">
                         <div class="flex flex-col gap-1.5">
@@ -549,7 +550,7 @@ const getLabelColor = (label) => {
                         <Button type="submit" label="Simpan Transaksi" :loading="txForm.processing" class="!bg-amber-500 hover:!bg-amber-600 !border-amber-500 hover:!border-amber-600 !text-gray-950 font-bold" />
                     </div>
                 </form>
-            </Dialog>
+            </Drawer>
         </div>
     </AdminLayout>
 </template>

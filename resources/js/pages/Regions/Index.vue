@@ -6,6 +6,7 @@ import { Head, useForm, router, Link } from '@inertiajs/vue3';
 import axios from 'axios';
 import AdminLayout from '@/layouts/AdminLayout.vue';
 import Dialog from 'primevue/dialog';
+import Drawer from 'primevue/drawer';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
@@ -439,17 +440,17 @@ const saveInlineShipping = async (region) => {
             </div>
         </div>
 
-        <!-- Form Dialog Modal -->
-        <Dialog
+        <!-- Form Drawer Modal -->
+        <Drawer
             v-model:visible="isModalOpen"
-            modal
+            position="right"
             :header="
                 modalAction === 'add_province' ? 'Tambah Provinsi' :
                 modalAction === 'add_city' ? 'Tambah Kota/Kabupaten' :
                 modalAction === 'edit_region' ? 'Edit Wilayah' :
                 modalAction === 'bulk_shipping' ? 'Atur Ongkir Massal' : 'Pengaturan Ongkos Kirim'
             "
-            class="w-full max-w-md"
+            class="!w-full sm:!w-[420px]"
             @hide="closeModal"
         >
             <div class="pt-2">
@@ -573,21 +574,18 @@ const saveInlineShipping = async (region) => {
                             <div v-if="form.errors.shipping_cost" class="text-red-500 text-xs">{{ form.errors.shipping_cost }}</div>
                         </div>
                     </template>
+
+                    <div class="flex justify-end gap-2 border-t border-gray-150 dark:border-gray-800 pt-4">
+                        <Button label="Batal" severity="secondary" text @click="closeModal" />
+                        <Button
+                            type="submit"
+                            :label="modalAction.startsWith('add') ? 'Tambah' : 'Simpan'"
+                            :loading="form.processing"
+                            class="!bg-amber-500 hover:!bg-amber-600 !border-amber-500 hover:!border-amber-600 !text-gray-950 font-bold"
+                        />
+                    </div>
                 </form>
             </div>
-            
-            <template #footer>
-                <div class="flex justify-end gap-2 border-t border-gray-150 dark:border-gray-800 pt-3">
-                    <Button label="Batal" severity="secondary" text @click="closeModal" />
-                    <Button
-                        type="submit"
-                        form="regionForm"
-                        :label="modalAction.startsWith('add') ? 'Tambah' : 'Simpan'"
-                        :loading="form.processing"
-                        class="!bg-amber-500 hover:!bg-amber-600 !border-amber-500 hover:!border-amber-600 !text-gray-950 font-bold"
-                    />
-                </div>
-            </template>
-        </Dialog>
+        </Drawer>
     </AdminLayout>
 </template>

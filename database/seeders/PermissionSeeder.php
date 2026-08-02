@@ -78,6 +78,9 @@ class PermissionSeeder extends Seeder
             'view-settings',
             'manage-settings',
             
+            // Announcements
+            'manage-announcements',
+            
             // User Management (Owner & Super Admin only)
             'view-users',
             'manage-users',
@@ -130,6 +133,7 @@ class PermissionSeeder extends Seeder
                 'view-gallery',
                 'view-orders',
                 'manage-orders',
+                'manage-announcements',
             ];
             
             $operatorRole->permissions()->sync(
@@ -174,6 +178,7 @@ class PermissionSeeder extends Seeder
                 'manage-gallery',
                 'view-settings',
                 'manage-settings',
+                'manage-announcements',
                 'view-orders',
                 'manage-orders',
             ];
@@ -184,7 +189,6 @@ class PermissionSeeder extends Seeder
         }
 
         // Super Admin: All permissions (handled by Gate::before)
-        // But we can still assign them for clarity
         $superAdminRole = Role::where('name', 'super-admin')->first();
         if ($superAdminRole) {
             $superAdminRole->permissions()->sync(

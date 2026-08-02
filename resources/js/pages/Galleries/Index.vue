@@ -6,6 +6,7 @@ import Card from 'primevue/card';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Dialog from 'primevue/dialog';
+import Drawer from 'primevue/drawer';
 import Message from 'primevue/message';
 
 const props = defineProps({
@@ -80,8 +81,8 @@ const deletePhoto = (photo) => {
                 </div>
             </div>
 
-            <!-- Upload Photo Modal -->
-            <Dialog v-model:visible="isUploadOpen" modal header="Unggah Foto Baru" class="w-full max-w-sm">
+            <!-- Upload Photo Drawer -->
+            <Drawer v-model:visible="isUploadOpen" position="right" header="Unggah Foto Baru" class="!w-full sm:!w-[400px]">
                 <div v-if="Object.keys(form.errors).length > 0" class="mb-4">
                     <Message severity="error" v-for="(err, key) in form.errors" :key="key" size="small" class="mb-1">
                         {{ err }}
@@ -106,7 +107,7 @@ const deletePhoto = (photo) => {
                         <Button type="submit" label="Unggah Foto" :loading="form.processing" class="!bg-amber-500 hover:!bg-amber-600 !border-amber-500 hover:!border-amber-600 !text-gray-950 font-bold" />
                     </div>
                 </form>
-            </Dialog>
+            </Drawer>
         </div>
     </AdminLayout>
 </template>

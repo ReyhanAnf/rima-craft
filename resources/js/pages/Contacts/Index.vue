@@ -7,6 +7,7 @@ import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
 import Dropdown from 'primevue/dropdown';
 import Dialog from 'primevue/dialog';
+import Drawer from 'primevue/drawer';
 import Message from 'primevue/message';
 
 const props = defineProps({
@@ -247,11 +248,11 @@ const getTypeText = (type) => {
             </div>
 
             <!-- Form Dialog Modal -->
-            <Dialog
+            <Drawer
                 v-model:visible="isFormOpen"
-                modal
+                position="right"
                 :header="editingContact ? 'Edit Kontak' : 'Tambah Kontak Baru'"
-                class="w-full max-w-md"
+                class="!w-full sm:!w-[420px]"
             >
                 <!-- Form Errors -->
                 <div v-if="Object.keys(form.errors).length > 0" class="mb-4">
@@ -304,7 +305,7 @@ const getTypeText = (type) => {
                         />
                     </div>
                 </form>
-            </Dialog>
+            </Drawer>
         </div>
     </AdminLayout>
 </template>

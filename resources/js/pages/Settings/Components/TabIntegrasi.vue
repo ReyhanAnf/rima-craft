@@ -2,6 +2,7 @@
 import InputText from 'primevue/inputtext';
 import Select from 'primevue/select';
 import Dialog from 'primevue/dialog';
+import Drawer from 'primevue/drawer';
 import Button from 'primevue/button';
 import ToggleSwitch from 'primevue/toggleswitch';
 import { ref, onMounted } from 'vue';
@@ -171,20 +172,19 @@ const checkRajaOngkir = async () => {
             </div>
         </div>
 
-        <!-- Shipping Cost Modal (RajaOngkir) -->
-        <Dialog 
+        <!-- Shipping Cost Drawer (RajaOngkir) -->
+        <Drawer 
             v-model:visible="modals.shipping" 
-            modal 
+            position="right" 
             header="Pengaturan Shipping Cost (RajaOngkir)" 
-            :style="{ width: '50rem' }" 
-            :breakpoints="{ '1199px': '75vw', '575px': '90vw' }"
+            class="!w-full sm:!w-[480px]"
         >
             <div class="text-sm text-gray-500 dark:text-gray-400 mb-6 border-b border-gray-100 dark:border-gray-800 pb-4">
                 Hubungkan website Anda dengan API RajaOngkir untuk perhitungan ongkos kirim otomatis secara *real-time*.
                 Anda bisa mendapatkan API Key gratis di <a href="https://rajaongkir.com" target="_blank" class="text-amber-600 font-bold hover:underline">rajaongkir.com</a>.
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-4">
                 <div class="flex flex-col gap-1.5">
                     <label class="text-sm font-semibold">RajaOngkir API Key</label>
                     <div class="flex gap-2">
@@ -196,7 +196,7 @@ const checkRajaOngkir = async () => {
                         <button 
                             type="button"
                             @click="checkRajaOngkir"
-                            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-sm font-bold rounded-lg border border-gray-300 dark:border-gray-600 transition"
+                            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-sm font-bold rounded-lg border border-gray-300 dark:border-gray-600 transition shrink-0"
                         >
                             Cek
                         </button>
@@ -233,15 +233,14 @@ const checkRajaOngkir = async () => {
             <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-100 dark:border-gray-800">
                 <Button label="Selesai" icon="pi pi-check" @click="modals.shipping = false" class="!bg-amber-500 hover:!bg-amber-600 !border-amber-500 hover:!border-amber-600 !text-gray-950 font-bold" />
             </div>
-        </Dialog>
+        </Drawer>
 
-        <!-- Payment API Modal Placeholder -->
-        <Dialog 
+        <!-- Payment API Drawer Placeholder -->
+        <Drawer 
             v-model:visible="modals.payment" 
-            modal 
+            position="right" 
             header="Pengaturan Payment API" 
-            :style="{ width: '40rem' }" 
-            :breakpoints="{ '1199px': '75vw', '575px': '90vw' }"
+            class="!w-full sm:!w-[400px]"
         >
             <div class="p-4 text-center">
                 <i class="pi pi-cog text-4xl text-gray-300 mb-3"></i>
@@ -250,15 +249,14 @@ const checkRajaOngkir = async () => {
             <div class="flex justify-end gap-3 mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
                 <Button label="Tutup" severity="secondary" @click="modals.payment = false" />
             </div>
-        </Dialog>
+        </Drawer>
 
-        <!-- QRISLY API Modal Placeholder -->
-        <Dialog 
+        <!-- QRISLY API Drawer Placeholder -->
+        <Drawer 
             v-model:visible="modals.qrisly" 
-            modal 
+            position="right" 
             header="Pengaturan QRISLY API" 
-            :style="{ width: '40rem' }" 
-            :breakpoints="{ '1199px': '75vw', '575px': '90vw' }"
+            class="!w-full sm:!w-[400px]"
         >
             <div class="p-4 text-center">
                 <i class="pi pi-qrcode text-4xl text-gray-300 mb-3"></i>
@@ -267,7 +265,7 @@ const checkRajaOngkir = async () => {
             <div class="flex justify-end gap-3 mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
                 <Button label="Tutup" severity="secondary" @click="modals.qrisly = false" />
             </div>
-        </Dialog>
+        </Drawer>
 
     </div>
 </template>

@@ -8,6 +8,7 @@ import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import Dropdown from 'primevue/dropdown';
 import Dialog from 'primevue/dialog';
+import Drawer from 'primevue/drawer';
 import Message from 'primevue/message';
 
 const props = defineProps({
@@ -272,13 +273,12 @@ const formatCurrency = (val) => {
                 </div>
             </div>
 
-            <!-- Form Dialog Modal -->
-            <Dialog
+            <!-- Form Drawer Modal -->
+            <Drawer
                 v-model:visible="isFormOpen"
-                modal
+                position="right"
                 :header="editingMaterial ? 'Edit Bahan Baku' : 'Tambah Bahan Baku'"
-                class="w-full max-w-md"
-                :contentStyle="{ maxHeight: '65vh', overflowY: 'auto' }"
+                class="!w-full sm:!w-[420px]"
             >
                 <!-- Form Errors -->
                 <div v-if="Object.keys(form.errors).length > 0" class="mb-4">
@@ -325,21 +325,18 @@ const formatCurrency = (val) => {
                             <InputNumber v-model="form.min_stock" mode="decimal" required :min="0" class="w-full" inputClass="w-full" />
                         </div>
                     </div>
-                </form>
 
-                <template #footer>
-                    <div class="flex justify-end gap-2 border-t border-gray-150 dark:border-gray-800 pt-3">
+                    <div class="flex justify-end gap-2 border-t border-gray-150 dark:border-gray-800 pt-4">
                         <Button label="Batal" severity="secondary" text @click="isFormOpen = false" />
                         <Button
                             type="submit"
-                            form="materialForm"
                             :label="editingMaterial ? 'Simpan Perubahan' : 'Tambah Bahan'"
                             :loading="form.processing"
                             class="!bg-amber-500 hover:!bg-amber-600 !border-amber-500 hover:!border-amber-600 !text-gray-950 font-bold"
                         />
                     </div>
-                </template>
-            </Dialog>
+                </form>
+            </Drawer>
         </div>
     </AdminLayout>
 </template>

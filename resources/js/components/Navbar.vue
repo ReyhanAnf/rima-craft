@@ -32,20 +32,46 @@ const scrolled = ref(false);
 
 const siteConfig = computed(() => page.props.siteConfig || {});
 
+const activeAnnouncement = computed(() => page.props.activeAnnouncement);
+const isAnnouncementDismissed = ref(false);
+
+function checkAnnouncementDismissed() {
+    if (activeAnnouncement.value) {
+        const dismissedId = sessionStorage.getItem('dismissed_announcement_id');
+        if (dismissedId && Number(dismissedId) === activeAnnouncement.value.id) {
+            isAnnouncementDismissed.value = true;
+            return;
+        }
+    }
+    isAnnouncementDismissed.value = false;
+}
+
+const hasAnnouncement = computed(() => !!activeAnnouncement.value && !isAnnouncementDismissed.value);
+
 function onScroll() {
     scrolled.value = window.pageYOffset > 20;
 }
 
-onMounted(() => window.addEventListener('scroll', onScroll));
-onUnmounted(() => window.removeEventListener('scroll', onScroll));
+onMounted(() => {
+    checkAnnouncementDismissed();
+    window.addEventListener('scroll', onScroll);
+    window.addEventListener('announcement-dismissed', checkAnnouncementDismissed);
+});
+onUnmounted(() => {
+    window.removeEventListener('scroll', onScroll);
+    window.removeEventListener('announcement-dismissed', checkAnnouncementDismissed);
+});
 </script>
 
 <template>
     <header
-        :class="scrolled
-            ? 'bg-white/95 dark:bg-[#0a0a0a]/95 backdrop-blur-md border-b border-gray-200 dark:border-[#1a1a1a] shadow-lg'
-            : 'bg-transparent border-b border-transparent'"
-        class="fixed top-0 w-full z-40 transition-all duration-500"
+        :class="[
+            scrolled
+                ? 'bg-white/95 dark:bg-[#0a0a0a]/95 backdrop-blur-md border-b border-gray-200 dark:border-[#1a1a1a] shadow-lg'
+                : 'bg-transparent border-b border-transparent',
+            hasAnnouncement ? 'top-[30px]' : 'top-0'
+        ]"
+        class="fixed w-full z-40 transition-all duration-300"
     >
         <div
             class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between transition-all duration-500"

@@ -7,6 +7,7 @@ import htmx from 'htmx.org';
 import PrimeVue from 'primevue/config';
 import Aura from '@primevue/themes/aura';
 import ToastService from 'primevue/toastservice';
+import ConfirmationService from 'primevue/confirmationservice';
 import 'primeicons/primeicons.css';
 
 window.Alpine = Alpine;
@@ -243,6 +244,7 @@ window.route = function(name, params = {}) {
         'users.destroy': '/users/{id}',
         'users.verify-reseller': '/users/{id}/verify-reseller',
         'users.reject-reseller': '/users/{id}/reject-reseller',
+        'users.update-password': '/users/{id}/password',
         'roles.index': '/roles',
         'orders.index': '/orders',
         'orders.show': '/orders/{id}',
@@ -253,6 +255,12 @@ window.route = function(name, params = {}) {
         'regions.update': '/regions/{id}',
         'regions.destroy': '/regions/{id}',
         'payment-methods.index': '/payment-methods',
+        'announcements.index': '/announcements',
+        'announcements.store': '/announcements',
+        'announcements.update': '/announcements/{id}',
+        'announcements.destroy': '/announcements/{id}',
+        'announcements.toggle': '/announcements/{id}/toggle',
+        'announcements.rebroadcast': '/announcements/{id}/rebroadcast',
         
         // Shipping API
         'api.shipping.provinces': '/api/shipping/provinces',
@@ -369,7 +377,8 @@ if (document.getElementById('app')) {
                         }
                     }
                 })
-                .use(ToastService);
+                .use(ToastService)
+                .use(ConfirmationService);
 
             // Register global route function for templates
             app.config.globalProperties.route = window.route;

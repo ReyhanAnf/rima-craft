@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import Toast from 'primevue/toast';
+import AnnouncementBanner from '@/components/AnnouncementBanner.vue';
 import { useToast } from 'primevue/usetoast';
 import { useThemeStore } from '@/stores/theme';
 import { useAdminStore } from '@/stores/admin';
@@ -217,8 +218,10 @@ const mobileBottomItems = computed(() => {
 </script>
 
 <template>
-    <div class="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-800 dark:text-gray-100 flex transition-colors duration-300">
-        <Toast />
+    <div class="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-800 dark:text-gray-100 transition-colors duration-300">
+        <AnnouncementBanner :fixed="false" />
+        <div class="flex flex-1 min-h-0">
+            <Toast />
 
         <aside
             :class="[
@@ -503,4 +506,5 @@ const mobileBottomItems = computed(() => {
             </div>
         </div>
     </div>
+</div>
 </template>

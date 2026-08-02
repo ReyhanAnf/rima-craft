@@ -8,6 +8,7 @@ import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
 import Dropdown from 'primevue/dropdown';
 import Dialog from 'primevue/dialog';
+import Drawer from 'primevue/drawer';
 import Message from 'primevue/message';
 
 const props = defineProps({
@@ -56,6 +57,7 @@ const form = useForm({
     name: '',
     email: '',
     password: '',
+    password_confirmation: '',
     role: '',
     phone: '',
     address: '',
@@ -77,6 +79,7 @@ const openEditModal = (user) => {
     form.name = user.name;
     form.email = user.email;
     form.password = '';
+    form.password_confirmation = '';
     form.role = user.roles[0]?.name || '';
     form.phone = user.contact?.phone || '';
     form.address = user.contact?.address || '';
@@ -99,6 +102,32 @@ const submitForm = () => {
             }
         });
     }
+};
+
+// Password Change Drawer State
+const isPasswordDrawerOpen = ref(false);
+const passwordUser = ref(null);
+
+const passwordForm = useForm({
+    password: '',
+    password_confirmation: '',
+});
+
+const openPasswordDrawer = (user) => {
+    passwordUser.value = user;
+    passwordForm.clearErrors();
+    passwordForm.reset();
+    isPasswordDrawerOpen.value = true;
+};
+
+const submitPasswordForm = () => {
+    if (!passwordUser.value) return;
+    passwordForm.put(route('users.update-password', passwordUser.value.id), {
+        onSuccess: () => {
+            isPasswordDrawerOpen.value = false;
+            passwordForm.reset();
+        }
+    });
 };
 
 const confirmDialog = ref({
@@ -301,6 +330,14 @@ const getRoleBadge = (roleName) => {
                                             class="mr-1"
                                         />
                                     </template>
+                                    <Button
+                                        icon="pi pi-key"
+                                        severity="warn"
+                                        text rounded
+                                        v-tooltip.top="'Ubah Password'"
+                                        @click="openPasswordDrawer(user)"
+                                        class="mr-1"
+                                    />
                                     <Button icon="pi pi-pencil" severity="secondary" text rounded @click="openEditModal(user)" class="mr-2" />
                                     <Button icon="pi pi-trash" severity="danger" text rounded @click="deleteUser(user)" :disabled="user.id === page.props.auth.user.id" />
                                 </td>
@@ -344,6 +381,14 @@ const getRoleBadge = (roleName) => {
                                         @click="rejectReseller(user)"
                                     />
                                 </template>
+                                <Button
+                                    icon="pi pi-key"
+                                    severity="warn"
+                                    text
+                                    size="small"
+                                    v-tooltip.top="'Ubah Password'"
+                                    @click="openPasswordDrawer(user)"
+                                />
                                 <Button icon="pi pi-pencil" severity="secondary" text size="small" @click="openEditModal(user)" />
                                 <Button icon="pi pi-trash" severity="danger" text size="small" @click="deleteUser(user)" :disabled="user.id === page.props.auth.user.id" />
                             </div>
@@ -388,8 +433,8 @@ const getRoleBadge = (roleName) => {
                 </div>
             </div>
 
-            <!-- Form Dialog Modal -->
-            <Dialog v-model:visible="isFormOpen" modal :header="editingUser ? 'Edit Pengguna' : 'Tambah Pengguna Baru'" class="w-full max-w-md">
+            <!-- Form Drawer Modal -->
+            <Drawer v-model:visible="isFormOpen" position="right" :header="editingUser ? 'Edit Pengguna' : 'Tambah Pengguna Baru'" class="!w-full sm:!w-[420px]">
                 <div v-if="Object.keys(form.errors).length > 0" class="mb-4">
                     <Message severity="error" v-for="(err, key) in form.errors" :key="key" size="small" class="mb-1">
                         {{ err }}
@@ -407,11 +452,16 @@ const getRoleBadge = (roleName) => {
                         <InputText v-model="form.email" type="email" required placeholder="Email..." />
                     </div>
 
-                    <div class="flex flex-col gap-1.5">
-                        <label class="text-xs font-semibold">Password <span v-if="!editingUser" class="text-red-500">*</span></label>
-                        <InputText v-model="form.password" type="password" :required="!editingUser" placeholder="Kata sandi..." />
-                        <p v-if="editingUser" class="text-[10px] text-gray-400">Kosongkan password jika tidak ingin diubah.</p>
-                    </div>
+                    <template v-if="!editingUser">
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-xs font-semibold">Kata Sandi <span class="text-red-500">*</span></label>
+                            <InputText v-model="form.password" type="password" required placeholder="Kata sandi..." />
+                        </div>
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-xs font-semibold">Konfirmasi Kata Sandi <span class="text-red-500">*</span></label>
+                            <InputText v-model="form.password_confirmation" type="password" required placeholder="Ketik ulang kata sandi..." />
+                        </div>
+                    </template>
 
                     <div class="flex flex-col gap-1.5">
                         <label class="text-xs font-semibold">Peran / Role Akses <span class="text-red-500">*</span></label>
@@ -443,7 +493,77 @@ const getRoleBadge = (roleName) => {
                         <Button type="submit" :label="editingUser ? 'Simpan Perubahan' : 'Buat Akun'" :loading="form.processing" class="!bg-amber-500 hover:!bg-amber-600 !border-amber-500 hover:!border-amber-600 !text-gray-950 font-bold" />
                     </div>
                 </form>
-            </Dialog>
+            </Drawer>
+
+            <!-- Drawer Ubah Password -->
+            <Drawer
+                v-model:visible="isPasswordDrawerOpen"
+                position="right"
+                header="Ubah Kata Sandi Pengguna"
+                class="!w-full sm:!w-[400px]"
+            >
+                <div v-if="passwordUser" class="space-y-5 pt-2">
+                    <div class="p-3.5 bg-gray-50 dark:bg-gray-800/60 rounded-xl border border-gray-150 dark:border-gray-700/60 flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-sm shrink-0">
+                            {{ passwordUser.name.charAt(0).toUpperCase() }}
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <h4 class="text-xs font-bold text-gray-900 dark:text-white truncate">{{ passwordUser.name }}</h4>
+                            <p class="text-[11px] text-gray-500 dark:text-gray-400 truncate">{{ passwordUser.email }}</p>
+                            <div class="mt-1 flex flex-wrap gap-1">
+                                <span v-for="role in passwordUser.roles" :key="role.id" :class="['text-[10px] px-1.5 py-0.5 rounded font-bold uppercase', getRoleBadge(role.name)]">
+                                    {{ role.name }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-if="Object.keys(passwordForm.errors).length > 0">
+                        <Message severity="error" v-for="(err, key) in passwordForm.errors" :key="key" size="small" class="mb-1">
+                            {{ err }}
+                        </Message>
+                    </div>
+
+                    <form @submit.prevent="submitPasswordForm" class="space-y-4">
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-xs font-semibold">Kata Sandi Baru <span class="text-red-500">*</span></label>
+                            <InputText
+                                v-model="passwordForm.password"
+                                type="password"
+                                required
+                                placeholder="Masukkan kata sandi baru..."
+                                class="w-full"
+                            />
+                        </div>
+
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-xs font-semibold">Konfirmasi Kata Sandi Baru <span class="text-red-500">*</span></label>
+                            <InputText
+                                v-model="passwordForm.password_confirmation"
+                                type="password"
+                                required
+                                placeholder="Ketik ulang kata sandi baru..."
+                                class="w-full"
+                            />
+                        </div>
+
+                        <p class="text-[11px] text-gray-400 leading-relaxed">
+                            <i class="pi pi-info-circle mr-1"></i> Kata sandi minimal 8 karakter. Pastikan kedua kolom kata sandi cocok.
+                        </p>
+
+                        <div class="flex justify-end gap-2 pt-4 border-t border-gray-150 dark:border-gray-800">
+                            <Button label="Batal" severity="secondary" text @click="isPasswordDrawerOpen = false" />
+                            <Button
+                                type="submit"
+                                label="Simpan Password"
+                                icon="pi pi-check"
+                                :loading="passwordForm.processing"
+                                class="!bg-amber-500 hover:!bg-amber-600 !border-amber-500 hover:!border-amber-600 !text-gray-950 font-bold"
+                            />
+                        </div>
+                    </form>
+                </div>
+            </Drawer>
 
             <!-- Custom Confirmation Dialog Popup -->
             <Dialog v-model:visible="confirmDialog.visible" modal :header="confirmDialog.title" class="w-full max-w-sm !rounded-2xl" :closable="false">

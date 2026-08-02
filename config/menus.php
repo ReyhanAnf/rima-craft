@@ -106,6 +106,12 @@ return [
                     'permission' => 'manage-users',
                 ],
                 [
+                    'name' => 'Pengumuman',
+                    'route' => 'announcements.index',
+                    'icon' => 'M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A2.5 2.5 0 013 11.2V9.8a2.5 2.5 0 012.436-2.483l5.564-.4V14.083l-5.564-.4z',
+                    'permission' => 'manage-announcements',
+                ],
+                [
                     'name' => 'Metode Pembayaran',
                     'route' => 'payment-methods.index',
                     'icon' => 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1',
