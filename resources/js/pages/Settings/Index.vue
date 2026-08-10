@@ -47,6 +47,8 @@ const form = useForm({
     seo_title: props.settings.seo_title || '',
     seo_description: props.settings.seo_description || '',
     seo_keywords: props.settings.seo_keywords || '',
+    favicon: null,
+    seo_og_image: null,
 
     // Info Halaman
     page_terms: props.settings.page_terms || '',
@@ -134,7 +136,7 @@ const submitForm = () => {
                 
                 <TabLanding v-show="activeTab === 'landing'" :form="form" :settings="settings" />
                 
-                <TabSEO v-show="activeTab === 'seo'" :form="form" />
+                <TabSEO v-show="activeTab === 'seo'" :form="form" :settings="settings" />
                 
                 <TabInfo v-show="activeTab === 'info'" :form="form" />
                 

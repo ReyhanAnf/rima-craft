@@ -218,6 +218,12 @@ window.route = function(name, params = {}) {
         'logout': '/logout',
         'dashboard': '/dashboard',
         'products.index': '/products',
+        'products.create': '/products/create',
+        'products.store': '/products',
+        'products.edit': '/products/{id}/edit',
+        'products.update': '/products/{id}',
+        'products.destroy': '/products/{id}',
+        'products.media.destroy': '/products/{product}/media/{index}',
         'materials.index': '/materials',
         'sales.index': '/sales',
         'sales.print': '/sales/{id}/print',
@@ -231,6 +237,11 @@ window.route = function(name, params = {}) {
         'settings.index': '/settings',
         'settings.update': '/settings',
         'contacts.index': '/contacts',
+        'contacts.store': '/contacts',
+        'contacts.update': '/contacts/{id}',
+        'contacts.destroy': '/contacts/{id}',
+        'contacts.import': '/contacts/import',
+        'contacts.sample-csv': '/contacts/sample-csv',
         'stock-adjustments.index': '/stock-adjustments',
         'productions.index': '/productions',
         'artisan-jobs.index': '/artisan-jobs',
@@ -344,12 +355,15 @@ window.route = function(name, params = {}) {
         return '';
     }
 
-    if (typeof params !== 'object') {
+    if (typeof params !== 'object' || params === null) {
         path = path.replace(/\{[a-zA-Z0-9_-]+\}/, params);
     } else {
         Object.keys(params).forEach(key => {
-            // Replace key placeholder like {id} or {role}
-            path = path.replace(/\{[a-zA-Z0-9_-]+\}/, params[key]);
+            if (path.includes(`{${key}}`)) {
+                path = path.replace(new RegExp(`\\{${key}\\}`, 'g'), String(params[key]));
+            } else {
+                path = path.replace(/\{[a-zA-Z0-9_-]+\}/, String(params[key]));
+            }
         });
     }
 

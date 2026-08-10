@@ -14,7 +14,10 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="{{ config('settings.business_name', 'Rima Craft') }}">
     <link rel="manifest" href="/manifest.json">
-    @if(config('settings.logo_url'))
+    @if(config('settings.favicon_url'))
+        <link rel="icon" href="{{ asset('storage/' . config('settings.favicon_url')) }}">
+        <link rel="apple-touch-icon" href="{{ asset('storage/' . config('settings.favicon_url')) }}">
+    @elseif(config('settings.logo_url'))
         <link rel="icon" href="{{ asset('storage/' . config('settings.logo_url')) }}">
         <link rel="apple-touch-icon" href="{{ asset('storage/' . config('settings.logo_url')) }}">
     @else
@@ -22,9 +25,31 @@
         <link rel="apple-touch-icon" href="/assets/icon.png">
     @endif
 
+    <!-- Primary Meta & SEO -->
     <title>{{ config('settings.seo_title') ?: config('settings.business_name', 'Rima Craft') . ' - Katalog Produk' }}</title>
     <meta name="description" content="{{ config('settings.seo_description', 'Katalog eksklusif kerajinan tangan dari Rima Craft.') }}">
     <meta name="keywords" content="{{ config('settings.seo_keywords', 'kerajinan, rima craft, anyaman, rotan, furniture') }}">
+
+    <!-- Open Graph / WhatsApp / Facebook Link Embed -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="{{ config('settings.business_name', 'Rima Craft') }}">
+    <meta property="og:title" content="{{ config('settings.seo_title') ?: config('settings.business_name', 'Rima Craft') }}">
+    <meta property="og:description" content="{{ config('settings.seo_description', 'Katalog eksklusif kerajinan tangan dari Rima Craft.') }}">
+    @if(config('settings.seo_og_image_url'))
+        <meta property="og:image" content="{{ asset('storage/' . config('settings.seo_og_image_url')) }}">
+        <meta name="twitter:image" content="{{ asset('storage/' . config('settings.seo_og_image_url')) }}">
+    @elseif(config('settings.hero_image_url'))
+        <meta property="og:image" content="{{ asset('storage/' . config('settings.hero_image_url')) }}">
+        <meta name="twitter:image" content="{{ asset('storage/' . config('settings.hero_image_url')) }}">
+    @elseif(config('settings.logo_url'))
+        <meta property="og:image" content="{{ asset('storage/' . config('settings.logo_url')) }}">
+        <meta name="twitter:image" content="{{ asset('storage/' . config('settings.logo_url')) }}">
+    @endif
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ config('settings.seo_title') ?: config('settings.business_name', 'Rima Craft') }}">
+    <meta name="twitter:description" content="{{ config('settings.seo_description', 'Katalog eksklusif kerajinan tangan dari Rima Craft.') }}">
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

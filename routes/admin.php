@@ -54,6 +54,8 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::middleware('permission:view-contacts')->group(function () {
+        Route::get('contacts/sample-csv', [ContactController::class, 'sampleCsv'])->name('contacts.sample-csv');
+        Route::post('contacts/import', [ContactController::class, 'import'])->name('contacts.import');
         Route::resource('contacts', ContactController::class)->except(['show']);
     });
 

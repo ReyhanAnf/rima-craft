@@ -27,7 +27,7 @@ class SettingController extends Controller
         $data = $request->except([
             '_token', '_method', 
             'looping_video', 'hero_image', 'gallery_1_image', 'gallery_2_image',
-            'logo', 'sponsor_logos',
+            'logo', 'sponsor_logos', 'favicon', 'seo_og_image',
         ]);
 
         $devKeys = [
@@ -42,11 +42,13 @@ class SettingController extends Controller
         }
 
         $filesToUpload = [
-            'looping_video' => 'looping_video_url',
-            'hero_image'    => 'hero_image_url',
+            'looping_video'   => 'looping_video_url',
+            'hero_image'      => 'hero_image_url',
             'gallery_1_image' => 'gallery_1_url',
             'gallery_2_image' => 'gallery_2_url',
-            'logo'          => 'logo_url',
+            'logo'            => 'logo_url',
+            'favicon'         => 'favicon_url',
+            'seo_og_image'    => 'seo_og_image_url',
         ];
 
         foreach ($filesToUpload as $input => $key) {
