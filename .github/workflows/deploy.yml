@@ -1,0 +1,90 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    name: Build & Deploy to Shared Hosting
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install NPM Dependencies
+        run: npm ci
+
+      - name: Build Frontend Assets (Vite)
+        run: npm run build
+
+      - name: Pull Latest Code & Update Dependencies on Server
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script_stop: true
+          script: |
+            export PATH=$PATH:/usr/local/bin:/usr/local/cpanel/3rdparty/lib/path-bin
+            cd ~/apps/rima-craft
+
+            # 1. Masuk mode maintenance sementara (opsional)
+            php artisan down || true
+
+            # 2. Ambil update kode terbaru dari branch main
+            git fetch origin main
+            git reset --hard origin/main
+
+            # 3. Update dependensi Composer (tanpa dev package)
+            composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+
+            # 4. Jalankan migrasi database
+            php artisan migrate --force
+
+            # 5. Pastikan storage symlink terhubung
+            php artisan storage:link || true
+
+      - name: Sync Fresh Frontend Build Assets via SCP
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          source: "public/build"
+          target: "~/apps/rima-craft"
+          overwrite: true
+          rm: false
+
+      - name: Rebuild Laravel Caches & Bring Site Up
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script_stop: true
+          script: |
+            export PATH=$PATH:/usr/local/bin:/usr/local/cpanel/3rdparty/lib/path-bin
+            cd ~/apps/rima-craft
+
+            # 6. Bersihkan dan optimalkan cache Laravel
+            php artisan optimize:clear
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+
+            # 7. Aktifkan kembali aplikasi
+            php artisan up
