@@ -604,6 +604,16 @@ const getBadgeClass = (type) => {
     }
 };
 
+const getAvatarBgClass = (type) => {
+    switch (type) {
+        case 'customer': return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20';
+        case 'reseller': return 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20';
+        case 'supplier': return 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20';
+        case 'crafter': return 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20';
+        default: return 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400';
+    }
+};
+
 const getTypeText = (type) => {
     switch (type) {
         case 'customer': return 'Pelanggan';
@@ -620,58 +630,68 @@ const getTypeText = (type) => {
         <Head title="Buku Kontak - Rima Craft" />
         <ConfirmDialog :style="{ width: '90vw', maxWidth: '380px' }" />
 
-        <div class="space-y-6">
+        <div class="space-y-4 sm:space-y-6">
             <!-- Header section -->
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent p-4 sm:p-6 rounded-2xl border border-amber-500/20">
-                <div>
-                    <div class="flex items-center gap-2">
-                        <span class="p-2 rounded-xl bg-amber-500 text-gray-950 shadow-sm">
-                            <i class="pi pi-address-book text-base"></i>
-                        </span>
-                        <h2 class="text-xl font-extrabold text-gray-900 dark:text-white">Buku Kontak</h2>
+            <div class="bg-gradient-to-br from-amber-500/15 via-amber-500/5 to-transparent p-4 sm:p-6 rounded-2xl border border-amber-500/20 shadow-sm space-y-4">
+                <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-amber-500 text-gray-950 flex items-center justify-center font-bold shadow-md shadow-amber-500/20 shrink-0">
+                            <i class="pi pi-address-book text-lg"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h2 class="text-lg sm:text-xl font-black text-gray-900 dark:text-white tracking-tight">Buku Kontak</h2>
+                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
+                                    {{ contacts.total || 0 }} Kontak
+                                </span>
+                            </div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                Kelola relasi bisnis: pelanggan, reseller, supplier, dan pengrajin.
+                            </p>
+                        </div>
                     </div>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Kelola relasi bisnis: pelanggan setia, reseller toko, supplier bahan baku, dan pengrajin lokal.
-                    </p>
                 </div>
-                
-                <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                    <!-- Quick Android Auto Import Button -->
+
+                <!-- Action Buttons on Mobile / Desktop -->
+                <div class="flex flex-col sm:flex-row gap-2 pt-1">
+                    <!-- Prominent Android Auto Import -->
                     <Button
                         label="Auto Import Kontak Android"
                         icon="pi pi-android"
-                        class="!bg-gradient-to-r !from-emerald-600 !to-teal-600 hover:!from-emerald-500 hover:!to-teal-500 !border-0 !text-white font-bold !text-xs !shadow-sm flex-1 sm:flex-none"
+                        class="!bg-gradient-to-r !from-emerald-600 !to-teal-600 hover:!from-emerald-500 hover:!to-teal-500 !border-0 !text-white font-bold !text-xs !py-2.5 !px-4 !rounded-xl !shadow-sm flex-1 sm:flex-none justify-center"
                         @click="triggerAndroidAutoImport"
                     />
                     
-                    <Button
-                        label="Import File"
-                        icon="pi pi-upload"
-                        severity="secondary"
-                        outlined
-                        class="!text-xs font-bold shrink-0"
-                        @click="openImportDrawer('file')"
-                    />
+                    <div class="grid grid-cols-2 sm:flex items-center gap-2">
+                        <Button
+                            label="Import File"
+                            icon="pi pi-upload"
+                            severity="secondary"
+                            outlined
+                            class="!text-xs font-bold !py-2.5 !px-4 !rounded-xl justify-center"
+                            @click="openImportDrawer('file')"
+                        />
 
-                    <Button
-                        label="Tambah Kontak"
-                        icon="pi pi-plus"
-                        class="!bg-amber-500 hover:!bg-amber-600 !border-amber-500 hover:!border-amber-600 !text-gray-950 font-bold !text-xs shrink-0"
-                        @click="openCreateModal"
-                    />
+                        <Button
+                            label="Tambah Kontak"
+                            icon="pi pi-plus"
+                            class="!bg-amber-500 hover:!bg-amber-600 !border-amber-500 hover:!border-amber-600 !text-gray-950 font-bold !text-xs !py-2.5 !px-4 !rounded-xl justify-center"
+                            @click="openCreateModal"
+                        />
+                    </div>
                 </div>
             </div>
 
             <!-- Filters Panel -->
-            <div class="bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div class="relative w-full">
+            <div class="bg-white dark:bg-gray-900 p-3 sm:p-4 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col sm:flex-row gap-2.5 sm:gap-3">
+                <div class="relative flex-1">
                     <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                        <i class="pi pi-search text-xs"></i>
                     </span>
                     <InputText
                         v-model="searchQuery"
                         placeholder="Cari nama, no. telepon, alamat..."
-                        class="w-full !pl-9 !text-xs"
+                        class="w-full !pl-8 !text-xs !rounded-xl !py-2"
                         @input="applyFilters"
                     />
                 </div>
@@ -682,123 +702,209 @@ const getTypeText = (type) => {
                     optionLabel="label"
                     optionValue="value"
                     placeholder="Semua Tipe Kontak"
-                    class="w-full !text-xs"
+                    class="w-full sm:w-64 !text-xs !rounded-xl"
                     @change="applyFilters"
                 />
             </div>
 
-            <!-- Table -->
-            <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden shadow-sm">
-                <!-- Desktop Table -->
-                <div class="hidden md:block overflow-x-auto">
-                    <table class="w-full text-sm text-left text-gray-600 dark:text-gray-400">
-                        <thead class="text-xs text-gray-500 uppercase bg-gray-50 dark:bg-gray-800/60 border-b border-gray-200 dark:border-gray-800">
-                            <tr>
-                                <th scope="col" class="px-6 py-4 font-bold">Nama Kontak</th>
-                                <th scope="col" class="px-6 py-4 font-bold">Tipe Hubungan</th>
-                                <th scope="col" class="px-6 py-4 font-bold">No. Telepon / WhatsApp</th>
-                                <th scope="col" class="px-6 py-4 font-bold">Email</th>
-                                <th scope="col" class="px-6 py-4 font-bold">Alamat</th>
-                                <th scope="col" class="px-6 py-4 font-bold text-right">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-                            <tr v-for="contact in contacts.data" :key="contact.id" class="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition">
-                                <td class="px-6 py-4">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-8 h-8 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-xs shrink-0">
-                                            {{ contact.name ? contact.name.charAt(0).toUpperCase() : '?' }}
+            <!-- Content Area: Desktop Table & Mobile Cards -->
+            <div>
+                <!-- Desktop Table View (Hidden on mobile) -->
+                <div class="hidden md:block bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left text-gray-600 dark:text-gray-400">
+                            <thead class="text-xs text-gray-500 uppercase bg-gray-50 dark:bg-gray-800/60 border-b border-gray-200 dark:border-gray-800">
+                                <tr>
+                                    <th scope="col" class="px-6 py-4 font-bold">Nama Kontak</th>
+                                    <th scope="col" class="px-6 py-4 font-bold">Tipe Hubungan</th>
+                                    <th scope="col" class="px-6 py-4 font-bold">No. Telepon / WhatsApp</th>
+                                    <th scope="col" class="px-6 py-4 font-bold">Email</th>
+                                    <th scope="col" class="px-6 py-4 font-bold">Alamat</th>
+                                    <th scope="col" class="px-6 py-4 font-bold text-right">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                                <tr v-for="contact in contacts.data" :key="contact.id" class="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition">
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center gap-3">
+                                            <div :class="['w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs shrink-0', getAvatarBgClass(contact.type)]">
+                                                {{ contact.name ? contact.name.charAt(0).toUpperCase() : '?' }}
+                                            </div>
+                                            <span class="font-bold text-gray-900 dark:text-white">{{ contact.name }}</span>
                                         </div>
-                                        <span class="font-bold text-gray-900 dark:text-white">{{ contact.name }}</span>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <span :class="['text-[11px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider', getBadgeClass(contact.type)]">
-                                        {{ getTypeText(contact.type) }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <div v-if="contact.phone" class="flex items-center gap-2">
-                                        <span class="font-mono text-xs text-gray-800 dark:text-gray-200">{{ contact.phone }}</span>
-                                        <a
-                                            :href="`https://wa.me/${contact.phone.replace(/^0/, '62').replace(/[^\d]/g, '')}`"
-                                            target="_blank"
-                                            class="text-emerald-500 hover:text-emerald-600 text-xs inline-flex items-center"
-                                            title="Kirim Pesan WhatsApp"
-                                        >
-                                            <i class="pi pi-whatsapp"></i>
-                                        </a>
-                                    </div>
-                                    <span v-else class="text-gray-400 text-xs">-</span>
-                                </td>
-                                <td class="px-6 py-4 text-xs">
-                                    {{ contact.email || '-' }}
-                                </td>
-                                <td class="px-6 py-4 text-xs text-gray-500 max-w-xs truncate">
-                                    {{ contact.address || '-' }}
-                                </td>
-                                <td class="px-6 py-4 text-right">
-                                    <Button icon="pi pi-pencil" severity="secondary" text rounded @click="openEditModal(contact)" class="mr-1 !w-8 !h-8" />
-                                    <Button icon="pi pi-trash" severity="danger" text rounded @click="deleteContact(contact)" class="!w-8 !h-8" />
-                                </td>
-                            </tr>
-                            <tr v-if="contacts.data.length === 0">
-                                <td colspan="6" class="px-6 py-12 text-center text-gray-400">
-                                    <div class="max-w-sm mx-auto space-y-3">
-                                        <i class="pi pi-users text-4xl text-gray-300 dark:text-gray-600"></i>
-                                        <p class="text-sm font-semibold text-gray-600 dark:text-gray-300">Belum ada kontak terdaftar</p>
-                                        <p class="text-xs text-gray-400">Gunakan tombol Auto Import Kontak Android untuk memindahkan kontak dari smartphone Anda dalam hitungan detik.</p>
-                                        <div class="flex justify-center gap-2 pt-2">
-                                            <Button
-                                                label="Auto Import Android"
-                                                icon="pi pi-android"
-                                                size="small"
-                                                class="!bg-emerald-600 hover:!bg-emerald-700 !border-0 !text-white font-bold !text-xs"
-                                                @click="triggerAndroidAutoImport"
-                                            />
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <span :class="['text-[11px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider', getBadgeClass(contact.type)]">
+                                            {{ getTypeText(contact.type) }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div v-if="contact.phone" class="flex items-center gap-2">
+                                            <span class="font-mono text-xs text-gray-800 dark:text-gray-200">{{ contact.phone }}</span>
+                                            <a
+                                                :href="`https://wa.me/${contact.phone.replace(/^0/, '62').replace(/[^\d]/g, '')}`"
+                                                target="_blank"
+                                                class="text-emerald-500 hover:text-emerald-600 text-xs inline-flex items-center p-1 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950 transition"
+                                                title="Kirim Pesan WhatsApp"
+                                            >
+                                                <i class="pi pi-whatsapp"></i>
+                                            </a>
                                         </div>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                                        <span v-else class="text-gray-400 text-xs">-</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-xs">
+                                        {{ contact.email || '-' }}
+                                    </td>
+                                    <td class="px-6 py-4 text-xs text-gray-500 max-w-xs truncate">
+                                        {{ contact.address || '-' }}
+                                    </td>
+                                    <td class="px-6 py-4 text-right">
+                                        <Button icon="pi pi-pencil" severity="secondary" text rounded @click="openEditModal(contact)" class="mr-1 !w-8 !h-8" />
+                                        <Button icon="pi pi-trash" severity="danger" text rounded @click="deleteContact(contact)" class="!w-8 !h-8" />
+                                    </td>
+                                </tr>
+                                <tr v-if="contacts.data.length === 0">
+                                    <td colspan="6" class="px-6 py-12 text-center text-gray-400">
+                                        <div class="max-w-sm mx-auto space-y-3">
+                                            <i class="pi pi-users text-4xl text-gray-300 dark:text-gray-600"></i>
+                                            <p class="text-sm font-semibold text-gray-600 dark:text-gray-300">Belum ada kontak terdaftar</p>
+                                            <p class="text-xs text-gray-400">Gunakan tombol Auto Import Kontak Android untuk memindahkan kontak dari smartphone Anda dalam hitungan detik.</p>
+                                            <div class="flex justify-center gap-2 pt-2">
+                                                <Button
+                                                    label="Auto Import Android"
+                                                    icon="pi pi-android"
+                                                    size="small"
+                                                    class="!bg-emerald-600 hover:!bg-emerald-700 !border-0 !text-white font-bold !text-xs !rounded-xl"
+                                                    @click="triggerAndroidAutoImport"
+                                                />
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
-                <!-- Mobile view -->
-                <div class="md:hidden divide-y divide-gray-150 dark:divide-gray-800">
-                    <div v-for="contact in contacts.data" :key="contact.id" class="p-4 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-800/40">
-                        <div class="flex-1 min-w-0 pr-3">
-                            <div class="flex items-center gap-2">
-                                <h4 class="text-sm font-bold text-gray-900 dark:text-white truncate">{{ contact.name }}</h4>
-                                <span :class="['text-[9px] px-1.5 py-0.5 rounded font-bold uppercase', getBadgeClass(contact.type)]">
-                                    {{ getTypeText(contact.type) }}
-                                </span>
+                <!-- Mobile Card View (Shown on screens < md) -->
+                <div class="md:hidden space-y-3">
+                    <div
+                        v-for="contact in contacts.data"
+                        :key="contact.id"
+                        class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-4 shadow-xs space-y-3 hover:border-amber-300 dark:hover:border-amber-700 transition"
+                    >
+                        <!-- Card Top: Avatar, Name, Type, Action Buttons -->
+                        <div class="flex items-start justify-between gap-2.5">
+                            <div class="flex items-center gap-3 min-w-0">
+                                <div :class="['w-10 h-10 rounded-2xl flex items-center justify-center font-black text-sm shrink-0 shadow-2xs', getAvatarBgClass(contact.type)]">
+                                    {{ contact.name ? contact.name.charAt(0).toUpperCase() : '?' }}
+                                </div>
+                                <div class="min-w-0">
+                                    <h3 class="text-sm font-bold text-gray-900 dark:text-white truncate leading-tight">
+                                        {{ contact.name }}
+                                    </h3>
+                                    <div class="mt-1">
+                                        <span :class="['text-[10px] px-2 py-0.5 rounded-full font-extrabold uppercase tracking-wide', getBadgeClass(contact.type)]">
+                                            {{ getTypeText(contact.type) }}
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="flex items-center gap-3 mt-1.5 text-xs text-gray-500">
-                                <span v-if="contact.phone" class="font-mono">{{ contact.phone }}</span>
-                                <span v-if="contact.address" class="truncate max-w-[150px]">{{ contact.address }}</span>
+
+                            <div class="flex items-center gap-1 shrink-0">
+                                <Button
+                                    icon="pi pi-pencil"
+                                    severity="secondary"
+                                    text
+                                    rounded
+                                    size="small"
+                                    class="!w-8 !h-8 text-gray-500 hover:text-gray-900 dark:hover:text-white"
+                                    @click="openEditModal(contact)"
+                                />
+                                <Button
+                                    icon="pi pi-trash"
+                                    severity="danger"
+                                    text
+                                    rounded
+                                    size="small"
+                                    class="!w-8 !h-8"
+                                    @click="deleteContact(contact)"
+                                />
                             </div>
                         </div>
-                        <div class="flex gap-1 shrink-0">
-                            <Button icon="pi pi-pencil" severity="secondary" text size="small" @click="openEditModal(contact)" />
-                            <Button icon="pi pi-trash" severity="danger" text size="small" @click="deleteContact(contact)" />
+
+                        <!-- Card Body: Phone, WhatsApp, Email, Address -->
+                        <div class="space-y-2 pt-2 border-t border-gray-100 dark:border-gray-800/80 text-xs">
+                            <!-- Phone & WhatsApp -->
+                            <div v-if="contact.phone" class="flex items-center justify-between gap-2">
+                                <a :href="`tel:${contact.phone}`" class="flex items-center gap-2 text-gray-700 dark:text-gray-300 font-mono text-xs hover:text-amber-600">
+                                    <i class="pi pi-phone text-gray-400 text-xs"></i>
+                                    <span>{{ contact.phone }}</span>
+                                </a>
+                                <a
+                                    :href="`https://wa.me/${contact.phone.replace(/^0/, '62').replace(/[^\d]/g, '')}`"
+                                    target="_blank"
+                                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 text-[11px] font-bold hover:bg-emerald-100 transition shadow-2xs"
+                                >
+                                    <i class="pi pi-whatsapp text-emerald-500"></i>
+                                    <span>WhatsApp</span>
+                                </a>
+                            </div>
+
+                            <!-- Email -->
+                            <div v-if="contact.email" class="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                                <i class="pi pi-envelope text-gray-400 text-xs shrink-0"></i>
+                                <a :href="`mailto:${contact.email}`" class="truncate text-xs hover:underline hover:text-amber-600">
+                                    {{ contact.email }}
+                                </a>
+                            </div>
+
+                            <!-- Address -->
+                            <div v-if="contact.address" class="flex items-start gap-2 text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/40 p-2.5 rounded-xl text-[11px]">
+                                <i class="pi pi-map-marker text-amber-500 text-xs mt-0.5 shrink-0"></i>
+                                <span class="line-clamp-2 leading-relaxed">{{ contact.address }}</span>
+                            </div>
                         </div>
                     </div>
-                    <div v-if="contacts.data.length === 0" class="p-8 text-center text-gray-400">
-                        Tidak ada kontak ditemukan.
+
+                    <!-- Empty State Mobile -->
+                    <div v-if="contacts.data.length === 0" class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-8 text-center space-y-3">
+                        <div class="w-12 h-12 mx-auto rounded-full bg-gray-100 dark:bg-gray-800 text-gray-400 flex items-center justify-center">
+                            <i class="pi pi-users text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-gray-700 dark:text-gray-200">Belum ada kontak terdaftar</p>
+                            <p class="text-xs text-gray-400 mt-1">Import kontak langsung dari Android atau tambahkan kontak baru.</p>
+                        </div>
+                        <div class="pt-2 flex flex-col gap-2">
+                            <Button
+                                label="Auto Import Kontak Android"
+                                icon="pi pi-android"
+                                class="!bg-emerald-600 hover:!bg-emerald-700 !border-0 !text-white font-bold !text-xs !py-2.5 !rounded-xl justify-center"
+                                @click="triggerAndroidAutoImport"
+                            />
+                            <Button
+                                label="Tambah Manual"
+                                icon="pi pi-plus"
+                                severity="secondary"
+                                outlined
+                                class="!text-xs font-bold !py-2.5 !rounded-xl justify-center"
+                                @click="openCreateModal"
+                            />
+                        </div>
                     </div>
                 </div>
 
                 <!-- Pagination Footer -->
-                <div v-if="contacts.links.length > 3" class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/20 flex flex-col sm:flex-row gap-3 justify-between items-center">
+                <div v-if="contacts.links.length > 3" class="mt-4 px-4 sm:px-6 py-3.5 border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-2xl flex flex-col sm:flex-row gap-3 justify-between items-center shadow-xs">
                     <span class="text-xs text-gray-500">Menampilkan {{ contacts.from || 0 }} - {{ contacts.to || 0 }} dari {{ contacts.total }} kontak</span>
-                    <div class="flex gap-1 flex-wrap">
+                    <div class="flex gap-1 flex-wrap justify-center">
                         <Link
                             v-for="link in contacts.links"
                             :key="link.label"
                             :href="link.url || '#'"
                             :class="[
-                                'px-3 py-1.5 rounded-lg text-xs font-semibold border transition',
+                                'px-3 py-1.5 rounded-xl text-xs font-semibold border transition',
                                 link.active
                                     ? 'bg-amber-500 text-gray-950 border-amber-500 font-bold'
                                     : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800',
@@ -832,38 +938,38 @@ const getTypeText = (type) => {
                             optionLabel="label"
                             optionValue="value"
                             placeholder="Pilih Hubungan..."
-                            class="w-full !text-xs"
+                            class="w-full !text-xs !rounded-xl"
                             required
                         />
                     </div>
 
                     <div class="flex flex-col gap-1.5">
                         <label class="text-xs font-semibold text-gray-700 dark:text-gray-300">Nama Lengkap <span class="text-red-500">*</span></label>
-                        <InputText v-model="form.name" required placeholder="Nama lengkap..." class="!text-xs" />
+                        <InputText v-model="form.name" required placeholder="Nama lengkap..." class="!text-xs !rounded-xl" />
                     </div>
 
                     <div class="flex flex-col gap-1.5">
                         <label class="text-xs font-semibold text-gray-700 dark:text-gray-300">Nomor Telepon / WhatsApp</label>
-                        <InputText v-model="form.phone" placeholder="Contoh: 081234567890" class="!text-xs" />
+                        <InputText v-model="form.phone" placeholder="Contoh: 081234567890" class="!text-xs !rounded-xl" />
                     </div>
 
                     <div class="flex flex-col gap-1.5">
                         <label class="text-xs font-semibold text-gray-700 dark:text-gray-300">Email</label>
-                        <InputText v-model="form.email" type="email" placeholder="contoh@domain.com" class="!text-xs" />
+                        <InputText v-model="form.email" type="email" placeholder="contoh@domain.com" class="!text-xs !rounded-xl" />
                     </div>
 
                     <div class="flex flex-col gap-1.5">
                         <label class="text-xs font-semibold text-gray-700 dark:text-gray-300">Alamat Lengkap</label>
-                        <Textarea v-model="form.address" rows="3" placeholder="Masukkan alamat jalan, kota, provinsi..." class="!text-xs" />
+                        <Textarea v-model="form.address" rows="3" placeholder="Masukkan alamat jalan, kota, provinsi..." class="!text-xs !rounded-xl" />
                     </div>
 
                     <div class="flex justify-end gap-2 pt-4 border-t border-gray-150 dark:border-gray-800">
-                        <Button label="Batal" severity="secondary" text @click="isFormOpen = false" class="!text-xs" />
+                        <Button label="Batal" severity="secondary" text @click="isFormOpen = false" class="!text-xs !rounded-xl" />
                         <Button
                             type="submit"
                             :label="editingContact ? 'Simpan Perubahan' : 'Tambah Kontak'"
                             :loading="form.processing"
-                            class="!bg-amber-500 hover:!bg-amber-600 !border-amber-500 hover:!border-amber-600 !text-gray-950 font-bold !text-xs"
+                            class="!bg-amber-500 hover:!bg-amber-600 !border-amber-500 hover:!border-amber-600 !text-gray-950 font-bold !text-xs !rounded-xl !px-4"
                         />
                     </div>
                 </form>
@@ -926,7 +1032,7 @@ const getTypeText = (type) => {
                                     <Button
                                         label="Buka Kontak Android Sekarang"
                                         icon="pi pi-android"
-                                        class="!bg-emerald-600 hover:!bg-emerald-700 !border-0 !text-white font-bold !text-xs !py-2.5 !px-5 !shadow"
+                                        class="!bg-emerald-600 hover:!bg-emerald-700 !border-0 !text-white font-bold !text-xs !py-2.5 !px-5 !rounded-xl !shadow w-full sm:w-auto"
                                         @click="triggerAndroidAutoImport"
                                     />
                                 </div>
@@ -945,7 +1051,7 @@ const getTypeText = (type) => {
                             </div>
 
                             <!-- Android Help Accordion -->
-                            <div class="border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
+                            <div class="border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
                                 <button
                                     type="button"
                                     class="w-full p-3 flex justify-between items-center text-xs font-bold text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800/40 hover:bg-gray-100 transition"
@@ -1028,7 +1134,7 @@ const getTypeText = (type) => {
                         <!-- Top Action Bar -->
                         <div class="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-gray-800">
                             <Button
-                                label="Pilih Ulang / Ganti Sumber"
+                                label="Pilih Ulang"
                                 icon="pi pi-arrow-left"
                                 severity="secondary"
                                 text
@@ -1037,13 +1143,13 @@ const getTypeText = (type) => {
                                 @click="clearParsedContacts"
                             />
                             <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                                {{ statsSummary.total }} Kontak Terdeteksi
+                                {{ statsSummary.total }} Terdeteksi
                             </span>
                         </div>
 
                         <!-- Configuration: Target Type & Duplicate Strategy -->
-                        <div class="bg-gray-50 dark:bg-gray-800/50 p-3.5 rounded-xl border border-gray-200 dark:border-gray-800 space-y-3">
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="bg-gray-50 dark:bg-gray-800/50 p-3.5 rounded-2xl border border-gray-200 dark:border-gray-800 space-y-3">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                                 <div class="flex flex-col gap-1">
                                     <label class="text-[11px] font-bold text-gray-700 dark:text-gray-300">Tipe Relasi Default</label>
                                     <Dropdown
@@ -1051,7 +1157,7 @@ const getTypeText = (type) => {
                                         :options="contactTypes"
                                         optionLabel="label"
                                         optionValue="value"
-                                        class="w-full !text-xs"
+                                        class="w-full !text-xs !rounded-xl"
                                     />
                                 </div>
 
@@ -1066,7 +1172,7 @@ const getTypeText = (type) => {
                                         ]"
                                         optionLabel="label"
                                         optionValue="value"
-                                        class="w-full !text-xs"
+                                        class="w-full !text-xs !rounded-xl"
                                     />
                                 </div>
                             </div>
@@ -1074,15 +1180,15 @@ const getTypeText = (type) => {
 
                         <!-- Statistics Summary Cards -->
                         <div class="grid grid-cols-3 gap-2 text-center">
-                            <div class="p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                            <div class="p-2.5 rounded-2xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
                                 <p class="text-[10px] text-gray-500 font-bold uppercase">Terpilih</p>
                                 <p class="text-base font-extrabold text-gray-900 dark:text-white">{{ statsSummary.selected }}</p>
                             </div>
-                            <div class="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800">
-                                <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase">Kontak Baru</p>
+                            <div class="p-2.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800">
+                                <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase">Baru</p>
                                 <p class="text-base font-extrabold text-emerald-700 dark:text-emerald-300">{{ statsSummary.newItems }}</p>
                             </div>
-                            <div class="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
+                            <div class="p-2.5 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
                                 <p class="text-[10px] text-amber-600 dark:text-amber-400 font-bold uppercase">Duplikat</p>
                                 <p class="text-base font-extrabold text-amber-700 dark:text-amber-300">{{ statsSummary.duplicates }}</p>
                             </div>
@@ -1090,45 +1196,44 @@ const getTypeText = (type) => {
 
                         <!-- Search & Filter Tab Controls -->
                         <div class="space-y-2">
-                            <div class="flex gap-2">
-                                <InputText
-                                    v-model="previewSearch"
-                                    placeholder="Cari kontak dalam daftar..."
-                                    class="w-full !text-xs !py-1.5"
-                                />
-                            </div>
+                            <InputText
+                                v-model="previewSearch"
+                                placeholder="Cari kontak dalam daftar..."
+                                class="w-full !text-xs !py-1.5 !rounded-xl"
+                            />
 
-                            <div class="flex justify-between items-center text-xs">
-                                <div class="flex gap-1">
+                            <!-- Filter pills and selection buttons -->
+                            <div class="flex flex-col gap-2">
+                                <div class="flex gap-1 overflow-x-auto pb-1">
                                     <button
                                         type="button"
                                         @click="previewFilterTab = 'all'"
-                                        :class="['px-2.5 py-1 rounded-lg font-bold text-[11px] transition', previewFilterTab === 'all' ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-800 text-gray-500']"
+                                        :class="['px-2.5 py-1 rounded-xl font-bold text-[11px] transition whitespace-nowrap', previewFilterTab === 'all' ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-800 text-gray-500']"
                                     >
                                         Semua ({{ statsSummary.total }})
                                     </button>
                                     <button
                                         type="button"
                                         @click="previewFilterTab = 'new'"
-                                        :class="['px-2.5 py-1 rounded-lg font-bold text-[11px] transition', previewFilterTab === 'new' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-500']"
+                                        :class="['px-2.5 py-1 rounded-xl font-bold text-[11px] transition whitespace-nowrap', previewFilterTab === 'new' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-500']"
                                     >
                                         Baru ({{ statsSummary.newItems }})
                                     </button>
                                     <button
                                         type="button"
                                         @click="previewFilterTab = 'duplicate'"
-                                        :class="['px-2.5 py-1 rounded-lg font-bold text-[11px] transition', previewFilterTab === 'duplicate' ? 'bg-amber-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-500']"
+                                        :class="['px-2.5 py-1 rounded-xl font-bold text-[11px] transition whitespace-nowrap', previewFilterTab === 'duplicate' ? 'bg-amber-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-500']"
                                     >
                                         Duplikat ({{ statsSummary.duplicates }})
                                     </button>
                                 </div>
 
-                                <div class="flex gap-1">
+                                <div class="flex justify-end gap-1">
                                     <Button
                                         label="Pilih Semua"
                                         size="small"
                                         text
-                                        class="!text-[10px] !py-0.5 !px-1.5"
+                                        class="!text-[10px] !py-0.5 !px-2 font-bold"
                                         @click="toggleSelectAll(true)"
                                     />
                                     <Button
@@ -1137,7 +1242,7 @@ const getTypeText = (type) => {
                                         size="small"
                                         text
                                         severity="help"
-                                        class="!text-[10px] !py-0.5 !px-1.5"
+                                        class="!text-[10px] !py-0.5 !px-2 font-bold"
                                         @click="selectOnlyNonDuplicates"
                                     />
                                     <Button
@@ -1145,7 +1250,7 @@ const getTypeText = (type) => {
                                         size="small"
                                         text
                                         severity="secondary"
-                                        class="!text-[10px] !py-0.5 !px-1.5"
+                                        class="!text-[10px] !py-0.5 !px-2 font-bold"
                                         @click="toggleSelectAll(false)"
                                     />
                                 </div>
@@ -1153,7 +1258,7 @@ const getTypeText = (type) => {
                         </div>
 
                         <!-- Scrollable Contact Items -->
-                        <div class="max-h-80 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900">
+                        <div class="max-h-80 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900">
                             <div
                                 v-for="item in filteredParsedContacts"
                                 :key="item.id"
@@ -1163,34 +1268,34 @@ const getTypeText = (type) => {
                                     type="checkbox"
                                     :id="`preview_check_${item.id}`"
                                     v-model="item.selected"
-                                    class="w-4 h-4 mt-1 text-amber-600 rounded border-gray-300 focus:ring-amber-500"
+                                    class="w-4 h-4 mt-1 text-amber-600 rounded-md border-gray-300 focus:ring-amber-500 shrink-0"
                                 />
 
-                                <label :for="`preview_check_${item.id}`" class="flex-1 min-w-0 cursor-pointer">
-                                    <div class="flex items-center gap-2">
+                                <label :for="`preview_check_${item.id}`" class="flex-1 min-w-0 cursor-pointer space-y-1">
+                                    <div class="flex items-center gap-2 flex-wrap">
                                         <p class="text-xs font-bold text-gray-900 dark:text-white truncate">{{ item.name }}</p>
                                         <span
                                             v-if="item.isDuplicate"
-                                            class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 shrink-0"
+                                            class="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 shrink-0"
                                             :title="item.duplicateReason"
                                         >
                                             ⚠️ Duplikat
                                         </span>
                                     </div>
 
-                                    <div class="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5 text-[11px] text-gray-500">
+                                    <div class="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-gray-500">
                                         <span v-if="item.phone" class="font-mono text-gray-700 dark:text-gray-300">
                                             <i class="pi pi-phone text-[9px] mr-1 text-gray-400"></i>{{ item.phone }}
                                         </span>
-                                        <span v-if="item.email" class="truncate max-w-[150px]">
+                                        <span v-if="item.email" class="truncate max-w-[140px]">
                                             <i class="pi pi-envelope text-[9px] mr-1 text-gray-400"></i>{{ item.email }}
                                         </span>
-                                        <span v-if="item.address" class="truncate max-w-[150px]">
+                                        <span v-if="item.address" class="truncate max-w-[140px]">
                                             <i class="pi pi-map-marker text-[9px] mr-1 text-gray-400"></i>{{ item.address }}
                                         </span>
                                     </div>
 
-                                    <p v-if="item.isDuplicate" class="text-[10px] text-amber-600 dark:text-amber-400 mt-1 italic">
+                                    <p v-if="item.isDuplicate" class="text-[10px] text-amber-600 dark:text-amber-400 italic">
                                         {{ item.duplicateReason }}
                                     </p>
                                 </label>
@@ -1199,7 +1304,7 @@ const getTypeText = (type) => {
                                     <select
                                         v-model="item.type"
                                         @change="item.customTypeSet = true"
-                                        class="text-[10px] font-semibold bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-1 text-gray-700 dark:text-gray-300"
+                                        class="text-[10px] font-bold bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-1.5 text-gray-700 dark:text-gray-300"
                                     >
                                         <option value="customer">Pelanggan</option>
                                         <option value="reseller">Reseller</option>
@@ -1221,7 +1326,7 @@ const getTypeText = (type) => {
                                 severity="secondary"
                                 text
                                 size="small"
-                                class="!text-xs"
+                                class="!text-xs !rounded-xl"
                                 @click="isImportDrawerOpen = false"
                             />
                             
@@ -1231,7 +1336,7 @@ const getTypeText = (type) => {
                                 icon="pi pi-check"
                                 :loading="isImporting"
                                 :disabled="statsSummary.selected === 0"
-                                class="!bg-emerald-600 hover:!bg-emerald-700 !border-0 !text-white font-bold !text-xs !py-2 !px-4"
+                                class="!bg-emerald-600 hover:!bg-emerald-700 !border-0 !text-white font-bold !text-xs !py-2.5 !px-4 !rounded-xl shadow-sm"
                                 @click="submitImport"
                             />
                         </div>
